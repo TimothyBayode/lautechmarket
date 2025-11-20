@@ -4,7 +4,7 @@ import { Trash2, Plus, Minus, MessageCircle, ShoppingBag } from 'lucide-react';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 import { CartItem } from '../types';
-import { getCart, removeFromCart, updateCartQuantity, getCartItemsByVendor, generateWhatsAppLink } from '../utils/cart';
+import { getCart, removeFromCart, updateCartQuantity, getCartItemsByVendor, generateWhatsAppLink, clearCart } from '../utils/cart';
 
 export const addToCart = (product: Product, quantity: number = 1) => {
   const cart = getCart();
@@ -25,30 +25,45 @@ export const addToCart = (product: Product, quantity: number = 1) => {
 export function Cart() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [vendorGroups, setVendorGroups] = useState<Map<string, CartItem[]>>(new Map());
+
   useEffect(() => {
     loadCart();
     window.addEventListener('cartUpdated', loadCart);
     return () => window.removeEventListener('cartUpdated', loadCart);
   }, []);
+
   const loadCart = () => {
     const cartData = getCart();
     setCart(cartData);
     setVendorGroups(getCartItemsByVendor());
   };
+
   const handleRemove = (productId: string) => {
     removeFromCart(productId);
     loadCart();
     window.dispatchEvent(new Event('cartUpdated'));
   };
+
   const handleQuantityChange = (productId: string, newQuantity: number) => {
     if (newQuantity < 1) return;
     updateCartQuantity(productId, newQuantity);
     loadCart();
     window.dispatchEvent(new Event('cartUpdated'));
   };
+
+  const handleClearCart = () => {
+    if (window.confirm('Are you sure you want to clear your entire cart? This action cannot be undone.')) {
+      clearCart();
+      loadCart();
+      window.dispatchEvent(new Event('cartUpdated'));
+    }
+  };
+
   const total = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+
   if (cart.length === 0) {
-    return <div className="min-h-screen bg-gray-50 flex flex-col">
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         <Header onSearch={() => {}} categories={[]} />
 
         <main className="flex-1 flex items-center justify-center px-4">
@@ -67,9 +82,12 @@ export function Cart() {
         </main>
 
         <Footer />
-      </div>;
+      </div>
+    );
   }
-  return <div className="min-h-screen bg-gray-50 flex flex-col">
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header onSearch={() => {}} categories={[]} />
 
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -78,23 +96,33 @@ export function Cart() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-6">
-            {Array.from(vendorGroups.entries()).map(([vendor, items]) => <div key={vendor} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            {Array.from(vendorGroups.entries()).map(([vendor, items]) => (
+              <div key={vendor} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 <div className="bg-gray-50 px-6 py-3 border-b border-gray-200 flex items-center justify-between">
                   <h3 className="font-semibold text-gray-900">
                     Vendor: {vendor}
                   </h3>
-                  <a href={generateWhatsAppLink(items, items[0].product.whatsappNumber)} target="_blank" rel="noopener noreferrer" className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors flex items-center space-x-2 text-sm font-medium">
+                  <a 
+                    href={generateWhatsAppLink(items, items[0].product.whatsappNumber)} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors flex items-center space-x-2 text-sm font-medium"
+                  >
                     <MessageCircle className="w-4 h-4" />
                     <span>Order from {vendor}</span>
                   </a>
                 </div>
 
                 <div className="divide-y divide-gray-200">
-                  {items.map(item => <div key={item.product.id} className="p-6 flex items-center space-x-4">
+                  {items.map(item => (
+                    <div key={item.product.id} className="p-6 flex items-center space-x-4">
                       <img src={item.product.image} alt={item.product.name} className="w-24 h-24 object-cover rounded-lg" />
 
                       <div className="flex-1 min-w-0">
-                        <Link to={`/product/${item.product.id}`} className="font-semibold text-gray-900 hover:text-emerald-600 transition-colors block mb-1">
+                        <Link 
+                          to={`/product/${item.product.id}`} 
+                          className="font-semibold text-gray-900 hover:text-emerald-600 transition-colors block mb-1"
+                        >
                           {item.product.name}
                         </Link>
                         <p className="text-sm text-gray-600 mb-2">
@@ -107,24 +135,35 @@ export function Cart() {
 
                       <div className="flex items-center space-x-4">
                         <div className="flex items-center space-x-2">
-                          <button onClick={() => handleQuantityChange(item.product.id, item.quantity - 1)} className="w-8 h-8 rounded-lg border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors">
+                          <button 
+                            onClick={() => handleQuantityChange(item.product.id, item.quantity - 1)} 
+                            className="w-8 h-8 rounded-lg border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                          >
                             <Minus className="w-4 h-4" />
                           </button>
                           <span className="text-lg font-semibold w-12 text-center">
                             {item.quantity}
                           </span>
-                          <button onClick={() => handleQuantityChange(item.product.id, item.quantity + 1)} className="w-8 h-8 rounded-lg border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors">
+                          <button 
+                            onClick={() => handleQuantityChange(item.product.id, item.quantity + 1)} 
+                            className="w-8 h-8 rounded-lg border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                          >
                             <Plus className="w-4 h-4" />
                           </button>
                         </div>
 
-                        <button onClick={() => handleRemove(item.product.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                        <button 
+                          onClick={() => handleRemove(item.product.id)} 
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        >
                           <Trash2 className="w-5 h-5" />
                         </button>
                       </div>
-                    </div>)}
+                    </div>
+                  ))}
                 </div>
-              </div>)}
+              </div>
+            ))}
           </div>
 
           {/* Order Summary */}
@@ -156,9 +195,22 @@ export function Cart() {
                   Order from each vendor separately via WhatsApp
                 </p>
 
-                <Link to="/" className="block w-full text-center bg-gray-100 text-gray-700 py-3 px-6 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+                <Link 
+                  to="/" 
+                  className="block w-full text-center bg-gray-100 text-gray-700 py-3 px-6 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                >
                   Continue Shopping
                 </Link>
+
+                <div className="text-center">
+                  <button 
+                    onClick={handleClearCart}
+                    className="text-red-600 hover:text-red-700 transition-colors text-sm font-medium inline-flex items-center space-x-1"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Clear Cart</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -166,5 +218,6 @@ export function Cart() {
       </main>
 
       <Footer />
-    </div>;
+    </div>
+  );
 }
