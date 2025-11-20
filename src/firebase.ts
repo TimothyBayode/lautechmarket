@@ -4,13 +4,13 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyD_vNpUQSzHrn9KqDr70ZMXJgi_PSFRdRk",
-  authDomain: "lautech-marketplace.firebaseapp.com",
-  projectId: "lautech-marketplace",
-  storageBucket: "lautech-marketplace.firebasestorage.app",
-  messagingSenderId: "92288746282",
-  appId: "1:92288746282:web:0a4f515b2417457c6b9453",
-  measurementId: "G-5Z8GT0M2ES"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 const app = initializeApp(firebaseConfig);
