@@ -7,40 +7,46 @@ import { AdminLogin } from "./pages/AdminLogin";
 import { AdminDashboard } from "./pages/AdminDashboard";
 import { authStateListener } from "./services/auth";
 
-// Protected route for admin pages
 function AdminProtectedRoute({ children }: { children: JSX.Element }) {
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     const unsubscribe = authStateListener((user) => {
-      if (user && user.email === "admin@markethub.com") {
-        setIsAdmin(true);
+      console.log("Protected route auth check:", user);
+      if (user) {
+        setIsAuthenticated(true);
       } else {
-        setIsAdmin(false);
+        setIsAuthenticated(false);
       }
       setLoading(false);
     });
     return unsubscribe;
   }, []);
 
-  if (loading) return <p>Loading...</p>;
-  if (!isAdmin) return <Navigate to="/admin/login" />;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/admin/login" />;
+  }
 
   return children;
 }
 
-// Main App
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public */}
         <Route path="/" element={<Home />} />
         <Route path="/category/:category" element={<Home />} />
         <Route path="/cart" element={<Cart />} />
 
-        {/* Admin */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route
           path="/admin/dashboard"
@@ -50,6 +56,8 @@ export default function App() {
             </AdminProtectedRoute>
           }
         />
+
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
   );

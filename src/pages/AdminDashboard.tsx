@@ -1,4 +1,3 @@
-// src/pages/AdminDashboard.tsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -11,8 +10,14 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { Product, CategoryStats } from "../types";
-import { fetchProducts, addProduct, updateProduct, deleteProduct } from "../services/products";
+import {
+  fetchProducts,
+  addProduct,
+  updateProduct,
+  deleteProduct,
+} from "../services/products";
 import { ProductForm } from "../components/ProductForm";
+import { authStateListener, logoutUser } from "../services/auth";
 
 export function AdminDashboard() {
   const navigate = useNavigate();
@@ -20,16 +25,24 @@ export function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
+  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(
+    new Set()
+  );
   const [categoryStats, setCategoryStats] = useState<CategoryStats[]>([]);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    const isAuthenticated = localStorage.getItem("adminAuthenticated");
-    if (!isAuthenticated) {
-      navigate("/admin/login");
-      return;
-    }
-    loadProductData();
+    const unsubscribe = authStateListener((user) => {
+      console.log("Auth state changed in dashboard:", user);
+      if (!user) {
+        navigate("/admin/login");
+        return;
+      }
+      setAuthChecked(true);
+      loadProductData();
+    });
+
+    return () => unsubscribe();
   }, [navigate]);
 
   const loadProductData = async () => {
@@ -59,9 +72,13 @@ export function AdminDashboard() {
     setCategoryStats(stats);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("adminAuthenticated");
-    navigate("/admin/login");
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+      navigate("/admin/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
 
   const handleSave = async (product: Product) => {
@@ -69,12 +86,12 @@ export function AdminDashboard() {
       let updatedProducts: Product[] = [];
 
       if (editingProduct) {
-        // Update existing product in Firestore
         await updateProduct(product.id, product);
-        updatedProducts = products.map((p) => (p.id === product.id ? product : p));
+        updatedProducts = products.map((p) =>
+          p.id === product.id ? product : p
+        );
       } else {
-        // Add new product to Firestore
-        const newProduct = await addProduct(product); // contains Firestore id
+        const newProduct = await addProduct(product);
         updatedProducts = [...products, newProduct];
       }
 
@@ -94,7 +111,8 @@ export function AdminDashboard() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this product?")) return;
+    if (!window.confirm("Are you sure you want to delete this product?"))
+      return;
     try {
       await deleteProduct(id);
       const updated = products.filter((p) => p.id !== id);
@@ -118,7 +136,8 @@ export function AdminDashboard() {
   };
 
   const handleSelectAll = () => {
-    if (selectedProducts.size === products.length) setSelectedProducts(new Set());
+    if (selectedProducts.size === products.length)
+      setSelectedProducts(new Set());
     else setSelectedProducts(new Set(products.map((p) => p.id)));
   };
 
@@ -136,7 +155,8 @@ export function AdminDashboard() {
 
   const handleBulkDelete = async () => {
     if (selectedProducts.size === 0) return;
-    if (!window.confirm(`Delete ${selectedProducts.size} selected products?`)) return;
+    if (!window.confirm(`Delete ${selectedProducts.size} selected products?`))
+      return;
 
     for (const id of selectedProducts) {
       await deleteProduct(id);
@@ -147,16 +167,16 @@ export function AdminDashboard() {
     setSelectedProducts(new Set());
   };
 
-  if (loading)
+  if (!authChecked || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
       </div>
     );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
@@ -171,12 +191,13 @@ export function AdminDashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-2">
               <Package className="w-8 h-8 text-emerald-600" />
-              <span className="text-2xl font-bold text-gray-900">{products.length}</span>
+              <span className="text-2xl font-bold text-gray-900">
+                {products.length}
+              </span>
             </div>
             <p className="text-gray-600">Total Products</p>
           </div>
@@ -204,28 +225,38 @@ export function AdminDashboard() {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-2">
               <Package className="w-8 h-8 text-blue-600" />
-              <span className="text-2xl font-bold text-gray-900">{categoryStats.length}</span>
+              <span className="text-2xl font-bold text-gray-900">
+                {categoryStats.length}
+              </span>
             </div>
             <p className="text-gray-600">Categories</p>
           </div>
         </div>
 
-        {/* Category Stats */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Category Statistics</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">
+            Category Statistics
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {categoryStats.map((stat) => (
-              <div key={stat.category} className="border border-gray-200 rounded-lg p-4">
-                <h3 className="font-semibold text-gray-900 mb-2">{stat.category}</h3>
+              <div
+                key={stat.category}
+                className="border border-gray-200 rounded-lg p-4"
+              >
+                <h3 className="font-semibold text-gray-900 mb-2">
+                  {stat.category}
+                </h3>
                 <div className="space-y-1 text-sm">
                   <p className="text-gray-600">
                     Total: <span className="font-semibold">{stat.count}</span>
                   </p>
                   <p className="text-green-600">
-                    In Stock: <span className="font-semibold">{stat.inStock}</span>
+                    In Stock:{" "}
+                    <span className="font-semibold">{stat.inStock}</span>
                   </p>
                   <p className="text-red-600">
-                    Out of Stock: <span className="font-semibold">{stat.outOfStock}</span>
+                    Out of Stock:{" "}
+                    <span className="font-semibold">{stat.outOfStock}</span>
                   </p>
                 </div>
               </div>
@@ -233,7 +264,6 @@ export function AdminDashboard() {
           </div>
         </div>
 
-        {/* Actions */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center space-x-4">
             <button
@@ -270,7 +300,6 @@ export function AdminDashboard() {
           </p>
         </div>
 
-        {/* Product Form Modal */}
         {showForm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -286,7 +315,6 @@ export function AdminDashboard() {
           </div>
         )}
 
-        {/* Products Table */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -295,7 +323,10 @@ export function AdminDashboard() {
                   <th className="px-6 py-3 text-left">
                     <input
                       type="checkbox"
-                      checked={selectedProducts.size === products.length && products.length > 0}
+                      checked={
+                        selectedProducts.size === products.length &&
+                        products.length > 0
+                      }
                       onChange={handleSelectAll}
                       className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
                     />
@@ -338,23 +369,31 @@ export function AdminDashboard() {
                           alt={product.name}
                           className="w-12 h-12 object-cover rounded"
                         />
-                        <span className="font-medium text-gray-900">{product.name}</span>
+                        <span className="font-medium text-gray-900">
+                          {product.name}
+                        </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{product.category}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {product.category}
+                    </td>
                     <td className="px-6 py-4 text-sm font-semibold text-gray-900">
                       ₦{product.price.toFixed(2)}
                     </td>
                     <td className="px-6 py-4">
                       <span
                         className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          product.inStock ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                          product.inStock
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
                         }`}
                       >
                         {product.inStock ? "In Stock" : "Out of Stock"}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{product.vendorName}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {product.vendorName}
+                    </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end space-x-2">
                         <button

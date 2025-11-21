@@ -1,4 +1,3 @@
-// src/components/ProductCard.tsx
 import React, { useState } from 'react';
 import { ShoppingCart, MessageCircle } from 'lucide-react';
 import { Product } from '../types';
@@ -9,7 +8,6 @@ interface ProductCardProps {
   product: Product;
 }
 
-// Price formatting function
 const formatPrice = (price: number): string => {
   return new Intl.NumberFormat('en-NG', {
     minimumFractionDigits: 2,
@@ -25,7 +23,6 @@ export function ProductCard({ product }: ProductCardProps) {
     addToCart(product);
     window.dispatchEvent(new Event('cartUpdated'));
     
-    // Simple toast notification
     const toast = document.createElement('div');
     toast.className = 'fixed bottom-4 right-4 bg-emerald-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in';
     toast.textContent = 'Added to cart!';
@@ -51,7 +48,7 @@ export function ProductCard({ product }: ProductCardProps) {
         className="group cursor-pointer"
       >
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-emerald-300">
-          {/* Image */}
+        
           <div className="relative aspect-square overflow-hidden bg-gray-100">
             <img 
               src={product.image} 
@@ -71,8 +68,6 @@ export function ProductCard({ product }: ProductCardProps) {
               {product.category}
             </div>
           </div>
-
-          {/* Content */}
           <div className="p-4">
             <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2 group-hover:text-emerald-600 transition-colors">
               {product.name}
@@ -91,7 +86,6 @@ export function ProductCard({ product }: ProductCardProps) {
               </span>
             </div>
 
-            {/* Actions */}
             {product.inStock && (
               <div className="flex items-center space-x-2">
                 <button 
@@ -115,7 +109,6 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
       </div>
 
-      {/* Product Detail Modal */}
       <ProductDetailModal
         product={product}
         isOpen={isModalOpen}

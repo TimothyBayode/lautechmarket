@@ -1,12 +1,11 @@
-import { CartItem, Product } from '../types';
+import { CartItem, Product } from "../types";
 
-const CART_KEY = 'shopping_cart';
+const CART_KEY = "shopping_cart";
 
-// Price formatting function
 const formatPrice = (price: number): string => {
-  return new Intl.NumberFormat('en-NG', {
+  return new Intl.NumberFormat("en-NG", {
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2
+    maximumFractionDigits: 2,
   }).format(price);
 };
 
@@ -15,7 +14,7 @@ export const getCart = (): CartItem[] => {
     const cart = localStorage.getItem(CART_KEY);
     return cart ? JSON.parse(cart) : [];
   } catch (error) {
-    console.error('Error loading cart:', error);
+    console.error("Error loading cart:", error);
     return [];
   }
 };
@@ -24,58 +23,62 @@ export const saveCart = (cart: CartItem[]): void => {
   try {
     localStorage.setItem(CART_KEY, JSON.stringify(cart));
   } catch (error) {
-    console.error('Error saving cart:', error);
+    console.error("Error saving cart:", error);
   }
 };
 
 export const addToCart = (product: Product, quantity: number = 1): void => {
   const cart = getCart();
-  
-  // Generate a unique identifier if product.id is empty
-  const productIdentifier = product.id || `${product.name}-${product.vendorName}`;
-  
-  console.log('Adding to cart:', { 
-    productId: productIdentifier, 
-    productName: product.name, 
-    quantity 
+
+  const productIdentifier =
+    product.id || `${product.name}-${product.vendorName}`;
+
+  console.log("Adding to cart:", {
+    productId: productIdentifier,
+    productName: product.name,
+    quantity,
   });
-  
-  const existingItemIndex = cart.findIndex(item => {
-    const itemId = item.product.id || `${item.product.name}-${item.product.vendorName}`;
+
+  const existingItemIndex = cart.findIndex((item) => {
+    const itemId =
+      item.product.id || `${item.product.name}-${item.product.vendorName}`;
     return itemId === productIdentifier;
   });
-  
+
   if (existingItemIndex !== -1) {
     cart[existingItemIndex].quantity += quantity;
-    console.log('Increased quantity for existing product');
+    console.log("Increased quantity for existing product");
   } else {
     cart.push({
       product: {
         ...product,
-        id: productIdentifier // Ensure the product has an ID when stored
+        id: productIdentifier,
       },
-      quantity
+      quantity,
     });
-    console.log('Added new product to cart');
+    console.log("Added new product to cart");
   }
-  
+
   saveCart(cart);
-  console.log('Cart after add:', getCart());
+  console.log("Cart after add:", getCart());
 };
 
 export const removeFromCart = (productId: string): void => {
-  const cart = getCart().filter(item => item.product.id !== productId);
+  const cart = getCart().filter((item) => item.product.id !== productId);
   saveCart(cart);
 };
 
-export const updateCartQuantity = (productId: string, quantity: number): void => {
+export const updateCartQuantity = (
+  productId: string,
+  quantity: number
+): void => {
   if (quantity <= 0) {
     removeFromCart(productId);
     return;
   }
-  
+
   const cart = getCart();
-  const item = cart.find(item => item.product.id === productId);
+  const item = cart.find((item) => item.product.id === productId);
   if (item) {
     item.quantity = quantity;
     saveCart(cart);
@@ -89,30 +92,45 @@ export const clearCart = (): void => {
 export const getCartItemsByVendor = (): Map<string, CartItem[]> => {
   const cart = getCart();
   const vendorMap = new Map<string, CartItem[]>();
-  
-  cart.forEach(item => {
+
+  cart.forEach((item) => {
     const vendor = item.product.vendorName;
     if (!vendorMap.has(vendor)) {
       vendorMap.set(vendor, []);
     }
     vendorMap.get(vendor)!.push(item);
   });
-  
+
   return vendorMap;
 };
 
-export const generateWhatsAppLink = (items: CartItem[], whatsappNumber: string): string => {
-  const message = items.map(item => 
-    `${item.product.name} (x${item.quantity}) - ₦${formatPrice(item.product.price * item.quantity)}`
-  ).join('%0A');
-  
-  const total = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
-  const fullMessage = `Hello! I'd like to order:%0A%0A${message}%0A%0ATotal: ₦${formatPrice(total)}`;
-  
-  return `https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=${fullMessage}`;
+export const generateWhatsAppLink = (
+  items: CartItem[],
+  whatsappNumber: string
+): string => {
+  const message = items
+    .map(
+      (item) =>
+        `${item.product.name} (x${item.quantity}) - ₦${formatPrice(
+          item.product.price * item.quantity
+        )}`
+    )
+    .join("%0A");
+
+  const total = items.reduce(
+    (sum, item) => sum + item.product.price * item.quantity,
+    0
+  );
+  const fullMessage = `Hello! I'd like to order:%0A%0A${message}%0A%0ATotal: ₦${formatPrice(
+    total
+  )}`;
+
+  return `https://wa.me/${whatsappNumber.replace(
+    /[^0-9]/g,
+    ""
+  )}?text=${fullMessage}`;
 };
 
-// Additional utility functions
 export const getCartItemCount = (): number => {
   const cart = getCart();
   return cart.reduce((total, item) => total + item.quantity, 0);
@@ -120,10 +138,13 @@ export const getCartItemCount = (): number => {
 
 export const getCartTotal = (): number => {
   const cart = getCart();
-  return cart.reduce((total, item) => total + (item.product.price * item.quantity), 0);
+  return cart.reduce(
+    (total, item) => total + item.product.price * item.quantity,
+    0
+  );
 };
 
 export const isProductInCart = (productId: string): boolean => {
   const cart = getCart();
-  return cart.some(item => item.product.id === productId);
+  return cart.some((item) => item.product.id === productId);
 };

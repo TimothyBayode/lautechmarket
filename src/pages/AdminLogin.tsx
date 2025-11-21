@@ -8,20 +8,46 @@ export function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // Custom error message function
+  const getFriendlyErrorMessage = (error: any): string => {
+    const errorCode = error.code;
+
+    switch (errorCode) {
+      case "auth/invalid-credential":
+        return "Invalid email or password.";
+      case "auth/user-not-found":
+        return "Account not found.";
+      case "auth/wrong-password":
+        return "Incorrect password.";
+      case "auth/invalid-email":
+        return "Invalid email address format.";
+      case "auth/too-many-requests":
+        return "Too many attempts. Please try again later.";
+      case "auth/network-request-failed":
+        return "Network error. Please check your internet connection.";
+      default:
+        return "Login failed. Please try again.";
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
     try {
       const user = await loginUser(email, password);
       console.log("Admin logged in:", user.email);
-
-      localStorage.setItem("adminAuthenticated", "true");
       navigate("/admin/dashboard");
     } catch (err: any) {
       console.error("Login error:", err);
-      setError(err.message || "Login failed");
+      // Use the friendly error message
+      const friendlyError = getFriendlyErrorMessage(err);
+      setError(friendlyError);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -45,7 +71,10 @@ export function AdminLogin() {
             )}
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Email Address
               </label>
               <div className="relative">
@@ -63,7 +92,10 @@ export function AdminLogin() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Password
               </label>
               <div className="relative">
@@ -82,9 +114,10 @@ export function AdminLogin() {
 
             <button
               type="submit"
-              className="w-full bg-emerald-600 text-white py-3 px-6 rounded-lg hover:bg-emerald-700 transition-colors font-medium"
+              disabled={loading}
+              className="w-full bg-emerald-600 text-white py-3 px-6 rounded-lg hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
             >
-              Sign In
+              {loading ? "Signing In..." : "Sign In"}
             </button>
           </form>
         </div>

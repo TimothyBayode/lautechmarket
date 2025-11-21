@@ -1,43 +1,52 @@
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Trash2, Plus, Minus, MessageCircle, ShoppingBag } from 'lucide-react';
-import { Header } from '../components/Header';
-import { Footer } from '../components/Footer';
-import { CartItem } from '../types';
-import { getCart, removeFromCart, updateCartQuantity, getCartItemsByVendor, generateWhatsAppLink, clearCart } from '../utils/cart';
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { Trash2, Plus, Minus, MessageCircle, ShoppingBag } from "lucide-react";
+import { Header } from "../components/Header";
+import { Footer } from "../components/Footer";
+import { CartItem } from "../types";
+import {
+  getCart,
+  removeFromCart,
+  updateCartQuantity,
+  getCartItemsByVendor,
+  generateWhatsAppLink,
+  clearCart,
+} from "../utils/cart";
 
 // Price formatting function
 const formatPrice = (price: number): string => {
-  return new Intl.NumberFormat('en-NG', {
+  return new Intl.NumberFormat("en-NG", {
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2
+    maximumFractionDigits: 2,
   }).format(price);
 };
 
 export const addToCart = (product: Product, quantity: number = 1) => {
   const cart = getCart();
-  const existingItem = cart.find(item => item.id === product.id);
-  
+  const existingItem = cart.find((item) => item.id === product.id);
+
   if (existingItem) {
     existingItem.quantity += quantity;
   } else {
     cart.push({
       ...product,
-      quantity: quantity
+      quantity: quantity,
     });
   }
-  
-  localStorage.setItem('cart', JSON.stringify(cart));
+
+  localStorage.setItem("cart", JSON.stringify(cart));
 };
 
 export function Cart() {
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [vendorGroups, setVendorGroups] = useState<Map<string, CartItem[]>>(new Map());
+  const [vendorGroups, setVendorGroups] = useState<Map<string, CartItem[]>>(
+    new Map()
+  );
 
   useEffect(() => {
     loadCart();
-    window.addEventListener('cartUpdated', loadCart);
-    return () => window.removeEventListener('cartUpdated', loadCart);
+    window.addEventListener("cartUpdated", loadCart);
+    return () => window.removeEventListener("cartUpdated", loadCart);
   }, []);
 
   const loadCart = () => {
@@ -49,25 +58,32 @@ export function Cart() {
   const handleRemove = (productId: string) => {
     removeFromCart(productId);
     loadCart();
-    window.dispatchEvent(new Event('cartUpdated'));
+    window.dispatchEvent(new Event("cartUpdated"));
   };
 
   const handleQuantityChange = (productId: string, newQuantity: number) => {
     if (newQuantity < 1) return;
     updateCartQuantity(productId, newQuantity);
     loadCart();
-    window.dispatchEvent(new Event('cartUpdated'));
+    window.dispatchEvent(new Event("cartUpdated"));
   };
 
   const handleClearCart = () => {
-    if (window.confirm('Are you sure you want to clear your entire cart? This action cannot be undone.')) {
+    if (
+      window.confirm(
+        "Are you sure you want to clear your entire cart? This action cannot be undone."
+      )
+    ) {
       clearCart();
       loadCart();
-      window.dispatchEvent(new Event('cartUpdated'));
+      window.dispatchEvent(new Event("cartUpdated"));
     }
   };
 
-  const total = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+  const total = cart.reduce(
+    (sum, item) => sum + item.product.price * item.quantity,
+    0
+  );
 
   if (cart.length === 0) {
     return (
@@ -83,7 +99,10 @@ export function Cart() {
             <p className="text-gray-600 mb-6">
               Add some products to get started!
             </p>
-            <Link to="/" className="inline-block bg-emerald-600 text-white px-6 py-3 rounded-lg hover:bg-emerald-700 transition-colors font-medium">
+            <Link
+              to="/"
+              className="inline-block bg-emerald-600 text-white px-6 py-3 rounded-lg hover:bg-emerald-700 transition-colors font-medium"
+            >
               Browse Products
             </Link>
           </div>
@@ -105,15 +124,21 @@ export function Cart() {
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-6">
             {Array.from(vendorGroups.entries()).map(([vendor, items]) => (
-              <div key={vendor} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              <div
+                key={vendor}
+                className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
+              >
                 <div className="bg-gray-50 px-6 py-3 border-b border-gray-200 flex items-center justify-between">
                   <h3 className="font-semibold text-gray-900">
                     Vendor: {vendor}
                   </h3>
-                  <a 
-                    href={generateWhatsAppLink(items, items[0].product.whatsappNumber)} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
+                  <a
+                    href={generateWhatsAppLink(
+                      items,
+                      items[0].product.whatsappNumber
+                    )}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors flex items-center space-x-2 text-sm font-medium"
                   >
                     <MessageCircle className="w-4 h-4" />
@@ -122,13 +147,20 @@ export function Cart() {
                 </div>
 
                 <div className="divide-y divide-gray-200">
-                  {items.map(item => (
-                    <div key={item.product.id} className="p-6 flex items-center space-x-4">
-                      <img src={item.product.image} alt={item.product.name} className="w-24 h-24 object-cover rounded-lg" />
+                  {items.map((item) => (
+                    <div
+                      key={item.product.id}
+                      className="p-6 flex items-center space-x-4"
+                    >
+                      <img
+                        src={item.product.image}
+                        alt={item.product.name}
+                        className="w-24 h-24 object-cover rounded-lg"
+                      />
 
                       <div className="flex-1 min-w-0">
-                        <Link 
-                          to={`/product/${item.product.id}`} 
+                        <Link
+                          to={`/product/${item.product.id}`}
                           className="font-semibold text-gray-900 hover:text-emerald-600 transition-colors block mb-1"
                         >
                           {item.product.name}
@@ -143,8 +175,13 @@ export function Cart() {
 
                       <div className="flex items-center space-x-4">
                         <div className="flex items-center space-x-2">
-                          <button 
-                            onClick={() => handleQuantityChange(item.product.id, item.quantity - 1)} 
+                          <button
+                            onClick={() =>
+                              handleQuantityChange(
+                                item.product.id,
+                                item.quantity - 1
+                              )
+                            }
                             className="w-8 h-8 rounded-lg border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors"
                           >
                             <Minus className="w-4 h-4" />
@@ -152,16 +189,21 @@ export function Cart() {
                           <span className="text-lg font-semibold w-12 text-center">
                             {item.quantity}
                           </span>
-                          <button 
-                            onClick={() => handleQuantityChange(item.product.id, item.quantity + 1)} 
+                          <button
+                            onClick={() =>
+                              handleQuantityChange(
+                                item.product.id,
+                                item.quantity + 1
+                              )
+                            }
                             className="w-8 h-8 rounded-lg border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors"
                           >
                             <Plus className="w-4 h-4" />
                           </button>
                         </div>
 
-                        <button 
-                          onClick={() => handleRemove(item.product.id)} 
+                        <button
+                          onClick={() => handleRemove(item.product.id)}
                           className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         >
                           <Trash2 className="w-5 h-5" />
@@ -203,15 +245,15 @@ export function Cart() {
                   Order from each vendor separately via WhatsApp
                 </p>
 
-                <Link 
-                  to="/" 
+                <Link
+                  to="/"
                   className="block w-full text-center bg-gray-100 text-gray-700 py-3 px-6 rounded-lg hover:bg-gray-200 transition-colors font-medium"
                 >
                   Continue Shopping
                 </Link>
 
                 <div className="text-center">
-                  <button 
+                  <button
                     onClick={handleClearCart}
                     className="text-red-600 hover:text-red-700 transition-colors text-sm font-medium inline-flex items-center space-x-1"
                   >
