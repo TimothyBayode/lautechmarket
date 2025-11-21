@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Lock, Mail } from "lucide-react";
-import { loginAdmin } from "../services/auth";
+import { loginUser } from "../services/auth";
 
 export function AdminLogin() {
   const navigate = useNavigate();
@@ -14,7 +14,7 @@ export function AdminLogin() {
     setError("");
 
     try {
-      const user = await loginAdmin(email, password);
+      const user = await loginUser(email, password);
       console.log("Admin logged in:", user.email);
 
       localStorage.setItem("adminAuthenticated", "true");

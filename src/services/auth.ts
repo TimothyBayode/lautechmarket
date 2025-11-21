@@ -2,27 +2,25 @@
 import { auth } from "../firebase";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged, User } from "firebase/auth";
 
-// List of authorized admin emails
-const ADMIN_EMAILS = ["admin@markethub.com"]; // add more if needed
-
-export const loginAdmin = async (email: string, password: string): Promise<User> => {
+export const loginUser = async (email: string, password: string): Promise<User> => {
   const userCredential = await signInWithEmailAndPassword(auth, email, password);
-
-  const user = userCredential.user;
-
-  if (!user.email || !ADMIN_EMAILS.includes(user.email)) {
-    // Logout immediately if user is not authorized
-    await signOut(auth);
-    throw new Error("Unauthorized: You are not an admin.");
-  }
-
-  return user;
+  return userCredential.user;
 };
 
-export const logoutAdmin = async (): Promise<void> => {
+export const logoutUser = async (): Promise<void> => {
   await signOut(auth);
 };
 
 export const authStateListener = (callback: (user: User | null) => void) => {
   return onAuthStateChanged(auth, callback);
+};
+
+// Optional: Get current user
+export const getCurrentUser = (): User | null => {
+  return auth.currentUser;
+};
+
+// Optional: Check if user is logged in
+export const isUserLoggedIn = (): boolean => {
+  return !!auth.currentUser;
 };
