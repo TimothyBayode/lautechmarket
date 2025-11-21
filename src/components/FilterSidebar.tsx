@@ -89,19 +89,25 @@ export function FilterSidebar({
       {isOpen && (
         <div className="pb-6 border-t border-gray-200">
           <div className="pt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* Categories */}
-            <div>
+            {/* Categories - Now horizontal on mobile */}
+            <div className="md:col-span-2 lg:col-span-1">
               <h3 className="font-medium text-gray-900 mb-4">Category</h3>
-              <div className="space-y-3">
+              <div className="flex flex-wrap gap-3">
                 {filters.categories.map(category => (
-                  <label key={category} className="flex items-center space-x-3 cursor-pointer group">
+                  <label key={category} className="inline-flex items-center cursor-pointer group">
                     <input 
                       type="checkbox" 
                       checked={selectedCategories.includes(category)} 
                       onChange={() => onCategoryChange(category)} 
-                      className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500" 
+                      className="sr-only" // Hide default checkbox
                     />
-                    <span className="text-sm text-gray-700 group-hover:text-emerald-600 transition-colors">
+                    <span className={`
+                      px-4 py-2 text-sm font-medium rounded-full border transition-all duration-200
+                      ${selectedCategories.includes(category) 
+                        ? 'bg-emerald-100 text-emerald-800 border-emerald-200' 
+                        : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200 hover:border-gray-300'
+                      }
+                    `}>
                       {category}
                     </span>
                   </label>
