@@ -9,6 +9,7 @@ import { authStateListener } from "./services/auth";
 import { Contact } from "./pages/Contact";
 import { ChatbotButton } from "./components/ChatbotButton";
 import ScrollToTop from './components/ScrollToTop';
+import { FAQ } from "./pages/FAQ";
 
 function AdminProtectedRoute({ children }: { children: JSX.Element }) {
   const [loading, setLoading] = useState(true);
@@ -50,6 +51,7 @@ export default function App() {
         <Route path="/category/:category" element={<Home />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/faq" element={<FAQ />} />
 
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route

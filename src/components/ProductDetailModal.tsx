@@ -3,9 +3,6 @@ import {
   X,
   ShoppingCart,
   MessageCircle,
-  Star,
-  Truck,
-  Shield,
 } from "lucide-react";
 import { Product } from "../types";
 import { addToCart } from "../utils/cart";
