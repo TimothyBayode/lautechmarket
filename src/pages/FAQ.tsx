@@ -12,8 +12,10 @@ import {
   MessageCircle,
   Search
 } from 'lucide-react';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 export function FAQ() {
+  useDocumentTitle("FAQs | LAUTECH Market");
   const [searchTerm, setSearchTerm] = useState('');
   const [openCategory, setOpenCategory] = useState<string | null>('general');
   const [openFaqs, setOpenFaqs] = useState<Set<string>>(new Set(['faq-1', 'faq-4']));

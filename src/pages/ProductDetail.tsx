@@ -15,6 +15,7 @@ import { Product } from "../types";
 import { getProductById, fetchProducts } from "../services/products";
 import { addToCart } from "../utils/cart";
 import { ShareButton } from "../components/ShareButton";
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -26,6 +27,7 @@ export function ProductDetail() {
   const [isInCart, setIsInCart] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
+  useDocumentTitle(product?.name || "Product Details");
 
   useEffect(() => {
     loadProduct();
