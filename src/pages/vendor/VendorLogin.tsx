@@ -198,9 +198,14 @@ export function VendorLogin() {
                         <h2 className="text-xl font-bold text-gray-900 mb-4">
                             Reset Password
                         </h2>
-                        <p className="text-gray-600 text-sm mb-6">
+                        <p className="text-gray-600 text-sm mb-4">
                             Enter your email address and we'll send you a link to reset your password.
                         </p>
+
+                        {/* Spam tip at top */}
+                        <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg text-sm mb-4">
+                            <strong>Can't find the email?</strong> Check your spam/junk folder.
+                        </div>
 
                         <form onSubmit={handleForgotPassword} className="space-y-4">
                             {resetMessage && (

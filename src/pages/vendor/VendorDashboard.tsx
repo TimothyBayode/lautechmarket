@@ -535,25 +535,20 @@ export function VendorDashboard() {
                                 Edit Profile
                             </button>
 
-                            {/* Get Verified Button - Only show if not verified */}
+                            {/* Get Verified Button - Coming Soon */}
                             {!vendor?.isVerified && (
-                                <button
-                                    onClick={async () => {
-                                        if (vendor?.id) {
-                                            const pending = await hasPendingRequest(vendor.id);
-                                            if (pending) {
-                                                setHasPendingVerification(true);
-                                                alert("You already have a pending verification request. Please wait for admin review.");
-                                            } else {
-                                                setShowVerificationModal(true);
-                                            }
-                                        }
-                                    }}
-                                    className="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-sm font-medium ml-3"
-                                >
-                                    <ShieldCheck className="w-4 h-4 mr-2" />
-                                    Get Verified
-                                </button>
+                                <div className="relative inline-flex items-center ml-3">
+                                    <button
+                                        disabled
+                                        className="inline-flex items-center px-4 py-2 bg-gray-400 text-white rounded-lg cursor-not-allowed opacity-60 text-sm font-medium"
+                                    >
+                                        <ShieldCheck className="w-4 h-4 mr-2" />
+                                        Get Verified
+                                    </button>
+                                    <span className="absolute -top-2 -right-3 bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold whitespace-nowrap">
+                                        Coming Soon
+                                    </span>
+                                </div>
                             )}
                             {vendor?.isVerified && (
                                 <span className="inline-flex items-center px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-medium ml-3">

@@ -105,6 +105,11 @@ export function VerifyEmail() {
 
                 {/* Card */}
                 <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-8">
+                    {/* Spam tip at top */}
+                    <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg text-sm mb-6">
+                        <strong>Can't find the email?</strong> Check your spam/junk folder.
+                    </div>
+
                     {/* Email display */}
                     <div className="text-center mb-6">
                         <p className="text-sm text-gray-500">Verification sent to:</p>
@@ -170,13 +175,7 @@ export function VerifyEmail() {
                         </button>
                     </div>
 
-                    {/* Tips */}
-                    <div className="mt-6 pt-6 border-t border-gray-200">
-                        <p className="text-sm text-gray-500 text-center">
-                            <strong>Can't find the email?</strong> Check your spam folder
-                            or request a new verification email.
-                        </p>
-                    </div>
+
                 </div>
 
                 {/* Back to Home */}
