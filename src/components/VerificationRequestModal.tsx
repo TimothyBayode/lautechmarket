@@ -169,8 +169,8 @@ export function VerificationRequestModal({
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 WhatsApp Number
                             </label>
-                            <div className="flex">
-                                <span className="inline-flex items-center px-3 py-3 bg-gray-100 border border-r-0 border-gray-300 rounded-l-lg text-gray-600 font-medium text-sm">
+                            <div className="flex w-full">
+                                <span className="inline-flex items-center px-3 py-3 bg-gray-100 border border-r-0 border-gray-300 rounded-l-lg text-gray-600 font-medium text-sm flex-shrink-0">
                                     +234
                                 </span>
                                 <input
@@ -187,7 +187,7 @@ export function VerificationRequestModal({
                                     }}
                                     maxLength={10}
                                     placeholder="8012345678"
-                                    className="flex-1 px-4 py-3 border border-gray-300 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                                    className="w-full min-w-0 px-4 py-3 border border-gray-300 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                                 />
                             </div>
                         </div>
