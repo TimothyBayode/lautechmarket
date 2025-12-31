@@ -111,11 +111,11 @@ export const generateWhatsAppLink = (
   const message = items
     .map(
       (item) =>
-        `${item.product.name} (x${item.quantity}) - ₦${formatPrice(
+        `*${item.product.name}* (x${item.quantity}) - ₦${formatPrice(
           item.product.price * item.quantity
-        )}`
+        )}%0AProduct Details: ${item.product.description || 'N/A'}`
     )
-    .join("%0A");
+    .join("%0A%0A");
 
   const total = items.reduce(
     (sum, item) => sum + item.product.price * item.quantity,

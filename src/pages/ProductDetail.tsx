@@ -117,7 +117,7 @@ export function ProductDetail() {
   const handleWhatsAppOrder = () => {
     if (!product) return;
 
-    const message = `Hello! I want to order:\n\n*${product.name
+    const message = `Hello! I saw your product on LAUTECH Market. I'm interested in:\n\n*${product.name
       }*\nQuantity: ${quantity}\nPrice: ₦${formatPrice(
         product.price * quantity
       )}\n\nProduct Details: ${product.description}`;

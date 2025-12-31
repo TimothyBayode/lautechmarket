@@ -19,6 +19,7 @@ import {
     List,
     ShieldCheck,
 } from "lucide-react";
+import { MessageCircle, ExternalLink } from "lucide-react";
 import { Product, Vendor } from "../../types";
 import {
     getVendorProducts,
@@ -76,6 +77,31 @@ export function VendorDashboard() {
     const [showVerificationModal, setShowVerificationModal] = useState(false);
     const [hasPendingVerification, setHasPendingVerification] = useState(false);
 
+    // State for Vendor Hub welcome popup
+    const [showVendorHubPopup, setShowVendorHubPopup] = useState(false);
+
+    // Check if should show Vendor Hub popup on mount
+    useEffect(() => {
+        const checkVendorHubPopup = () => {
+            const joined = localStorage.getItem('vendorHubJoined');
+            if (joined === 'true') return; // Never show if already joined
+
+            const dismissedAt = localStorage.getItem('vendorHubDismissedAt');
+            if (dismissedAt) {
+                const dismissedTime = parseInt(dismissedAt, 10);
+                const oneDayMs = 24 * 60 * 60 * 1000; // 24 hours
+                if (Date.now() - dismissedTime < oneDayMs) return; // Don't show if less than 24 hours
+            }
+
+            // Show popup
+            setShowVendorHubPopup(true);
+        };
+
+        // Delay popup slightly so dashboard loads first
+        const timer = setTimeout(checkVendorHubPopup, 1000);
+        return () => clearTimeout(timer);
+    }, []);
+
     // Generate WhatsApp link
     const getWhatsAppLink = (number: string): string => {
         const cleanNumber = number.replace(/\D/g, "");
@@ -126,6 +152,7 @@ export function VendorDashboard() {
     const [profileForm, setProfileForm] = useState({
         businessName: "",
         description: "",
+        whatsappNumber: "",
     });
 
     // State for image uploads
@@ -320,6 +347,7 @@ export function VendorDashboard() {
             await updateVendorProfile(vendor.id, {
                 businessName: profileForm.businessName,
                 description: profileForm.description,
+                whatsappNumber: profileForm.whatsappNumber ? `+234${profileForm.whatsappNumber}` : vendor.whatsappNumber,
             });
             setShowProfileForm(false);
         } catch (err) {
@@ -331,9 +359,15 @@ export function VendorDashboard() {
     // Open profile form
     const handleOpenProfileForm = () => {
         if (vendor) {
+            // Extract digits after +234 if present
+            let phoneDigits = "";
+            if (vendor.whatsappNumber) {
+                phoneDigits = vendor.whatsappNumber.replace(/^\+234/, "").replace(/\D/g, "");
+            }
             setProfileForm({
                 businessName: vendor.businessName,
                 description: vendor.description || "",
+                whatsappNumber: phoneDigits,
             });
             setShowProfileForm(true);
         }
@@ -1007,6 +1041,33 @@ export function VendorDashboard() {
                                     />
                                 </div>
 
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        WhatsApp Number
+                                    </label>
+                                    <div className="flex w-full">
+                                        <span className="inline-flex items-center px-3 py-2 bg-gray-100 border border-r-0 border-gray-300 rounded-l-lg text-gray-600 font-medium text-sm flex-shrink-0">
+                                            +234
+                                        </span>
+                                        <input
+                                            type="tel"
+                                            value={profileForm.whatsappNumber}
+                                            onChange={(e) => {
+                                                let value = e.target.value.replace(/\D/g, '');
+                                                if (value.startsWith('0')) {
+                                                    value = value.substring(1);
+                                                }
+                                                if (value.length <= 10) {
+                                                    setProfileForm({ ...profileForm, whatsappNumber: value });
+                                                }
+                                            }}
+                                            maxLength={10}
+                                            placeholder="8012345678"
+                                            className="w-full min-w-0 px-3 py-2 border border-gray-300 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                        />
+                                    </div>
+                                </div>
+
                                 <div className="flex justify-end space-x-3 pt-4">
                                     <button
                                         type="button"
@@ -1040,6 +1101,48 @@ export function VendorDashboard() {
                         setHasPendingVerification(true);
                     }}
                 />
+            )}
+
+            {/* Vendor Hub Welcome Popup */}
+            {showVendorHubPopup && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl max-w-sm w-full p-6 text-center shadow-xl">
+                        <div className="text-5xl mb-4">🎉</div>
+                        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                            You're In!
+                        </h2>
+                        <p className="text-gray-600 mb-6">
+                            Welcome to the LAUTECH Market vendor family!<br /><br />
+                            Join our WhatsApp community to connect with other vendors,
+                            get selling tips, and receive important updates.
+                        </p>
+                        <div className="flex flex-col space-y-3">
+                            <a
+                                href="https://chat.whatsapp.com/J8tSxuYVX5ZJKy8WESiE6T"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={() => {
+                                    localStorage.setItem('vendorHubJoined', 'true');
+                                    setShowVendorHubPopup(false);
+                                }}
+                                className="w-full bg-green-500 text-white py-3 px-6 rounded-lg hover:bg-green-600 transition-colors font-medium flex items-center justify-center space-x-2"
+                            >
+                                <MessageCircle className="w-5 h-5" />
+                                <span>Join Vendor Hub</span>
+                                <ExternalLink className="w-4 h-4" />
+                            </a>
+                            <button
+                                onClick={() => {
+                                    localStorage.setItem('vendorHubDismissedAt', Date.now().toString());
+                                    setShowVendorHubPopup(false);
+                                }}
+                                className="w-full text-gray-500 hover:text-gray-700 py-2 transition-colors"
+                            >
+                                Maybe Later
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
