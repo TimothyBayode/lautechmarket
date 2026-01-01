@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 import { Mail, Phone, Send, Clock } from 'lucide-react';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 export function Contact() {
+  useDocumentTitle("Contact Us | LAUTECH Market");
   const [formData, setFormData] = useState({
     name: '',
     email: '',

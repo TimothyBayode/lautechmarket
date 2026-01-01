@@ -1,16 +1,16 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Lock, Mail } from "lucide-react";
+import { Lock, Mail, Eye, EyeOff } from "lucide-react";
 import { loginUser } from "../services/auth";
 
 export function AdminLogin() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Custom error message function
   const getFriendlyErrorMessage = (error: any): string => {
     const errorCode = error.code;
 
@@ -43,7 +43,6 @@ export function AdminLogin() {
       navigate("/admin/dashboard");
     } catch (err: any) {
       console.error("Login error:", err);
-      // Use the friendly error message
       const friendlyError = getFriendlyErrorMessage(err);
       setError(friendlyError);
     } finally {
@@ -55,11 +54,10 @@ export function AdminLogin() {
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 flex items-center justify-center px-4">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-600 rounded-full mb-4">
-            <Lock className="w-8 h-8 text-white" />
+          <div className="inline-flex items-center justify-center">
+            <img src="/both.svg" alt="Logo" className="w-32" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Login</h1>
-          <p className="text-gray-600">Access the MarketHub dashboard</p>
+          <p className="text-gray-600">Access the LAUTECH Market admin dashboard</p>
         </div>
 
         <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-8">
@@ -86,7 +84,7 @@ export function AdminLogin() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  placeholder="admin@example.com"
+                  placeholder="admin@lautechmarket.com.ng"
                 />
               </div>
             </div>
@@ -102,15 +100,30 @@ export function AdminLogin() {
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                   placeholder="Enter your password"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 focus:outline-none"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
               </div>
             </div>
+
+            
 
             <button
               type="submit"

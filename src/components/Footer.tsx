@@ -37,6 +37,25 @@ export function Footer() {
                   FAQ
                 </Link>
               </li>
+              <li>
+                <Link
+                  to="/shipping"
+                  className="inline-flex items-center space-x-2 text-sm text-gray-500 cursor-not-allowed"
+                >
+                  Shipping Info
+                  <span className="bg-emerald-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold ml-1">
+                    SOON
+                  </span>
+                </Link>
+              </li>
+              <li>
+                <span className="inline-flex items-center space-x-2 text-sm text-gray-500 cursor-not-allowed">
+                  <span>Track Order</span>
+                  <span className="bg-emerald-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold">
+                    SOON
+                  </span>
+                </span>
+              </li>
             </ul>
           </div>
 
@@ -60,25 +79,6 @@ export function Footer() {
                 >
                   lautechmarket.help@gmail.com
                 </a>
-              </li>
-              <li>
-                <Link
-                  to="/shipping"
-                  className="inline-flex items-center space-x-2 text-sm text-gray-500 cursor-not-allowed"
-                >
-                  Shipping Info
-                  <span className="bg-emerald-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold ml-1">
-                    SOON
-                  </span>
-                </Link>
-              </li>
-              <li>
-                <span className="inline-flex items-center space-x-2 text-sm text-gray-500 cursor-not-allowed">
-                  <span>Track Order</span>
-                  <span className="bg-emerald-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold">
-                    SOON
-                  </span>
-                </span>
               </li>
             </ul>
           </div>
