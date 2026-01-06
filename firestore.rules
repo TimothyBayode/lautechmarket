@@ -1,0 +1,84 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===== HELPER FUNCTIONS =====
+    
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Check if user is the admin
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.email == "admin@lautech.edu.ng";
+    }
+    
+    // Check if user is the vendor who owns the resource
+    function isVendor(vendorId) {
+      return isAuthenticated() && request.auth.uid == vendorId;
+    }
+    
+    // ===== PRODUCTS =====
+    // Anyone can read products
+    // Vendors can create products
+    // Vendors can update/delete their own products
+    // Admin can do anything
+    match /products/{productId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin() || 
+        (isAuthenticated() && resource.data.vendorId == request.auth.uid);
+    }
+    
+    // ===== VENDORS =====
+    // Anyone can read vendor info (for store pages)
+    // Vendors can create their own profile and update it
+    // Admin can do anything
+    match /vendors/{vendorId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && request.auth.uid == vendorId;
+      allow update: if isAdmin() || isVendor(vendorId);
+      allow delete: if isAdmin();
+    }
+    
+    // ===== CATEGORIES =====
+    // Anyone can read categories
+    // Only admin can manage categories
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    // ===== ANNOUNCEMENTS =====
+    // Anyone can read announcements
+    // Only admin can manage announcements
+    match /announcements/{announcementId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    // ===== VERIFICATION REQUESTS =====
+    // Logged-in users can read and create verification requests
+    // Only admin can update/delete (approve/reject)
+    match /verificationRequests/{requestId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin();
+    }
+    
+    // ===== ANALYTICS =====
+    // Anyone can write (to track visits from homepage)
+    // Only admin can read (for dashboard)
+    match /analytics/{docId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    
+    // ===== ADMIN COLLECTION (if exists) =====
+    match /admins/{adminId} {
+      allow read, write: if isAdmin();
+    }
+  }
+}
