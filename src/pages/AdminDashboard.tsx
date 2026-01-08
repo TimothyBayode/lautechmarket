@@ -63,6 +63,7 @@ export function AdminDashboard() {
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetPeriodName, setResetPeriodName] = useState("");
   const [resetting, setResetting] = useState(false);
+  const [showAllLeaderboard, setShowAllLeaderboard] = useState(false);
 
   // Auth check
   useEffect(() => {
@@ -442,7 +443,7 @@ export function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {leaderboard.slice(0, 10).map((item) => (
+                    {(showAllLeaderboard ? leaderboard : leaderboard.slice(0, 3)).map((item) => (
                       <tr key={item.vendorId} className="border-b border-gray-100 hover:bg-gray-50">
                         <td className="px-4 py-3">
                           <span className="text-lg">
@@ -458,6 +459,14 @@ export function AdminDashboard() {
                     ))}
                   </tbody>
                 </table>
+                {leaderboard.length > 3 && (
+                  <button
+                    onClick={() => setShowAllLeaderboard(!showAllLeaderboard)}
+                    className="w-full py-3 text-sm text-emerald-600 hover:text-emerald-700 hover:bg-gray-50 transition-colors flex items-center justify-center space-x-1 border-t border-gray-200"
+                  >
+                    <span>{showAllLeaderboard ? '▲ Show Less' : `▼ Show ${leaderboard.length - 3} more`}</span>
+                  </button>
+                )}
               </div>
             )}
           </div>

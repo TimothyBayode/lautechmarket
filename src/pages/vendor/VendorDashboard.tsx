@@ -36,6 +36,8 @@ import { uploadImage } from "../../services/cloudinary";
 import { Header } from "../../components/Header";
 import { VerificationRequestModal } from "../../components/VerificationRequestModal";
 import { hasPendingRequest } from "../../services/verificationRequests";
+import { getVisitsLeaderboard, VendorVisitData } from "../../services/vendorVisits";
+import { Trophy } from "lucide-react";
 
 /**
  * VendorDashboard Component
@@ -79,6 +81,9 @@ export function VendorDashboard() {
 
     // State for Vendor Hub welcome popup
     const [showVendorHubPopup, setShowVendorHubPopup] = useState(false);
+
+    // State for top referrers leaderboard
+    const [topReferrers, setTopReferrers] = useState<VendorVisitData[]>([]);
 
     // Check if should show Vendor Hub popup on mount
     useEffect(() => {
@@ -173,6 +178,15 @@ export function VendorDashboard() {
 
         return () => unsubscribe();
     }, [navigate]);
+
+    // Load top referrers leaderboard
+    useEffect(() => {
+        const loadLeaderboard = async () => {
+            const data = await getVisitsLeaderboard();
+            setTopReferrers(data.slice(0, 3)); // Only top 3
+        };
+        loadLeaderboard();
+    }, []);
 
     // Load vendor's products
     const loadVendorProducts = async (vendorId: string) => {
@@ -655,6 +669,31 @@ export function VendorDashboard() {
                         </p>
                     </button>
                 </div>
+
+                {/* Top Referrers Card */}
+                {topReferrers.length > 0 && (
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+                        <div className="flex items-center space-x-2 mb-4">
+                            <Trophy className="w-5 h-5 text-amber-500" />
+                            <h3 className="font-bold text-gray-900">Top Referrers</h3>
+                        </div>
+                        <div className="space-y-3">
+                            {topReferrers.map((item) => (
+                                <div key={item.vendorId} className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-3">
+                                        <span className="text-lg">
+                                            {item.rank === 1 && "🥇"}
+                                            {item.rank === 2 && "🥈"}
+                                            {item.rank === 3 && "🥉"}
+                                        </span>
+                                        <span className="font-medium text-gray-900">{item.vendorName}</span>
+                                    </div>
+                                    <span className="text-gray-600 text-sm">{item.count} visits</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* Add Product Button and View Toggle */}
                 <div className="flex items-center justify-between mb-6">
