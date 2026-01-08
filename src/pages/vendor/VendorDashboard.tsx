@@ -681,12 +681,14 @@ export function VendorDashboard() {
                 </div>
 
                 {/* Top Visits Card */}
-                {topReferrers.length > 0 && (
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-                        <div className="flex items-center space-x-2 mb-4">
-                            <Trophy className="w-5 h-5 text-amber-500" />
-                            <h3 className="font-bold text-gray-900">Top Visits</h3>
-                        </div>
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+                    <div className="flex items-center space-x-2 mb-4">
+                        <Trophy className="w-5 h-5 text-amber-500" />
+                        <h3 className="font-bold text-gray-900">Top Visits</h3>
+                    </div>
+                    {topReferrers.length === 0 ? (
+                        <p className="text-gray-500 text-center py-4">No store visits recorded yet.</p>
+                    ) : (
                         <div className="space-y-3">
                             {topReferrers.map((item) => (
                                 <div key={item.vendorId} className="flex items-center justify-between">
@@ -712,8 +714,8 @@ export function VendorDashboard() {
                                 </div>
                             )}
                         </div>
-                    </div>
-                )}
+                    )}
+                </div>
 
                 {/* Add Product Button and View Toggle */}
                 <div className="flex items-center justify-between mb-6">
