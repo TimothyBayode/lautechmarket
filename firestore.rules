@@ -80,5 +80,25 @@ service cloud.firestore {
     match /admins/{adminId} {
       allow read, write: if isAdmin();
     }
+    
+    // ===== VENDOR VISITS =====
+    // Anyone can read vendor visit counts (for leaderboard)
+    // Write handled by API (server-side with admin SDK)
+    // Admin can manage all
+    match /vendorVisits/{vendorId} {
+      allow read: if true;
+      allow write: if isAdmin();
+      
+      // Subcollection for IP hashes
+      match /ips/{ipHash} {
+        allow read, write: if isAdmin();
+      }
+    }
+    
+    // ===== VISIT HISTORY =====
+    // Only admin can read/write visit history
+    match /visitHistory/{periodId} {
+      allow read, write: if isAdmin();
+    }
   }
 }

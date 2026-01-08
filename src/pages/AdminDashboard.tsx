@@ -15,6 +15,8 @@ import {
   Eye,
   ShieldCheck,
   ShieldX,
+  Trophy,
+  RotateCcw,
   Tag,
 } from "lucide-react";
 import { Product, Vendor } from "../types";
@@ -33,6 +35,7 @@ import { AdminCategories } from "../components/AdminCategories";
 import { AdminVerificationRequests } from "../components/AdminVerificationRequests";
 import { getAnalytics } from "../services/analytics";
 import { VerifiedBadge } from "../components/VerifiedBadge";
+import { getVisitsLeaderboard, resetVisits, VendorVisitData } from "../services/vendorVisits";
 
 export function AdminDashboard() {
   const navigate = useNavigate();
@@ -55,6 +58,12 @@ export function AdminDashboard() {
   // Analytics state
   const [analytics, setAnalytics] = useState({ uniqueVisitors: 0, totalVisits: 0 });
 
+  // Leaderboard state
+  const [leaderboard, setLeaderboard] = useState<VendorVisitData[]>([]);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetPeriodName, setResetPeriodName] = useState("");
+  const [resetting, setResetting] = useState(false);
+
   // Auth check
   useEffect(() => {
     const unsubscribe = authStateListener((user) => {
@@ -73,17 +82,23 @@ export function AdminDashboard() {
   const loadDashboardData = async () => {
     setLoading(true);
     try {
-      const [vendorsData, productsData, analyticsData] = await Promise.all([
-        getAllVendors(),
-        fetchProducts(),
-        getAnalytics(),
-      ]);
+      const vendorsData = await getAllVendors();
       setVendors(vendorsData);
-      setAllProducts(productsData);
+
+      const allVendorProducts = await fetchProducts();
+      setAllProducts(allVendorProducts);
+
+      // Load analytics
+      const analyticsData = await getAnalytics();
       setAnalytics(analyticsData);
-    } catch (err) {
-      console.error("Failed to load dashboard data:", err);
-    } finally {
+
+      // Load leaderboard
+      const leaderboardData = await getVisitsLeaderboard();
+      setLeaderboard(leaderboardData);
+
+      setLoading(false);
+    } catch (error) {
+      console.error("Error loading dashboard data:", error);
       setLoading(false);
     }
   };
@@ -392,6 +407,107 @@ export function AdminDashboard() {
               <h2 className="text-xl font-bold text-gray-900">Homepage Banners</h2>
             </div>
             <AdminAnnouncements />
+          </div>
+        )}
+
+        {/* Store Visits Leaderboard (only on main admin view) */}
+        {!selectedVendor && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-2">
+                <Trophy className="w-6 h-6 text-amber-500" />
+                <h2 className="text-xl font-bold text-gray-900">Store Visits Leaderboard</h2>
+              </div>
+              <button
+                onClick={() => setShowResetModal(true)}
+                className="flex items-center space-x-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm transition-colors"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>Reset</span>
+              </button>
+            </div>
+
+            {leaderboard.length === 0 ? (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center text-gray-500">
+                No store visits recorded yet.
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Rank</th>
+                      <th className="text-left px-4 py-3 text-sm font-medium text-gray-600">Vendor</th>
+                      <th className="text-right px-4 py-3 text-sm font-medium text-gray-600">Visits</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {leaderboard.slice(0, 10).map((item) => (
+                      <tr key={item.vendorId} className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="px-4 py-3">
+                          <span className="text-lg">
+                            {item.rank === 1 && "🥇"}
+                            {item.rank === 2 && "🥈"}
+                            {item.rank === 3 && "🥉"}
+                            {item.rank && item.rank > 3 && item.rank}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 font-medium text-gray-900">{item.vendorName}</td>
+                        <td className="px-4 py-3 text-right text-gray-700">{item.count.toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Reset Leaderboard Modal */}
+        {showResetModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl max-w-md w-full p-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Reset Leaderboard</h3>
+              <p className="text-gray-600 mb-4">
+                This will archive the current leaderboard and reset all counts to 0.
+              </p>
+              <input
+                type="text"
+                value={resetPeriodName}
+                onChange={(e) => setResetPeriodName(e.target.value)}
+                placeholder="Period name (e.g., January 2026)"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => {
+                    setShowResetModal(false);
+                    setResetPeriodName("");
+                  }}
+                  className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!resetPeriodName.trim()) return;
+                    setResetting(true);
+                    const success = await resetVisits(resetPeriodName);
+                    if (success) {
+                      const newLeaderboard = await getVisitsLeaderboard();
+                      setLeaderboard(newLeaderboard);
+                    }
+                    setResetting(false);
+                    setShowResetModal(false);
+                    setResetPeriodName("");
+                  }}
+                  disabled={!resetPeriodName.trim() || resetting}
+                  className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:bg-gray-400"
+                >
+                  {resetting ? "Resetting..." : "Reset & Archive"}
+                </button>
+              </div>
+            </div>
           </div>
         )}
 

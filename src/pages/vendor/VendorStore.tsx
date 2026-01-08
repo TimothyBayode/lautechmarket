@@ -26,6 +26,7 @@ import { Product, Vendor } from "../../types";
 import { getVendorProducts } from "../../services/products";
 import { db } from "../../firebase";
 import { doc, getDoc } from "firebase/firestore";
+import { trackStoreVisit } from "../../services/vendorVisits";
 
 /**
  * Fetch vendor data from Firestore by ID
@@ -102,6 +103,22 @@ export function VendorStore() {
         };
 
         loadVendorData();
+
+        // Track external visits (for leaderboard)
+        const trackVisit = async () => {
+            if (!vendorId) return;
+
+            // Check if visit is from external source
+            const referrer = document.referrer;
+            const currentHost = window.location.hostname;
+            const isExternal = !referrer || !referrer.includes(currentHost);
+
+            if (isExternal) {
+                await trackStoreVisit(vendorId, true);
+            }
+        };
+
+        trackVisit();
     }, [vendorId]);
 
     // Generate WhatsApp link
