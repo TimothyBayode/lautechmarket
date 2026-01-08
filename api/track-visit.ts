@@ -10,21 +10,30 @@ let db: Firestore | null = null;
 function getDB(): Firestore {
     if (!db) {
         if (getApps().length === 0) {
-            const privateKey = process.env.FIREBASE_PRIVATE_KEY;
-            if (!privateKey) {
-                throw new Error('FIREBASE_PRIVATE_KEY is not set');
+            // Check for base64 encoded key first
+            let privateKey = process.env.FIREBASE_PRIVATE_KEY_BASE64;
+
+            if (privateKey) {
+                // Decode from base64
+                privateKey = Buffer.from(privateKey, 'base64').toString('utf-8');
+            } else {
+                // Try regular key
+                privateKey = process.env.FIREBASE_PRIVATE_KEY;
+                if (privateKey) {
+                    // Handle escaped newlines
+                    privateKey = privateKey.replace(/\\n/g, '\n');
+                }
             }
 
-            // Handle both escaped and unescaped newlines
-            const formattedKey = privateKey.includes('\\n')
-                ? privateKey.replace(/\\n/g, '\n')
-                : privateKey;
+            if (!privateKey) {
+                throw new Error('FIREBASE_PRIVATE_KEY or FIREBASE_PRIVATE_KEY_BASE64 is not set');
+            }
 
             app = initializeApp({
                 credential: cert({
                     projectId: process.env.FIREBASE_PROJECT_ID,
                     clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-                    privateKey: formattedKey,
+                    privateKey: privateKey,
                 }),
             });
         }
@@ -59,6 +68,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             hasProjectId: !!process.env.FIREBASE_PROJECT_ID,
             hasClientEmail: !!process.env.FIREBASE_CLIENT_EMAIL,
             hasPrivateKey: !!process.env.FIREBASE_PRIVATE_KEY,
+            hasPrivateKeyBase64: !!process.env.FIREBASE_PRIVATE_KEY_BASE64,
         });
     }
 
@@ -124,7 +134,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(500).json({
             error: 'Internal server error',
             message: error.message,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 }
