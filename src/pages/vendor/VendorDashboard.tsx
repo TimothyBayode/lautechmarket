@@ -84,6 +84,7 @@ export function VendorDashboard() {
 
     // State for top referrers leaderboard
     const [topReferrers, setTopReferrers] = useState<VendorVisitData[]>([]);
+    const [vendorRank, setVendorRank] = useState<{ rank: number; total: number } | null>(null);
 
     // Check if should show Vendor Hub popup on mount
     useEffect(() => {
@@ -179,14 +180,21 @@ export function VendorDashboard() {
         return () => unsubscribe();
     }, [navigate]);
 
-    // Load top referrers leaderboard
+    // Load top referrers leaderboard and find vendor's rank
     useEffect(() => {
         const loadLeaderboard = async () => {
+            if (!vendor) return;
             const data = await getVisitsLeaderboard();
             setTopReferrers(data.slice(0, 3)); // Only top 3
+
+            // Find current vendor's rank
+            const myRank = data.find(item => item.vendorId === vendor.id);
+            if (myRank && myRank.rank) {
+                setVendorRank({ rank: myRank.rank, total: data.length });
+            }
         };
         loadLeaderboard();
-    }, []);
+    }, [vendor]);
 
     // Load vendor's products
     const loadVendorProducts = async (vendorId: string) => {
@@ -669,6 +677,33 @@ export function VendorDashboard() {
                         </p>
                     </button>
                 </div>
+
+                {/* Your Ranking Card */}
+                {vendorRank && (
+                    <div className="bg-gradient-to-r from-amber-50 to-amber-100 rounded-lg shadow-sm border border-amber-200 p-6 mb-6">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                                <span className="text-3xl">
+                                    {vendorRank.rank === 1 && "🥇"}
+                                    {vendorRank.rank === 2 && "🥈"}
+                                    {vendorRank.rank === 3 && "🥉"}
+                                    {vendorRank.rank > 3 && "📊"}
+                                </span>
+                                <div>
+                                    <h3 className="font-bold text-gray-900">Your Ranking</h3>
+                                    <p className="text-gray-600 text-sm">
+                                        #{vendorRank.rank} out of {vendorRank.total} vendors
+                                    </p>
+                                </div>
+                            </div>
+                            {vendorRank.rank <= 3 && (
+                                <span className="bg-amber-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                                    Top Referrer!
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {/* Top Referrers Card */}
                 {topReferrers.length > 0 && (
