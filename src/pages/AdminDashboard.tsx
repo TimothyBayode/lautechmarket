@@ -417,7 +417,7 @@ export function AdminDashboard() {
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-2">
                 <Trophy className="w-6 h-6 text-amber-500" />
-                <h2 className="text-xl font-bold text-gray-900">Store Visits Leaderboard</h2>
+                <h2 className="text-xl font-bold text-gray-900">Top Visits</h2>
               </div>
               <button
                 onClick={() => setShowResetModal(true)}
