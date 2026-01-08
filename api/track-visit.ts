@@ -1,20 +1,37 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import { initializeApp, getApps, cert, App } from 'firebase-admin/app';
+import { getFirestore, Firestore } from 'firebase-admin/firestore';
 import crypto from 'crypto';
 
-// Initialize Firebase Admin (only once)
-if (getApps().length === 0) {
-    initializeApp({
-        credential: cert({
-            projectId: process.env.FIREBASE_PROJECT_ID,
-            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-            privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-        }),
-    });
-}
+let app: App | null = null;
+let db: Firestore | null = null;
 
-const db = getFirestore();
+// Lazy initialize Firebase Admin
+function getDB(): Firestore {
+    if (!db) {
+        if (getApps().length === 0) {
+            const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+            if (!privateKey) {
+                throw new Error('FIREBASE_PRIVATE_KEY is not set');
+            }
+
+            // Handle both escaped and unescaped newlines
+            const formattedKey = privateKey.includes('\\n')
+                ? privateKey.replace(/\\n/g, '\n')
+                : privateKey;
+
+            app = initializeApp({
+                credential: cert({
+                    projectId: process.env.FIREBASE_PROJECT_ID,
+                    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+                    privateKey: formattedKey,
+                }),
+            });
+        }
+        db = getFirestore();
+    }
+    return db;
+}
 
 // Hash IP for privacy
 function hashIP(ip: string, vendorId: string): string {
@@ -35,12 +52,23 @@ function getClientIP(req: VercelRequest): string {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-    // Only allow POST
+    // Allow GET for testing
+    if (req.method === 'GET') {
+        return res.status(200).json({
+            status: 'API is running',
+            hasProjectId: !!process.env.FIREBASE_PROJECT_ID,
+            hasClientEmail: !!process.env.FIREBASE_CLIENT_EMAIL,
+            hasPrivateKey: !!process.env.FIREBASE_PRIVATE_KEY,
+        });
+    }
+
+    // Only allow POST for tracking
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
     try {
+        const firestore = getDB();
         const { vendorId, isExternal } = req.body;
 
         // Validate input
@@ -62,7 +90,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const ipHash = hashIP(clientIP, vendorId);
 
         // Check if this IP already visited this vendor
-        const vendorVisitsRef = db.collection('vendorVisits').doc(vendorId);
+        const vendorVisitsRef = firestore.collection('vendorVisits').doc(vendorId);
         const ipRef = vendorVisitsRef.collection('ips').doc(ipHash);
         const ipDoc = await ipRef.get();
 
@@ -72,24 +100,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         // New unique visit - save IP and increment count
-        const batch = db.batch();
+        const batch = firestore.batch();
 
         // Save IP hash
         batch.set(ipRef, {
             firstVisit: new Date(),
         });
 
-        // Increment visit count
+        // Get current count and increment
+        const vendorDoc = await vendorVisitsRef.get();
+        const currentCount = vendorDoc.exists ? (vendorDoc.data()?.count || 0) : 0;
+
         batch.set(vendorVisitsRef, {
-            count: (await vendorVisitsRef.get()).data()?.count + 1 || 1,
+            count: currentCount + 1,
             lastUpdated: new Date(),
         }, { merge: true });
 
         await batch.commit();
 
-        return res.status(200).json({ counted: true });
-    } catch (error) {
+        return res.status(200).json({ counted: true, newCount: currentCount + 1 });
+    } catch (error: any) {
         console.error('Error tracking visit:', error);
-        return res.status(500).json({ error: 'Internal server error' });
+        return res.status(500).json({
+            error: 'Internal server error',
+            message: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 }
