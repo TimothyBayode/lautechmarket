@@ -84,7 +84,7 @@ export function VendorDashboard() {
 
     // State for top referrers leaderboard
     const [topReferrers, setTopReferrers] = useState<VendorVisitData[]>([]);
-    const [vendorRank, setVendorRank] = useState<{ rank: number; total: number } | null>(null);
+    const [myRankData, setMyRankData] = useState<VendorVisitData | null>(null);
 
     // Check if should show Vendor Hub popup on mount
     useEffect(() => {
@@ -187,10 +187,12 @@ export function VendorDashboard() {
             const data = await getVisitsLeaderboard();
             setTopReferrers(data.slice(0, 3)); // Only top 3
 
-            // Find current vendor's rank
+            // Find current vendor's rank data (if not already in top 3)
             const myRank = data.find(item => item.vendorId === vendor.id);
-            if (myRank && myRank.rank) {
-                setVendorRank({ rank: myRank.rank, total: data.length });
+            if (myRank && myRank.rank && myRank.rank > 3) {
+                setMyRankData(myRank);
+            } else {
+                setMyRankData(null);
             }
         };
         loadLeaderboard();
@@ -678,33 +680,6 @@ export function VendorDashboard() {
                     </button>
                 </div>
 
-                {/* Your Ranking Card */}
-                {vendorRank && (
-                    <div className="bg-gradient-to-r from-amber-50 to-amber-100 rounded-lg shadow-sm border border-amber-200 p-6 mb-6">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                                <span className="text-3xl">
-                                    {vendorRank.rank === 1 && "🥇"}
-                                    {vendorRank.rank === 2 && "🥈"}
-                                    {vendorRank.rank === 3 && "🥉"}
-                                    {vendorRank.rank > 3 && "📊"}
-                                </span>
-                                <div>
-                                    <h3 className="font-bold text-gray-900">Your Ranking</h3>
-                                    <p className="text-gray-600 text-sm">
-                                        #{vendorRank.rank} out of {vendorRank.total} vendors
-                                    </p>
-                                </div>
-                            </div>
-                            {vendorRank.rank <= 3 && (
-                                <span className="bg-amber-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                                    Top Referrer!
-                                </span>
-                            )}
-                        </div>
-                    </div>
-                )}
-
                 {/* Top Referrers Card */}
                 {topReferrers.length > 0 && (
                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
@@ -726,6 +701,16 @@ export function VendorDashboard() {
                                     <span className="text-gray-600 text-sm">{item.count} visits</span>
                                 </div>
                             ))}
+                            {/* Vendor's own rank as 4th row */}
+                            {myRankData && (
+                                <div className="flex items-center justify-between bg-amber-50 -mx-6 px-6 py-3 border-t border-amber-200">
+                                    <div className="flex items-center space-x-3">
+                                        <span className="text-lg font-medium text-gray-700 w-6 text-center">{myRankData.rank}</span>
+                                        <span className="font-medium text-gray-900">{myRankData.vendorName}</span>
+                                    </div>
+                                    <span className="text-gray-600 text-sm">{myRankData.count} visits</span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
