@@ -113,8 +113,17 @@ export function VendorStore() {
             const currentHost = window.location.hostname;
             const isExternal = !referrer || !referrer.includes(currentHost);
 
+            console.log('[Visit Tracking] referrer:', referrer);
+            console.log('[Visit Tracking] currentHost:', currentHost);
+            console.log('[Visit Tracking] isExternal:', isExternal);
+            console.log('[Visit Tracking] vendorId:', vendorId);
+
             if (isExternal) {
-                await trackStoreVisit(vendorId, true);
+                console.log('[Visit Tracking] Calling API...');
+                const result = await trackStoreVisit(vendorId, true);
+                console.log('[Visit Tracking] API result:', result);
+            } else {
+                console.log('[Visit Tracking] Skipped - internal visit');
             }
         };
 

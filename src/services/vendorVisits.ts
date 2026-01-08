@@ -42,6 +42,7 @@ export interface VisitHistoryPeriod {
  */
 export const trackStoreVisit = async (vendorId: string, isExternal: boolean): Promise<boolean> => {
     try {
+        console.log('[trackStoreVisit] Sending request to /api/track-visit');
         const response = await fetch('/api/track-visit', {
             method: 'POST',
             headers: {
@@ -50,10 +51,12 @@ export const trackStoreVisit = async (vendorId: string, isExternal: boolean): Pr
             body: JSON.stringify({ vendorId, isExternal }),
         });
 
+        console.log('[trackStoreVisit] Response status:', response.status);
         const data = await response.json();
+        console.log('[trackStoreVisit] Response data:', data);
         return data.counted === true;
     } catch (error) {
-        console.error("Error tracking store visit:", error);
+        console.error("[trackStoreVisit] Error:", error);
         return false;
     }
 };
