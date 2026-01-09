@@ -96,7 +96,7 @@ export function AnnouncementCarousel() {
     // Loading state
     if (loading) {
         return (
-            <div className="w-full h-48 md:h-64 bg-emerald-100 animate-pulse rounded-lg" />
+            <div className="w-full aspect-[21/9] md:aspect-[5/1] bg-emerald-100 animate-pulse rounded-lg" />
         );
     }
 
@@ -119,7 +119,7 @@ export function AnnouncementCarousel() {
         >
             {/* Carousel Content with Slide Animation */}
             <div
-                className="relative h-48 md:h-64 overflow-hidden"
+                className="relative aspect-[21/9] md:aspect-[5/1] overflow-hidden"
                 style={{
                     backgroundColor: currentAnnouncement.type === 'text'
                         ? (currentAnnouncement.backgroundColor || '#059669')
