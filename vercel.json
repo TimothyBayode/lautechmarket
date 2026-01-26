@@ -1,12 +1,31 @@
 {
-    "rewrites": [
+  "functions": {
+    "api/**/*.php": {
+      "runtime": "vercel-php@0.7.1"
+    }
+  },
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [
         {
-            "source": "/api/(.*)",
-            "destination": "/api/$1"
-        },
-        {
-            "source": "/(.*)",
-            "destination": "/"
+          "type": "header",
+          "key": "x-forwarded-proto",
+          "value": "http"
         }
-    ]
+      ],
+      "destination": "https://%{HTTP_HOST}/$1",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/"
+    }
+  ]
 }
