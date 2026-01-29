@@ -424,6 +424,13 @@ export function ProductForm({ product, onSave, onCancel, vendorName, whatsappNum
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                         placeholder="Describe exactly what this product or service includes, the price or price range, and any important details a student should know (location, turnaround time, or home service)."
                     />
+                    <div className="mt-1 flex justify-end">
+                        {formData.description.trim().length < 40 && (
+                            <span className="text-xs text-red-500 font-medium">
+                                {formData.description.trim().length} / 40 characters minimum
+                            </span>
+                        )}
+                    </div>
                 </div>
 
                 <div className="flex items-center">

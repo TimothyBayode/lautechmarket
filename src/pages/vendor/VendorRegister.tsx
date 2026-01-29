@@ -62,6 +62,9 @@ export function VendorRegister() {
         if (formData.description.trim() && formData.description.trim().length < 80) {
             return "Store description must be at least 80 characters";
         }
+        if (formData.description.trim() && formData.description.trim().length < 80) {
+            return "Store description must be at least 80 characters";
+        }
         return null;
     };
 
