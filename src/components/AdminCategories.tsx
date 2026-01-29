@@ -112,8 +112,8 @@ export function AdminCategories({ onClose }: AdminCategoriesProps) {
             {/* Header */}
             <div className="p-4 border-b border-gray-200 flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                    <Tag className="w-5 h-5 text-emerald-600" />
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <Tag className="w-5 h-5 text-emerald-600 font-bold" />
+                    <h3 className="text-lg font-bold text-gray-900">
                         Categories ({categories.length})
                     </h3>
                 </div>
@@ -129,11 +129,11 @@ export function AdminCategories({ onClose }: AdminCategoriesProps) {
 
             <div className="p-4">
                 {/* Add Category Form */}
-                <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="mb-8">
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
                         Add New Category
                     </label>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-3">
                         <input
                             type="text"
                             value={newCategoryName}
@@ -142,20 +142,20 @@ export function AdminCategories({ onClose }: AdminCategoriesProps) {
                                 setError("");
                             }}
                             onKeyPress={handleKeyPress}
-                            placeholder="e.g. Electronics, Fashion, Books..."
-                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                            placeholder="e.g. Electronics, Fashion..."
+                            className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                         />
                         <button
                             onClick={handleAdd}
                             disabled={adding || !newCategoryName.trim()}
-                            className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                            className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl hover:bg-emerald-700 transition-all shadow-md shadow-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 font-bold"
                         >
                             <Plus className="w-4 h-4" />
                             <span>{adding ? "Adding..." : "Add"}</span>
                         </button>
                     </div>
                     {error && (
-                        <p className="mt-2 text-sm text-red-600">{error}</p>
+                        <p className="mt-2 text-sm text-red-600 font-medium">{error}</p>
                     )}
                 </div>
 
@@ -170,18 +170,18 @@ export function AdminCategories({ onClose }: AdminCategoriesProps) {
                         <p className="text-sm text-gray-500 mb-3">
                             These categories are available for vendors when adding products:
                         </p>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-2.5">
                             {categories.map((category) => (
                                 <div
                                     key={category.id}
-                                    className="group flex items-center bg-gray-100 rounded-full pl-4 pr-2 py-2 hover:bg-gray-200 transition-colors"
+                                    className="group flex items-center bg-white border border-gray-200 rounded-xl pl-4 pr-2 py-2.5 hover:border-emerald-300 hover:shadow-sm transition-all shadow-sm"
                                 >
-                                    <span className="text-sm font-medium text-gray-700 mr-2">
+                                    <span className="text-sm font-bold text-gray-700 mr-2">
                                         {category.name}
                                     </span>
                                     <button
                                         onClick={() => handleDelete(category.id, category.name)}
-                                        className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                         title="Delete category"
                                     >
                                         <Trash2 className="w-3.5 h-3.5" />

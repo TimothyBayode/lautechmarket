@@ -4,20 +4,13 @@ import {
   Plus,
   Edit2,
   Trash2,
-  LogOut,
   Package,
-  TrendingUp,
-  AlertCircle,
   Store,
   ArrowLeft,
   Users,
-  Megaphone,
-  Eye,
   ShieldCheck,
   ShieldX,
-  Trophy,
-  RotateCcw,
-  Tag,
+  Menu,
 } from "lucide-react";
 import { Product, Vendor } from "../types";
 import {
@@ -64,12 +57,7 @@ export function AdminDashboard() {
 
   // Leaderboard state
   const [leaderboard, setLeaderboard] = useState<VendorVisitData[]>([]);
-  const [showResetModal, setShowResetModal] = useState(false);
-  const [resetPeriodName, setResetPeriodName] = useState("");
-  const [resetting, setResetting] = useState(false);
-  const [showAllLeaderboard, setShowAllLeaderboard] = useState(false);
-
-  // Auth check
+  // Dashboard data loading - initial load
   useEffect(() => {
     const unsubscribe = authStateListener((user) => {
       if (!user) {
@@ -492,8 +480,9 @@ export function AdminDashboard() {
             <button
               onClick={() => setIsSidebarOpen(true)}
               className="lg:hidden p-2 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors"
+              aria-label="Toggle Sidebar"
             >
-              <Users className="w-6 h-6" /> {/* Hamburger icon could go here, using Users for now */}
+              <Menu className="w-6 h-6" />
             </button>
             <div className="flex items-center gap-3">
               {selectedVendor && (

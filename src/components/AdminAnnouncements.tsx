@@ -249,14 +249,14 @@ export function AdminAnnouncements({ onClose }: AdminAnnouncementsProps) {
     return (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             {/* Header */}
-            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-900">
+            <div className="p-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <h2 className="text-lg font-bold text-gray-900">
                     Announcements & Banners
                 </h2>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 w-full sm:w-auto">
                     <button
                         onClick={() => setShowForm(true)}
-                        className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors flex items-center space-x-2 text-sm font-medium"
+                        className="flex-1 sm:flex-none justify-center bg-emerald-600 text-white px-4 py-2.5 rounded-xl hover:bg-emerald-700 transition-all flex items-center space-x-2 text-sm font-semibold shadow-sm"
                     >
                         <Plus className="w-4 h-4" />
                         <span>Add New</span>
@@ -264,7 +264,7 @@ export function AdminAnnouncements({ onClose }: AdminAnnouncementsProps) {
                     {onClose && (
                         <button
                             onClick={onClose}
-                            className="p-2 text-gray-500 hover:text-gray-700"
+                            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                         >
                             <X className="w-5 h-5" />
                         </button>
@@ -479,14 +479,14 @@ export function AdminAnnouncements({ onClose }: AdminAnnouncementsProps) {
                         {announcements.map((announcement, index) => (
                             <div
                                 key={announcement.id}
-                                className={`flex items-center space-x-4 p-3 rounded-lg border ${announcement.active
-                                    ? 'border-emerald-200 bg-emerald-50'
-                                    : 'border-gray-200 bg-gray-50'
+                                className={`flex flex-col sm:flex-row sm:items-center p-4 rounded-xl border gap-4 transition-all duration-300 ${announcement.active
+                                    ? 'border-emerald-200 bg-emerald-50/50 shadow-sm'
+                                    : 'border-gray-200 bg-gray-50/30'
                                     }`}
                             >
                                 {/* Thumbnail */}
                                 <div
-                                    className="w-20 h-12 rounded overflow-hidden flex-shrink-0"
+                                    className="w-full sm:w-24 h-32 sm:h-16 rounded-lg overflow-hidden flex-shrink-0 shadow-sm"
                                     style={{
                                         backgroundColor: announcement.type === 'text'
                                             ? announcement.backgroundColor
@@ -501,64 +501,66 @@ export function AdminAnnouncements({ onClose }: AdminAnnouncementsProps) {
                                         />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center">
-                                            <Type className="w-4 h-4 text-white/70" />
+                                            <Type className="w-6 h-6 sm:w-5 sm:h-5 text-white/80" />
                                         </div>
                                     )}
                                 </div>
 
                                 {/* Info */}
                                 <div className="flex-1 min-w-0">
-                                    <p className="font-medium text-gray-900 truncate">
+                                    <p className="font-bold text-gray-900 truncate text-base">
                                         {announcement.title || announcement.message || 'Image Banner'}
                                     </p>
-                                    <p className="text-sm text-gray-500">
-                                        {announcement.type === 'image' ? 'Image' : 'Text'} •
-                                        {announcement.active ? ' Active' : ' Inactive'}
-                                    </p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-white/50 border border-black/5 text-gray-600">
+                                            {announcement.type === 'image' ? 'Image' : 'Text'}
+                                        </span>
+                                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${announcement.active ? 'bg-emerald-100 border-emerald-200 text-emerald-700' : 'bg-gray-100 border-gray-200 text-gray-500'}`}>
+                                            {announcement.active ? 'Active' : 'Inactive'}
+                                        </span>
+                                    </div>
                                 </div>
 
                                 {/* Actions */}
-                                <div className="flex items-center space-x-1">
-                                    <button
-                                        onClick={() => handleMoveUp(index)}
-                                        disabled={index === 0}
-                                        className="p-1.5 text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                                        title="Move up"
-                                    >
-                                        <ChevronUp className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                        onClick={() => handleMoveDown(index)}
-                                        disabled={index === announcements.length - 1}
-                                        className="p-1.5 text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                                        title="Move down"
-                                    >
-                                        <ChevronDown className="w-4 h-4" />
-                                    </button>
+                                <div className="flex items-center justify-end gap-1.5 pt-3 sm:pt-0 border-t sm:border-t-0 border-gray-100 sm:border-none">
+                                    <div className="flex items-center bg-white/50 rounded-lg p-1 border border-black/5">
+                                        <button
+                                            onClick={() => handleMoveUp(index)}
+                                            disabled={index === 0}
+                                            className="p-1.5 text-gray-500 hover:text-emerald-600 disabled:opacity-30 disabled:hover:text-gray-500 transition-colors"
+                                            title="Move up"
+                                        >
+                                            <ChevronUp className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => handleMoveDown(index)}
+                                            disabled={index === announcements.length - 1}
+                                            className="p-1.5 text-gray-500 hover:text-emerald-600 disabled:opacity-30 disabled:hover:text-gray-500 transition-colors"
+                                            title="Move down"
+                                        >
+                                            <ChevronDown className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                     <button
                                         onClick={() => handleToggleActive(announcement.id, announcement.active)}
-                                        className={`p-1.5 rounded ${announcement.active
-                                            ? 'text-emerald-600 hover:bg-emerald-100'
-                                            : 'text-gray-400 hover:bg-gray-100'
+                                        className={`p-2 rounded-lg transition-all ${announcement.active
+                                            ? 'text-emerald-600 bg-emerald-100 hover:bg-emerald-200'
+                                            : 'text-gray-400 bg-gray-100 hover:bg-gray-200'
                                             }`}
                                         title={announcement.active ? 'Deactivate' : 'Activate'}
                                     >
-                                        {announcement.active ? (
-                                            <Eye className="w-4 h-4" />
-                                        ) : (
-                                            <EyeOff className="w-4 h-4" />
-                                        )}
+                                        {announcement.active ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                                     </button>
                                     <button
                                         onClick={() => handleEdit(announcement)}
-                                        className="p-1.5 text-blue-500 hover:bg-blue-50 rounded"
+                                        className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-all"
                                         title="Edit"
                                     >
                                         <Edit2 className="w-4 h-4" />
                                     </button>
                                     <button
                                         onClick={() => handleDelete(announcement.id)}
-                                        className="p-1.5 text-red-500 hover:bg-red-50 rounded"
+                                        className="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-all"
                                         title="Delete"
                                     >
                                         <Trash2 className="w-4 h-4" />

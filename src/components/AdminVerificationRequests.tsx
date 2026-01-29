@@ -127,8 +127,8 @@ export function AdminVerificationRequests({ onClose }: AdminVerificationRequests
             {/* Header */}
             <div className="p-4 border-b border-gray-200 flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                    <ShieldCheck className="w-5 h-5 text-emerald-600" />
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <ShieldCheck className="w-5 h-5 text-emerald-600 font-bold" />
+                    <h3 className="text-lg font-bold text-gray-900">
                         Verification Requests ({requests.length})
                     </h3>
                 </div>
@@ -153,51 +153,53 @@ export function AdminVerificationRequests({ onClose }: AdminVerificationRequests
                         {requests.map((request) => (
                             <div
                                 key={request.id}
-                                className="border border-gray-200 rounded-lg p-4 hover:border-emerald-300 transition-colors"
+                                className="border border-gray-200 rounded-xl p-4 hover:border-emerald-300 hover:shadow-sm transition-all bg-white"
                             >
-                                <div className="flex items-start justify-between">
-                                    <div className="flex-1">
-                                        <h4 className="font-semibold text-gray-900">
+                                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                                    <div className="flex-1 space-y-1">
+                                        <h4 className="font-bold text-gray-900 text-base">
                                             {request.vendorName}
                                         </h4>
-                                        <p className="text-sm text-gray-500">
-                                            {request.vendorEmail}
-                                        </p>
-                                        <p className="text-sm text-gray-500">
-                                            {request.whatsappNumber}
-                                        </p>
-                                        <div className="flex items-center text-sm text-gray-600 mt-2">
-                                            <MapPin className="w-4 h-4 mr-1" />
+                                        <div className="flex flex-col gap-0.5">
+                                            <p className="text-sm text-gray-500 font-medium">
+                                                {request.vendorEmail}
+                                            </p>
+                                            <p className="text-sm text-gray-500 font-medium">
+                                                {request.whatsappNumber}
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center text-sm text-gray-600 pt-1">
+                                            <MapPin className="w-4 h-4 mr-1 text-emerald-500" />
                                             {request.location}
                                         </div>
-                                        <div className="flex items-center text-xs text-gray-400 mt-1">
-                                            <Clock className="w-3 h-3 mr-1" />
+                                        <div className="flex items-center text-xs text-gray-400">
+                                            <Clock className="w-3.5 h-3.5 mr-1" />
                                             {formatDate(request.createdAt)}
                                         </div>
                                     </div>
-                                    <div className="flex items-center space-x-2">
+                                    <div className="flex items-center sm:flex-col gap-2 pt-3 sm:pt-0 border-t sm:border-none border-gray-100">
                                         <button
                                             onClick={() => setSelectedRequest(request)}
-                                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                            className="flex-1 sm:w-10 sm:h-10 flex items-center justify-center p-2.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all"
                                             title="View receipt"
                                         >
-                                            <Eye className="w-4 h-4" />
+                                            <Eye className="w-5 h-5" />
                                         </button>
                                         <button
                                             onClick={() => handleApprove(request)}
                                             disabled={processing}
-                                            className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors disabled:opacity-50"
+                                            className="flex-1 sm:w-10 sm:h-10 flex items-center justify-center p-2.5 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-all disabled:opacity-50"
                                             title="Approve"
                                         >
-                                            <CheckCircle className="w-4 h-4" />
+                                            <CheckCircle className="w-5 h-5" />
                                         </button>
                                         <button
                                             onClick={() => handleDismiss(request)}
                                             disabled={processing}
-                                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                                            className="flex-1 sm:w-10 sm:h-10 flex items-center justify-center p-2.5 text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-all disabled:opacity-50"
                                             title="Dismiss"
                                         >
-                                            <XCircle className="w-4 h-4" />
+                                            <XCircle className="w-5 h-5" />
                                         </button>
                                     </div>
                                 </div>
