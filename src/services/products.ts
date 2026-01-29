@@ -5,7 +5,15 @@ import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc } from "
 export const fetchProducts = async (): Promise<Product[]> => {
   const querySnapshot = await getDocs(collection(db, "products"));
   return querySnapshot.docs.map(
-    (doc) => ({ id: doc.id, ...doc.data() } as Product)
+    (docSnapshot) => {
+      const data = docSnapshot.data();
+      return {
+        id: docSnapshot.id,
+        ...data,
+        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : undefined),
+        updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : undefined),
+      } as Product;
+    }
   );
 };
 
@@ -19,14 +27,23 @@ export const getProductById = async (id: string): Promise<Product | null> => {
 
 export const addProduct = async (data: Product): Promise<Product> => {
   const { id, ...productData } = data;
-  const docRef = await addDoc(collection(db, "products"), productData);
-  return { id: docRef.id, ...productData };
+  const now = new Date();
+  const finalData = {
+    ...productData,
+    createdAt: now,
+    updatedAt: now,
+  };
+  const docRef = await addDoc(collection(db, "products"), finalData);
+  return { id: docRef.id, ...finalData };
 };
 
 export const updateProduct = async (id: string, data: Partial<Product>) => {
   const docRef = doc(db, "products", id);
   const { id: _, ...updateData } = data;
-  await updateDoc(docRef, updateData);
+  await updateDoc(docRef, {
+    ...updateData,
+    updatedAt: new Date(),
+  });
 };
 
 export const deleteProduct = async (id: string) => {

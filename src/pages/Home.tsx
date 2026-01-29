@@ -99,7 +99,20 @@ export function Home() {
       (p) => p.price >= priceRange.min && p.price <= priceRange.max
     );
 
-    setFilteredProducts(filtered);
+    // Sort: In-stock first, then by newest/recently updated
+    const sorted = [...filtered].sort((a, b) => {
+      // 1. In stock status (true first)
+      if (a.inStock && !b.inStock) return -1;
+      if (!a.inStock && b.inStock) return 1;
+
+      // 2. Recently updated or created (newest first)
+      const timeA = (a.updatedAt instanceof Date ? a.updatedAt.getTime() : 0) || (a.createdAt instanceof Date ? a.createdAt.getTime() : 0);
+      const timeB = (b.updatedAt instanceof Date ? b.updatedAt.getTime() : 0) || (b.createdAt instanceof Date ? b.createdAt.getTime() : 0);
+
+      return timeB - timeA;
+    });
+
+    setFilteredProducts(sorted);
   }, [products, searchQuery, selectedCategories, priceRange]);
 
   // Filter vendors based on search query

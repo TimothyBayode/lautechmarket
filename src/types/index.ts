@@ -14,6 +14,8 @@ export interface Product {
     whatsappNumber: string;
     vendorName: string;
     vendorId?: string;
+    createdAt?: Date;
+    updatedAt?: Date;
 }
 
 /**
