@@ -59,10 +59,7 @@ export function VendorRegister() {
         if (!formData.businessName.trim()) {
             return "Please enter your business name";
         }
-        if (formData.description.trim() && formData.description.trim().length < 80) {
-            return "Store description must be at least 80 characters";
-        }
-        if (formData.description.trim() && formData.description.trim().length < 80) {
+        if (formData.description.trim().length < 80) {
             return "Store description must be at least 80 characters";
         }
         return null;
@@ -308,6 +305,13 @@ export function VendorRegister() {
                                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                                     placeholder="Describe what you do, where you’re located, and why students trust you."
                                 />
+                                <div className="mt-1 flex justify-end">
+                                    {formData.description.trim().length < 80 && (
+                                        <span className="text-xs text-red-500 font-medium">
+                                            {formData.description.trim().length} / 80 characters minimum
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                         </div>
 

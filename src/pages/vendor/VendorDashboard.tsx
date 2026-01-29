@@ -367,7 +367,7 @@ export function VendorDashboard() {
         e.preventDefault();
         if (!vendor) return;
 
-        if (profileForm.description.trim() && profileForm.description.trim().length < 80) {
+        if (profileForm.description.trim().length < 80) {
             alert("Store description must be at least 80 characters");
             return;
         }
