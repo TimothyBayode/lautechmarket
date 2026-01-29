@@ -9,7 +9,6 @@ import {
     ShieldCheck,
     X,
     Eye,
-    Trash2,
     MapPin,
     Clock,
     ExternalLink,
