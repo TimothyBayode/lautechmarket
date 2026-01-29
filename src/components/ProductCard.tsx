@@ -35,7 +35,7 @@ export function ProductCard({ product, isVendorVerified }: ProductCardProps) {
 
   const handleWhatsAppClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const message = `Hello! I Saw your product on LAUTECH Market. I'm interested in:\n\n*${product.name}*\nPrice: ₦${formatPrice(product.price)}\n\nProduct Details: ${product.description}`;
+    const message = `Hello 👋\nI found this product on LAUTECH Market.\n\nI’m interested in the *${product.name}* (₦${formatPrice(product.price)}).\n\nBefore I decide, please confirm:\n– Is it currently available?\n– can you deliver around lautech?\n– How fast can I get it?\n\nThank you 😊`;
     const whatsappUrl = `https://wa.me/${product.whatsappNumber.replace(
       /[^0-9]/g,
       ""

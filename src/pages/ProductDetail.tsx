@@ -119,10 +119,7 @@ export function ProductDetail() {
   const handleWhatsAppOrder = () => {
     if (!product) return;
 
-    const message = `Hello! I saw your product on LAUTECH Market. I'm interested in:\n\n*${product.name
-      }*\nQuantity: ${quantity}\nPrice: ₦${formatPrice(
-        product.price * quantity
-      )}\n\nProduct Details: ${product.description}`;
+    const message = `Hello 👋\nI found this product on LAUTECH Market.\n\nI’m interested in ${quantity > 1 ? `*${quantity}x ${product.name}*` : `the *${product.name}*`} (₦${formatPrice(product.price * quantity)}).\n\nBefore I decide, please confirm:\n– Is it currently available?\n– can you deliver around lautech?\n– How fast can I get it?\n\nThank you 😊`;
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${product.whatsappNumber.replace(
       /[^0-9]/g,
