@@ -414,7 +414,7 @@ export function AdminDashboard() {
                 {allProducts
                   .filter(p => (p.orderCount || 0) > 0 || (p.viewCount || 0) > 0)
                   .sort((a, b) => ((b.orderCount || 0) + (b.viewCount || 0)) - ((a.orderCount || 0) + (a.viewCount || 0)))
-                  .slice(0, 6)
+                  .slice(0, 10)
                   .map(product => (
                     <div
                       key={product.id}
