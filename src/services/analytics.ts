@@ -35,11 +35,13 @@ export const logEvent = async (
             timestamp: serverTimestamp(),
         });
 
-        // If it's an order or view, we also update the product counter directly
+        // If it's an order, view, or cart addition, update the product counter directly
         if (type === "whatsapp_order" && data.productId) {
             await updateProductCounter(data.productId, "orderCount");
         } else if (type === "product_view" && data.productId) {
             await updateProductCounter(data.productId, "viewCount");
+        } else if (type === "add_to_cart" && data.productId) {
+            await updateProductCounter(data.productId, "cartCount");
         }
     } catch (error) {
         console.error("Error logging event:", error);
@@ -64,7 +66,7 @@ export const logSearch = async (query: string) => {
 /**
  * Increments a counter on a product document
  */
-const updateProductCounter = async (productId: string, field: "orderCount" | "viewCount") => {
+const updateProductCounter = async (productId: string, field: "orderCount" | "viewCount" | "cartCount") => {
     try {
         const productRef = doc(db, "products", productId);
         await updateDoc(productRef, {

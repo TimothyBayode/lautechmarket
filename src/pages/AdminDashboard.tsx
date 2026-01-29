@@ -14,6 +14,8 @@ import {
   Tag,
   Flame,
   Eye,
+  ShoppingCart,
+  BarChart3,
 } from "lucide-react";
 import {
   getDoc,
@@ -71,6 +73,8 @@ export function AdminDashboard() {
   const [topSearches, setTopSearches] = useState<{ query: string; count: number }[]>([]);
   const [totalOrders, setTotalOrders] = useState(0);
   const [totalProductViews, setTotalProductViews] = useState(0);
+  const [totalCartAdditions, setTotalCartAdditions] = useState(0);
+  const [showDetailedStats, setShowDetailedStats] = useState<null | 'orders' | 'views' | 'cart'>(null);
   // Dashboard data loading - initial load
   useEffect(() => {
     const unsubscribe = authStateListener((user) => {
@@ -110,7 +114,7 @@ export function AdminDashboard() {
       const topSearchesData = Object.entries(searchCounts)
         .map(([query, count]) => ({ query, count }))
         .sort((a, b) => b.count - a.count)
-        .slice(0, 10);
+        .slice(0, 20);
       setTopSearches(topSearchesData);
 
       // Load site analytics
@@ -120,8 +124,10 @@ export function AdminDashboard() {
       // Calculate total interaction metrics from products
       const orders = allVendorProducts.reduce((sum, p) => sum + (p.orderCount || 0), 0);
       const views = allVendorProducts.reduce((sum, p) => sum + (p.viewCount || 0), 0);
+      const cart = allVendorProducts.reduce((sum, p) => sum + (p.cartCount || 0), 0);
       setTotalOrders(orders);
       setTotalProductViews(views);
+      setTotalCartAdditions(cart);
 
       setLoading(false);
     } catch (error) {
@@ -391,18 +397,132 @@ export function AdminDashboard() {
 
             {/* Interaction Analytics */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-              <h3 className="text-lg font-bold text-gray-900 mb-6 font-display">Interaction Metrics</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100">
-                  <p className="text-orange-600 text-sm font-bold uppercase tracking-wider mb-1">Total Clicks to Order</p>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-bold text-gray-900 font-display">Interaction Metrics</h3>
+                <span className="text-xs text-gray-400 font-medium italic">Click a card for full details</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div
+                  onClick={() => setShowDetailedStats('orders')}
+                  className="p-4 bg-orange-50 rounded-2xl border border-orange-100 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all group"
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-orange-600 text-[10px] font-black uppercase tracking-wider">Total Clicks to Order</p>
+                    <Flame className="w-4 h-4 text-orange-400 group-hover:animate-bounce" />
+                  </div>
                   <p className="text-3xl font-black text-orange-900">{totalOrders.toLocaleString()}</p>
                 </div>
-                <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                  <p className="text-blue-600 text-sm font-bold uppercase tracking-wider mb-1">Total Product Views</p>
+
+                <div
+                  onClick={() => setShowDetailedStats('views')}
+                  className="p-4 bg-blue-50 rounded-2xl border border-blue-100 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all group"
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-blue-600 text-[10px] font-black uppercase tracking-wider">Total Product Views</p>
+                    <Eye className="w-4 h-4 text-blue-400 group-hover:animate-bounce" />
+                  </div>
                   <p className="text-3xl font-black text-blue-900">{totalProductViews.toLocaleString()}</p>
+                </div>
+
+                <div
+                  onClick={() => setShowDetailedStats('cart')}
+                  className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all group"
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-emerald-600 text-[10px] font-black uppercase tracking-wider">Total Cart Additions</p>
+                    <ShoppingCart className="w-4 h-4 text-emerald-400 group-hover:animate-bounce" />
+                  </div>
+                  <p className="text-3xl font-black text-emerald-900">{totalCartAdditions.toLocaleString()}</p>
                 </div>
               </div>
             </div>
+
+            {/* Detailed Stats View (Conditionally Rendered) */}
+            {showDetailedStats && (
+              <div className="bg-white p-6 rounded-2xl shadow-xl border-2 border-emerald-100 animate-in zoom-in-95 duration-300">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-xl font-black text-gray-900 flex items-center gap-2">
+                      <BarChart3 className="w-6 h-6 text-emerald-600" />
+                      Detailed Report: {showDetailedStats === 'orders' ? 'Click to Order' : showDetailedStats === 'views' ? 'Product Views' : 'Cart Additions'}
+                    </h3>
+                    <p className="text-sm text-gray-500">Full breakdown of user interactions across all listed products</p>
+                  </div>
+                  <button
+                    onClick={() => setShowDetailedStats(null)}
+                    className="flex items-center space-x-2 text-sm font-bold text-gray-500 hover:text-emerald-600 transition-colors bg-gray-50 px-4 py-2 rounded-xl"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span>Back to Overview</span>
+                  </button>
+                </div>
+
+                <div className="bg-gray-50 rounded-2xl border border-gray-100 overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="bg-emerald-600 text-white text-left">
+                          <th className="px-6 py-4 text-xs font-black uppercase tracking-widest">Product</th>
+                          <th className="px-6 py-4 text-xs font-black uppercase tracking-widest">Vendor</th>
+                          <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-center">Interactions</th>
+                          <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-right">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {allProducts
+                          .filter(p => {
+                            if (showDetailedStats === 'orders') return (p.orderCount || 0) > 0;
+                            if (showDetailedStats === 'views') return (p.viewCount || 0) > 0;
+                            if (showDetailedStats === 'cart') return (p.cartCount || 0) > 0;
+                            return false;
+                          })
+                          .sort((a, b) => {
+                            const valA = showDetailedStats === 'orders' ? (a.orderCount || 0) : showDetailedStats === 'views' ? (a.viewCount || 0) : (a.cartCount || 0);
+                            const valB = showDetailedStats === 'orders' ? (b.orderCount || 0) : showDetailedStats === 'views' ? (b.viewCount || 0) : (b.cartCount || 0);
+                            return valB - valA;
+                          })
+                          .map(product => (
+                            <tr key={product.id} className="hover:bg-white transition-colors group">
+                              <td className="px-6 py-4">
+                                <div className="flex items-center space-x-3">
+                                  <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-200 border border-gray-100 flex-shrink-0">
+                                    <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                                  </div>
+                                  <span className="font-bold text-gray-900 line-clamp-1">{product.name}</span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-600 font-medium">
+                                <div className="flex items-center">
+                                  <Store className="w-4 h-4 mr-1.5 text-emerald-500" />
+                                  {product.vendorName}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-center">
+                                <span className={`px-4 py-1.5 rounded-full text-sm font-black ${showDetailedStats === 'orders' ? 'bg-orange-100 text-orange-700' :
+                                    showDetailedStats === 'views' ? 'bg-blue-100 text-blue-700' :
+                                      'bg-emerald-100 text-emerald-700'
+                                  }`}>
+                                  {showDetailedStats === 'orders' ? product.orderCount :
+                                    showDetailedStats === 'views' ? product.viewCount :
+                                      product.cartCount}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-right">
+                                <button
+                                  onClick={() => navigate(`/product/${product.id}`)}
+                                  className="text-emerald-600 hover:text-emerald-700 font-bold text-sm underline-offset-4 hover:underline"
+                                >
+                                  View Item
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Most Interacted Products */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
@@ -414,7 +534,7 @@ export function AdminDashboard() {
                 {allProducts
                   .filter(p => (p.orderCount || 0) > 0 || (p.viewCount || 0) > 0)
                   .sort((a, b) => ((b.orderCount || 0) + (b.viewCount || 0)) - ((a.orderCount || 0) + (a.viewCount || 0)))
-                  .slice(0, 10)
+                  .slice(0, 20)
                   .map(product => (
                     <div
                       key={product.id}

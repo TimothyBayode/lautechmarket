@@ -16,6 +16,7 @@ export interface Product {
     vendorId?: string;
     orderCount?: number;
     viewCount?: number;
+    cartCount?: number;
     createdAt?: Date;
     updatedAt?: Date;
 }
