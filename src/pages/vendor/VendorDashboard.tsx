@@ -1094,7 +1094,7 @@ export function VendorDashboard() {
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Store Description
+                                        Store Description (Min 80 characters)
                                     </label>
                                     <textarea
                                         value={profileForm.description}

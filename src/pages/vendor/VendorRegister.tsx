@@ -293,7 +293,7 @@ export function VendorRegister() {
                                 htmlFor="description"
                                 className="block text-sm font-medium text-gray-700 mb-2"
                             >
-                                Store Description (Optional)
+                                Store Description (Min 80 characters)
                             </label>
                             <div className="relative">
                                 <textarea
