@@ -109,7 +109,7 @@ export function Footer() {
         </div>
 
         <div className="mt-12 pt-8 border-t border-gray-800">
-          <div className="flex flex-col md:flex-row space-x-10 justify-center items-center space-y-4 md:space-y-0">
+          <div className="flex flex-col md:flex-row space-x-0 md:space-x-10 justify-center items-center space-y-4 md:space-y-0">
             <p className="text-sm">
               © {new Date().getFullYear()} LAUTECH Market. All rights reserved.
             </p>
@@ -137,6 +137,12 @@ export function Footer() {
                 <Instagram className="w-5 h-5" />
               </a>
             </div>
+          </div>
+
+          <div className="mt-6 text-center">
+            <p className="text-xs text-gray-500 max-w-2xl mx-auto leading-relaxed">
+              LAUTECH Market is an independent student-built platform and is not officially affiliated with or endorsed by LAUTECH.
+            </p>
           </div>
         </div>
       </div>

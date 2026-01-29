@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   ShieldX,
   Menu,
+  Search,
 } from "lucide-react";
 import { Product, Vendor } from "../types";
 import {
@@ -57,6 +58,7 @@ export function AdminDashboard() {
 
   // Leaderboard state
   const [leaderboard, setLeaderboard] = useState<VendorVisitData[]>([]);
+  const [vendorSearchQuery, setVendorSearchQuery] = useState("");
   // Dashboard data loading - initial load
   useEffect(() => {
     const unsubscribe = authStateListener((user) => {
@@ -398,49 +400,69 @@ export function AdminDashboard() {
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {vendors.map((vendor) => (
-                  <div key={vendor.id} onClick={() => handleVendorClick(vendor)} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden cursor-pointer hover:shadow-xl hover:border-emerald-300 transition-all duration-300 group">
-                    <div className="h-28 bg-gradient-to-br from-emerald-600 to-emerald-800 relative overflow-hidden">
-                      {vendor.bannerImage && <img src={vendor.bannerImage} alt="" className="w-full h-full object-cover opacity-60 group-hover:scale-110 transition-transform duration-500" />}
-                      <div className="absolute inset-0 bg-black/10" />
-                    </div>
-                    <div className="p-6 pt-0 relative">
-                      <div className="w-20 h-20 rounded-2xl border-4 border-white bg-white shadow-lg overflow-hidden -mt-10 relative z-10 mx-auto">
-                        {vendor.profileImage ? (
-                          <img src={vendor.profileImage} alt={vendor.businessName} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-emerald-50">
-                            <Store className="w-10 h-10 text-emerald-600" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="text-center mt-4">
-                        <h3 className="font-bold text-gray-900 group-hover:text-emerald-700 transition-colors flex items-center justify-center gap-1.5">
-                          {vendor.businessName}
-                          {vendor.isVerified && <VerifiedBadge size="sm" />}
-                        </h3>
-                        <p className="text-sm text-gray-500 mt-1 mb-4">{vendor.email}</p>
-                        <div className="flex items-center justify-center gap-2 mb-6">
-                          <div className="bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center">
-                            <Package className="w-3.5 h-3.5 mr-1.5" />
-                            {getVendorProductCount(vendor.id)} Products
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-center gap-2">
-                          <button onClick={(e) => handleVerifyVendor(vendor, e)} className={`flex-1 flex items-center justify-center px-3 py-2 text-xs font-bold rounded-xl border transition-all ${vendor.isVerified ? 'text-amber-600 border-amber-200 hover:bg-amber-50' : 'text-emerald-600 border-emerald-200 hover:bg-emerald-50'}`}>
-                            {vendor.isVerified ? <ShieldX className="w-3.5 h-3.5 mr-1" /> : <ShieldCheck className="w-3.5 h-3.5 mr-1" />}
-                            {vendor.isVerified ? 'Unverify' : 'Verify'}
-                          </button>
-                          <button onClick={(e) => handleDeleteVendor(vendor, e)} className="flex-1 flex items-center justify-center px-3 py-2 text-xs font-bold text-red-600 border border-red-200 hover:bg-red-50 rounded-xl transition-all">
-                            <Trash2 className="w-3.5 h-3.5 mr-1" />
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    </div>
+              <div className="space-y-6">
+                <div className="relative max-w-md">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Search className="h-5 w-5 text-gray-400" />
                   </div>
-                ))}
+                  <input
+                    type="text"
+                    value={vendorSearchQuery}
+                    onChange={(e) => setVendorSearchQuery(e.target.value)}
+                    placeholder="Search vendors by name or email..."
+                    className="block w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent shadow-sm transition-all"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {vendors
+                    .filter((v) =>
+                      v.businessName.toLowerCase().includes(vendorSearchQuery.toLowerCase()) ||
+                      v.email.toLowerCase().includes(vendorSearchQuery.toLowerCase())
+                    )
+                    .map((vendor) => (
+                      <div key={vendor.id} onClick={() => handleVendorClick(vendor)} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden cursor-pointer hover:shadow-xl hover:border-emerald-300 transition-all duration-300 group">
+                        <div className="h-28 bg-gradient-to-br from-emerald-600 to-emerald-800 relative overflow-hidden">
+                          {vendor.bannerImage && <img src={vendor.bannerImage} alt="" className="w-full h-full object-cover opacity-60 group-hover:scale-110 transition-transform duration-500" />}
+                          <div className="absolute inset-0 bg-black/10" />
+                        </div>
+                        <div className="p-6 pt-0 relative">
+                          <div className="w-20 h-20 rounded-2xl border-4 border-white bg-white shadow-lg overflow-hidden -mt-10 relative z-10 mx-auto">
+                            {vendor.profileImage ? (
+                              <img src={vendor.profileImage} alt={vendor.businessName} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-emerald-50">
+                                <Store className="w-10 h-10 text-emerald-600" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-center mt-4">
+                            <h3 className="font-bold text-gray-900 group-hover:text-emerald-700 transition-colors flex items-center justify-center gap-1.5">
+                              {vendor.businessName}
+                              {vendor.isVerified && <VerifiedBadge size="sm" />}
+                            </h3>
+                            <p className="text-sm text-gray-500 mt-1 mb-4">{vendor.email}</p>
+                            <div className="flex items-center justify-center gap-2 mb-6">
+                              <div className="bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center">
+                                <Package className="w-3.5 h-3.5 mr-1.5" />
+                                {getVendorProductCount(vendor.id)} Products
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-center gap-2">
+                              <button onClick={(e) => handleVerifyVendor(vendor, e)} className={`flex-1 flex items-center justify-center px-3 py-2 text-xs font-bold rounded-xl border transition-all ${vendor.isVerified ? 'text-amber-600 border-amber-200 hover:bg-amber-50' : 'text-emerald-600 border-emerald-200 hover:bg-emerald-50'}`}>
+                                {vendor.isVerified ? <ShieldX className="w-3.5 h-3.5 mr-1" /> : <ShieldCheck className="w-3.5 h-3.5 mr-1" />}
+                                {vendor.isVerified ? 'Unverify' : 'Verify'}
+                              </button>
+                              <button onClick={(e) => handleDeleteVendor(vendor, e)} className="flex-1 flex items-center justify-center px-3 py-2 text-xs font-bold text-red-600 border border-red-200 hover:bg-red-50 rounded-xl transition-all">
+                                <Trash2 className="w-3.5 h-3.5 mr-1" />
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
               </div>
             )}
           </div>
