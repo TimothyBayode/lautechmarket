@@ -1105,6 +1105,13 @@ export function VendorDashboard() {
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                         placeholder="Describe what you do, where you’re located, and why students trust you."
                                     />
+                                    <div className="mt-1 flex justify-end">
+                                        {profileForm.description.trim().length < 80 && (
+                                            <span className="text-xs text-red-500 font-medium">
+                                                {profileForm.description.trim().length} / 80 characters minimum
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
 
                                 <div>
