@@ -7,12 +7,20 @@ import {
   Package,
   Store,
   ArrowLeft,
-  Users,
   ShieldCheck,
   ShieldX,
   Menu,
   Search,
+  Tag,
 } from "lucide-react";
+import {
+  getDoc,
+  getDocs,
+  query,
+  collection,
+  orderBy,
+  limit,
+} from "firebase/firestore";
 import { Product, Vendor } from "../types";
 import {
   fetchProducts,
@@ -27,13 +35,12 @@ import { getAllVendors, deleteVendor, updateVendorProfile } from "../services/ve
 import { AdminAnnouncements } from "../components/AdminAnnouncements";
 import { AdminCategories } from "../components/AdminCategories";
 import { AdminVerificationRequests } from "../components/AdminVerificationRequests";
-import { getAnalytics } from "../services/analytics";
+import { db } from "../firebase";
 import { VerifiedBadge } from "../components/VerifiedBadge";
-import { getVisitsLeaderboard, resetVisits, VendorVisitData } from "../services/vendorVisits";
+import { getVisitsLeaderboard, VendorVisitData } from "../services/vendorVisits";
 import { AdminSidebar } from "../components/AdminSidebar";
 import { AdminStats } from "../components/AdminStats";
 import { AdminLeaderboard } from "../components/AdminLeaderboard";
-import { Menu } from "lucide-react"; // Added Menu icon for sidebar toggle
 
 export function AdminDashboard() {
   const navigate = useNavigate();
@@ -53,12 +60,14 @@ export function AdminDashboard() {
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [authChecked, setAuthChecked] = useState(false);
 
-  // Analytics state
   const [analytics, setAnalytics] = useState({ uniqueVisitors: 0, totalVisits: 0 });
 
   // Leaderboard state
   const [leaderboard, setLeaderboard] = useState<VendorVisitData[]>([]);
   const [vendorSearchQuery, setVendorSearchQuery] = useState("");
+  const [topSearches, setTopSearches] = useState<{ query: string; count: number }[]>([]);
+  const [totalOrders, setTotalOrders] = useState(0);
+  const [totalProductViews, setTotalProductViews] = useState(0);
   // Dashboard data loading - initial load
   useEffect(() => {
     const unsubscribe = authStateListener((user) => {
@@ -83,13 +92,29 @@ export function AdminDashboard() {
       const allVendorProducts = await fetchProducts();
       setAllProducts(allVendorProducts);
 
-      // Load analytics
-      const analyticsData = await getAnalytics();
-      setAnalytics(analyticsData);
-
       // Load leaderboard
       const leaderboardData = await getVisitsLeaderboard();
       setLeaderboard(leaderboardData);
+
+      // Fetch top searches
+      const searchesQuery = query(collection(db, "searches"), orderBy("timestamp", "desc"), limit(100));
+      const searchesSnap = await getDocs(searchesQuery);
+      const searchCounts: { [key: string]: number } = {};
+      searchesSnap.docs.forEach(doc => {
+        const q = doc.data().query;
+        searchCounts[q] = (searchCounts[q] || 0) + 1;
+      });
+      const topSearchesData = Object.entries(searchCounts)
+        .map(([query, count]) => ({ query, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+      setTopSearches(topSearchesData);
+
+      // Calculate total metrics from products
+      const orders = allProducts.reduce((sum, p) => sum + (p.orderCount || 0), 0);
+      const views = allProducts.reduce((sum, p) => sum + (p.viewCount || 0), 0);
+      setTotalOrders(orders);
+      setTotalProductViews(views);
 
       setLoading(false);
     } catch (error) {
@@ -301,6 +326,76 @@ export function AdminDashboard() {
               uniqueVisitors={analytics.uniqueVisitors}
               totalVisits={analytics.totalVisits}
             />
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Category Distribution */}
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
+                  <Tag className="w-5 h-5 mr-2 text-emerald-600" />
+                  Category Distribution
+                </h3>
+                <div className="space-y-4">
+                  {Array.from(new Set(allProducts.map(p => p.category))).map(category => {
+                    const count = allProducts.filter(p => p.category === category).length;
+                    const percentage = Math.round((count / allProducts.length) * 100) || 0;
+                    return (
+                      <div key={category} className="space-y-2">
+                        <div className="flex justify-between text-sm font-medium">
+                          <span className="capitalize text-gray-700">{category}</span>
+                          <span className="text-gray-500">{count} products ({percentage}%)</span>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                          <div
+                            className="bg-emerald-500 h-full rounded-full transition-all duration-1000"
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Top Searches */}
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
+                  <Search className="w-5 h-5 mr-2 text-emerald-600" />
+                  Top Search Queries
+                </h3>
+                {topSearches.length > 0 ? (
+                  <div className="space-y-3">
+                    {topSearches.map((item, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                        <span className="text-sm font-semibold text-gray-700">"{item.query}"</span>
+                        <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg text-xs font-bold">
+                          {item.count} searches
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Search className="w-12 h-12 text-gray-200 mx-auto mb-4" />
+                    <p className="text-gray-500">No search data yet</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Interaction Analytics */}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+              <h3 className="text-lg font-bold text-gray-900 mb-6">Interaction Metrics</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100">
+                  <p className="text-orange-600 text-sm font-bold uppercase tracking-wider mb-1">WhatsApp Orders (Clicks)</p>
+                  <p className="text-3xl font-black text-orange-900">{totalOrders.toLocaleString()}</p>
+                </div>
+                <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                  <p className="text-blue-600 text-sm font-bold uppercase tracking-wider mb-1">Total Product Views</p>
+                  <p className="text-3xl font-black text-blue-900">{totalProductViews.toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
             {/* Quick Actions or Recent Stats could go here */}
           </div>
         );

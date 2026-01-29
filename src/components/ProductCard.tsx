@@ -4,6 +4,8 @@ import { ShoppingCart, LinkIcon, Store } from "lucide-react";
 import { Product } from "../types";
 import { addToCart } from "../utils/cart";
 import { VerifiedBadge } from "./VerifiedBadge";
+import { logEvent } from "../services/analytics";
+import { Flame } from "lucide-react";
 
 interface ProductCardProps {
   product: Product;
@@ -23,6 +25,11 @@ export function ProductCard({ product, isVendorVerified }: ProductCardProps) {
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
     addToCart(product);
+    logEvent("add_to_cart", {
+      productId: product.id,
+      vendorId: product.vendorId,
+      category: product.category
+    });
     window.dispatchEvent(new Event("cartUpdated"));
 
     const toast = document.createElement("div");
@@ -40,6 +47,13 @@ export function ProductCard({ product, isVendorVerified }: ProductCardProps) {
       /[^0-9]/g,
       ""
     )}?text=${encodeURIComponent(message)}`;
+
+    logEvent("whatsapp_order", {
+      productId: product.id,
+      vendorId: product.vendorId,
+      category: product.category
+    });
+
     window.open(whatsappUrl, "_blank");
   };
 
@@ -60,6 +74,11 @@ export function ProductCard({ product, isVendorVerified }: ProductCardProps) {
   };
 
   const handleCardClick = () => {
+    logEvent("product_view", {
+      productId: product.id,
+      vendorId: product.vendorId,
+      category: product.category
+    });
     navigate(`/product/${product.id}`);
   };
 
@@ -78,6 +97,13 @@ export function ProductCard({ product, isVendorVerified }: ProductCardProps) {
               <span className="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold">
                 Out of Stock
               </span>
+            </div>
+          )}
+
+          {product.orderCount && product.orderCount > 0 && (
+            <div className="absolute top-2 left-12 bg-orange-100 text-orange-700 px-2 py-1 rounded-full text-[10px] font-bold flex items-center shadow-sm border border-orange-200 animate-pulse">
+              <Flame className="w-3 h-3 mr-1" />
+              {product.orderCount} {product.orderCount === 1 ? 'order' : 'orders'}
             </div>
           )}
 

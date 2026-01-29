@@ -4,6 +4,7 @@ import { Search, ShoppingCart, Menu, X, ChevronDown } from "lucide-react";
 import { getCart } from "../utils/cart";
 import { vendorAuthStateListener, logoutVendor } from "../services/vendorAuth";
 import { Vendor } from "../types";
+import { logSearch } from "../services/analytics";
 
 interface HeaderProps {
   onSearch?: (query: string) => void;
@@ -55,6 +56,17 @@ export function Header({ onSearch, categories = [] }: HeaderProps) {
     window.addEventListener("cartUpdated", updateCartCount);
     return () => window.removeEventListener("cartUpdated", updateCartCount);
   }, []);
+
+  // Debounced search logging
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery.trim().length >= 3) {
+        logSearch(searchQuery);
+      }
+    }, 1500); // Wait 1.5 seconds after typing stops
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;

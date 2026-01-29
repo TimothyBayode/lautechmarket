@@ -14,6 +14,8 @@ export interface Product {
     whatsappNumber: string;
     vendorName: string;
     vendorId?: string;
+    orderCount?: number;
+    viewCount?: number;
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -34,6 +36,7 @@ export interface Vendor {
     profileImage?: string;
     isVerified?: boolean;
     verifiedAt?: Date | null;
+    totalOrders?: number;
     createdAt: Date;
 }
 

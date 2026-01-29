@@ -1,120 +1,74 @@
-/**
- * Analytics Service
- * 
- * Tracks website visitors using Firestore and localStorage.
- * - Unique visitors: Identified by localStorage ID
- * - Total visits: Incremented on every page load
- */
-
-import { db } from "../firebase";
 import {
-    doc,
-    getDoc,
-    setDoc,
-    updateDoc,
+    collection,
+    addDoc,
+    serverTimestamp,
     increment,
-    Timestamp,
+    doc,
+    updateDoc
 } from "firebase/firestore";
+import { db } from "../firebase";
 
-const ANALYTICS_DOC = "visitors";
-const COLLECTION_NAME = "analytics";
-const VISITOR_ID_KEY = "lautech_market_visitor_id";
-
-interface AnalyticsData {
-    uniqueVisitors: number;
-    totalVisits: number;
-    lastUpdated: Date;
-}
+export type EventType =
+    | "whatsapp_order"
+    | "add_to_cart"
+    | "product_view"
+    | "search";
 
 /**
- * Generate a unique visitor ID
+ * Logs a user interaction event to Firestore
  */
-const generateVisitorId = (): string => {
-    return `visitor_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-};
-
-/**
- * Check if this is a new unique visitor
- */
-const isNewVisitor = (): boolean => {
-    const existingId = localStorage.getItem(VISITOR_ID_KEY);
-    if (existingId) {
-        return false; // Returning visitor
+export const logEvent = async (
+    type: EventType,
+    data: {
+        productId?: string;
+        vendorId?: string;
+        query?: string;
+        category?: string;
     }
-    // New visitor - save ID
-    const newId = generateVisitorId();
-    localStorage.setItem(VISITOR_ID_KEY, newId);
-    return true;
-};
-
-/**
- * Track a visit - called on app load
- */
-export const trackVisit = async (): Promise<void> => {
+) => {
     try {
-        const docRef = doc(db, COLLECTION_NAME, ANALYTICS_DOC);
-        const docSnap = await getDoc(docRef);
+        await addDoc(collection(db, "analytics_events"), {
+            type,
+            ...data,
+            timestamp: serverTimestamp(),
+        });
 
-        const isNew = isNewVisitor();
-
-        if (!docSnap.exists()) {
-            // First ever visit - create document
-            await setDoc(docRef, {
-                uniqueVisitors: 1,
-                totalVisits: 1,
-                lastUpdated: Timestamp.now(),
-            });
-        } else {
-            // Update existing document
-            if (isNew) {
-                // New unique visitor
-                await updateDoc(docRef, {
-                    uniqueVisitors: increment(1),
-                    totalVisits: increment(1),
-                    lastUpdated: Timestamp.now(),
-                });
-            } else {
-                // Returning visitor - only increment total
-                await updateDoc(docRef, {
-                    totalVisits: increment(1),
-                    lastUpdated: Timestamp.now(),
-                });
-            }
+        // If it's an order or view, we also update the product counter directly
+        if (type === "whatsapp_order" && data.productId) {
+            await updateProductCounter(data.productId, "orderCount");
+        } else if (type === "product_view" && data.productId) {
+            await updateProductCounter(data.productId, "viewCount");
         }
     } catch (error) {
-        console.error("Error tracking visit:", error);
-        // Silent fail - don't break the app for analytics
+        console.error("Error logging event:", error);
     }
 };
 
 /**
- * Get analytics data for admin dashboard
+ * Records a search query
  */
-export const getAnalytics = async (): Promise<AnalyticsData> => {
+export const logSearch = async (query: string) => {
+    if (!query.trim()) return;
     try {
-        const docRef = doc(db, COLLECTION_NAME, ANALYTICS_DOC);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            return {
-                uniqueVisitors: data.uniqueVisitors || 0,
-                totalVisits: data.totalVisits || 0,
-                lastUpdated: data.lastUpdated?.toDate() || new Date(),
-            };
-        }
-
-        return {
-            uniqueVisitors: 0,
-            totalVisits: 0,
-            lastUpdated: new Date(),
-        };
+        await addDoc(collection(db, "searches"), {
+            query: query.trim().toLowerCase(),
+            timestamp: serverTimestamp(),
+        });
     } catch (error) {
-        console.error("Error fetching analytics:", error);
-        return {
-            uniqueVisitors: 0,
-            totalVisits: 0,
-            lastUpdated: new Date(),
-        };
+        console.error("Error logging search:", error);
+    }
+};
+
+/**
+ * Increments a counter on a product document
+ */
+const updateProductCounter = async (productId: string, field: "orderCount" | "viewCount") => {
+    try {
+        const productRef = doc(db, "products", productId);
+        await updateDoc(productRef, {
+            [field]: increment(1)
+        });
+    } catch (error) {
+        console.error(`Error updating product ${field}:`, error);
     }
 };

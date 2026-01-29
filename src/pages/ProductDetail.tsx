@@ -20,6 +20,7 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { VerifiedBadge } from "../components/VerifiedBadge";
 import { db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
+import { logEvent } from "../services/analytics";
 
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -101,6 +102,11 @@ export function ProductDetail() {
 
     addToCart(product, quantity);
     setIsInCart(true);
+    logEvent("add_to_cart", {
+      productId: product.id,
+      vendorId: product.vendorId,
+      category: product.category
+    });
     window.dispatchEvent(new Event("cartUpdated"));
 
     const toast = document.createElement("div");
@@ -125,6 +131,13 @@ export function ProductDetail() {
       /[^0-9]/g,
       ""
     )}?text=${encodedMessage}`;
+
+    logEvent("whatsapp_order", {
+      productId: product.id,
+      vendorId: product.vendorId,
+      category: product.category
+    });
+
     window.open(whatsappUrl, "_blank");
   };
 
