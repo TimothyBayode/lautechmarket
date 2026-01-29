@@ -367,6 +367,11 @@ export function VendorDashboard() {
         e.preventDefault();
         if (!vendor) return;
 
+        if (profileForm.description.trim() && profileForm.description.trim().length < 80) {
+            alert("Store description must be at least 80 characters");
+            return;
+        }
+
         try {
             await updateVendorProfile(vendor.id, {
                 businessName: profileForm.businessName,
@@ -1098,7 +1103,7 @@ export function VendorDashboard() {
                                         }
                                         rows={4}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                                        placeholder="Tell customers about your store..."
+                                        placeholder="Describe what you do, where you’re located, and why students trust you."
                                     />
                                 </div>
 

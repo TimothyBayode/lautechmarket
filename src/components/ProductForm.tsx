@@ -171,8 +171,8 @@ export function ProductForm({ product, onSave, onCancel, vendorName, whatsappNum
             setError("Please select a category");
             return;
         }
-        if (!formData.image) {
-            setError("Please add an image");
+        if (formData.description.trim().length < 40) {
+            setError("Description must be at least 40 characters");
             return;
         }
         setError("");
@@ -422,6 +422,7 @@ export function ProductForm({ product, onSave, onCancel, vendorName, whatsappNum
                         value={formData.description}
                         onChange={handleChange}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                        placeholder="Describe exactly what this product or service includes, the price or price range, and any important details a student should know (location, turnaround time, or home service)."
                     />
                 </div>
 
