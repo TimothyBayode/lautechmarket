@@ -329,6 +329,99 @@ export function AdminDashboard() {
   const renderContent = () => {
     switch (activeTab) {
       case "overview":
+        if (showDetailedStats) {
+          return (
+            <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <div className="bg-white p-6 rounded-2xl shadow-xl border-2 border-emerald-100">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
+                  <div>
+                    <h3 className="text-2xl font-black text-gray-900 flex items-center gap-3">
+                      <BarChart3 className="w-8 h-8 text-emerald-600" />
+                      Detailed Report: {showDetailedStats === 'orders' ? 'Click to Order' : showDetailedStats === 'views' ? 'Product Views' : 'Cart Additions'}
+                    </h3>
+                    <p className="text-gray-500 mt-1">Comprehensive breakdown of performance and buyer intent across all products</p>
+                  </div>
+                  <button
+                    onClick={() => setShowDetailedStats(null)}
+                    className="flex items-center space-x-2 text-sm font-bold text-gray-600 hover:text-emerald-600 transition-colors bg-gray-50 hover:bg-emerald-50 px-6 py-3 rounded-xl border border-gray-200"
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                    <span>Back to Overview</span>
+                  </button>
+                </div>
+
+                <div className="bg-gray-50 rounded-2xl border border-gray-100 overflow-hidden shadow-inner">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="bg-emerald-600 text-white text-left">
+                          <th className="px-6 py-4 text-xs font-black uppercase tracking-widest">Product Details</th>
+                          <th className="px-6 py-4 text-xs font-black uppercase tracking-widest">Vendor</th>
+                          <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-center">Interactions</th>
+                          <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-right">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {allProducts
+                          .filter(p => {
+                            if (showDetailedStats === 'orders') return (p.orderCount || 0) > 0;
+                            if (showDetailedStats === 'views') return (p.viewCount || 0) > 0;
+                            if (showDetailedStats === 'cart') return (p.cartCount || 0) > 0;
+                            return false;
+                          })
+                          .sort((a, b) => {
+                            const valA = showDetailedStats === 'orders' ? (a.orderCount || 0) : showDetailedStats === 'views' ? (a.viewCount || 0) : (a.cartCount || 0);
+                            const valB = showDetailedStats === 'orders' ? (b.orderCount || 0) : showDetailedStats === 'views' ? (b.viewCount || 0) : (b.cartCount || 0);
+                            return valB - valA;
+                          })
+                          .map(product => (
+                            <tr key={product.id} className="hover:bg-white transition-colors group">
+                              <td className="px-6 py-4">
+                                <div className="flex items-center space-x-4">
+                                  <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-200 border border-gray-100 flex-shrink-0 shadow-sm">
+                                    <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <div className="font-black text-gray-900 truncate">{product.name}</div>
+                                    <div className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">{product.category}</div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="flex items-center font-bold text-gray-600 text-sm">
+                                  <Store className="w-4 h-4 mr-2 text-emerald-500" />
+                                  {product.vendorName}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-center">
+                                <span className={`px-5 py-2 rounded-full text-xs font-black shadow-sm ${showDetailedStats === 'orders' ? 'bg-orange-100 text-orange-700 border border-orange-200' :
+                                    showDetailedStats === 'views' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
+                                      'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                                  }`}>
+                                  {showDetailedStats === 'orders' ? `${product.orderCount} clicks` :
+                                    showDetailedStats === 'views' ? `${product.viewCount} views` :
+                                      `${product.cartCount} in cart`}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-right">
+                                <button
+                                  onClick={() => navigate(`/product/${product.id}`)}
+                                  className="bg-white border border-gray-200 text-gray-700 hover:text-emerald-600 hover:border-emerald-200 px-4 py-2 rounded-lg font-bold text-xs transition-all shadow-sm flex items-center gap-2 ml-auto"
+                                >
+                                  View Item
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
         return (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
             <AdminStats
@@ -378,10 +471,10 @@ export function AdminDashboard() {
                 {topSearches.length > 0 ? (
                   <div className="space-y-3">
                     {topSearches.map((item, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 hover:bg-emerald-50 hover:border-emerald-100 transition-colors">
                         <span className="text-sm font-semibold text-gray-700">"{item.query}"</span>
-                        <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg text-xs font-bold">
-                          {item.count} searches
+                        <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg text-xs font-bold font-mono">
+                          {item.count}
                         </span>
                       </div>
                     ))}
@@ -499,8 +592,8 @@ export function AdminDashboard() {
                               </td>
                               <td className="px-6 py-4 text-center">
                                 <span className={`px-4 py-1.5 rounded-full text-sm font-black ${showDetailedStats === 'orders' ? 'bg-orange-100 text-orange-700' :
-                                    showDetailedStats === 'views' ? 'bg-blue-100 text-blue-700' :
-                                      'bg-emerald-100 text-emerald-700'
+                                  showDetailedStats === 'views' ? 'bg-blue-100 text-blue-700' :
+                                    'bg-emerald-100 text-emerald-700'
                                   }`}>
                                   {showDetailedStats === 'orders' ? product.orderCount :
                                     showDetailedStats === 'views' ? product.viewCount :
@@ -528,9 +621,9 @@ export function AdminDashboard() {
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
               <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
                 <Flame className="w-5 h-5 mr-2 text-orange-600" />
-                Most Interacted Products
+                Most Interacted Products (Top 20)
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                 {allProducts
                   .filter(p => (p.orderCount || 0) > 0 || (p.viewCount || 0) > 0)
                   .sort((a, b) => ((b.orderCount || 0) + (b.viewCount || 0)) - ((a.orderCount || 0) + (a.viewCount || 0)))
@@ -539,26 +632,37 @@ export function AdminDashboard() {
                     <div
                       key={product.id}
                       onClick={() => navigate(`/product/${product.id}`)}
-                      className="group p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-emerald-300 hover:bg-emerald-50 transition-all cursor-pointer flex items-center space-x-4"
+                      className="group p-3 bg-gray-50 rounded-xl border border-gray-100 hover:border-emerald-300 hover:bg-emerald-50 transition-all cursor-pointer flex flex-col"
                     >
-                      <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
-                        <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                      <div className="aspect-square rounded-lg overflow-hidden bg-gray-200 mb-3 relative">
+                        <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h4 className="font-bold text-gray-900 truncate group-hover:text-emerald-700 transition-colors">{product.name}</h4>
-                        <p className="text-xs text-gray-500 truncate flex items-center">
-                          <Store className="w-3 h-3 mr-1" />
+                        <h4 className="font-bold text-gray-900 truncate group-hover:text-emerald-700 transition-colors text-sm">{product.name}</h4>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter truncate flex items-center mt-0.5">
+                          <Store className="w-2.5 h-2.5 mr-1" />
                           {product.vendorName}
                         </p>
-                        <div className="mt-2 flex items-center space-x-3 text-[10px] font-bold uppercase tracking-tighter">
-                          <span className="text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full flex items-center">
-                            <Flame className="w-2 h-2 mr-1" />
-                            {product.orderCount || 0} clicks
-                          </span>
-                          <span className="text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full flex items-center">
-                            <Eye className="w-2 h-2 mr-1" />
-                            {product.viewCount || 0} views
-                          </span>
+                        <div className="mt-3 flex items-center justify-between">
+                          <div className="flex -space-x-1 overflow-hidden">
+                            {product.orderCount && product.orderCount > 0 && (
+                              <span className="inline-flex items-center justify-center p-1.5 rounded-full bg-orange-100 border border-white ring-2 ring-white" title={`${product.orderCount} clicks`}>
+                                <Flame className="w-3 h-3 text-orange-600" />
+                              </span>
+                            )}
+                            {product.viewCount && product.viewCount > 0 && (
+                              <span className="inline-flex items-center justify-center p-1.5 rounded-full bg-blue-100 border border-white ring-2 ring-white" title={`${product.viewCount} views`}>
+                                <Eye className="w-3 h-3 text-blue-600" />
+                              </span>
+                            )}
+                            {product.cartCount && product.cartCount > 0 && (
+                              <span className="inline-flex items-center justify-center p-1.5 rounded-full bg-emerald-100 border border-white ring-2 ring-white" title={`${product.cartCount} in cart`}>
+                                <ShoppingCart className="w-3 h-3 text-emerald-600" />
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[10px] font-black text-gray-400">DETAIL ›</span>
                         </div>
                       </div>
                     </div>
