@@ -108,27 +108,26 @@ export const generateWhatsAppLink = (
   items: CartItem[],
   whatsappNumber: string
 ): string => {
-  const message = items
+  const messageDetails = items
     .map(
       (item) =>
-        `*${item.product.name}* (x${item.quantity}) - ₦${formatPrice(
+        `– *${item.quantity}x ${item.product.name}* (₦${formatPrice(
           item.product.price * item.quantity
-        )}%0AProduct Details: ${item.product.description || 'N/A'}`
+        )})`
     )
-    .join("%0A%0A");
+    .join("\n");
 
   const total = items.reduce(
     (sum, item) => sum + item.product.price * item.quantity,
     0
   );
-  const fullMessage = `Hello! I Saw your product on LAUTECH Market. I'm interested in:%0A%0A${message}%0A%0ATotal: ₦${formatPrice(
-    total
-  )}`;
+
+  const greeting = `Hello 👋\nI found these products on LAUTECH Market.\n\nI’m interested in:\n${messageDetails}\n*Total: ₦${formatPrice(total)}*\n\nBefore I decide, please confirm:\n– Is it currently available?\n– can you deliver around lautech?\n– How fast can I get it?\n\nThank you 😊`;
 
   return `https://wa.me/${whatsappNumber.replace(
     /[^0-9]/g,
     ""
-  )}?text=${fullMessage}`;
+  )}?text=${encodeURIComponent(greeting)}`;
 };
 
 export const getCartItemCount = (): number => {
