@@ -395,8 +395,8 @@ export function AdminDashboard() {
                               </td>
                               <td className="px-6 py-4 text-center">
                                 <span className={`px-5 py-2 rounded-full text-xs font-black shadow-sm ${showDetailedStats === 'orders' ? 'bg-orange-100 text-orange-700 border border-orange-200' :
-                                    showDetailedStats === 'views' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
-                                      'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                                  showDetailedStats === 'views' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
+                                    'bg-emerald-100 text-emerald-700 border border-emerald-200'
                                   }`}>
                                   {showDetailedStats === 'orders' ? `${product.orderCount} clicks` :
                                     showDetailedStats === 'views' ? `${product.viewCount} views` :
@@ -441,24 +441,29 @@ export function AdminDashboard() {
                   Category Distribution
                 </h3>
                 <div className="space-y-4">
-                  {Array.from(new Set(allProducts.map(p => p.category))).map(category => {
-                    const count = allProducts.filter(p => p.category === category).length;
-                    const percentage = Math.round((count / allProducts.length) * 100) || 0;
-                    return (
-                      <div key={category} className="space-y-2">
-                        <div className="flex justify-between text-sm font-medium">
-                          <span className="capitalize text-gray-700">{category}</span>
-                          <span className="text-gray-500">{count} products ({percentage}%)</span>
+                  {Array.from(new Set(allProducts.map(p => p.category)))
+                    .map(category => ({
+                      name: category,
+                      count: allProducts.filter(p => p.category === category).length
+                    }))
+                    .sort((a, b) => b.count - a.count)
+                    .map(({ name: category, count }) => {
+                      const percentage = Math.round((count / allProducts.length) * 100) || 0;
+                      return (
+                        <div key={category} className="space-y-2">
+                          <div className="flex justify-between text-sm font-medium">
+                            <span className="capitalize text-gray-700">{category}</span>
+                            <span className="text-gray-500">{count} products ({percentage}%)</span>
+                          </div>
+                          <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                            <div
+                              className="bg-emerald-500 h-full rounded-full transition-all duration-1000"
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
                         </div>
-                        <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
-                          <div
-                            className="bg-emerald-500 h-full rounded-full transition-all duration-1000"
-                            style={{ width: `${percentage}%` }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
                 </div>
               </div>
 
