@@ -310,128 +310,131 @@ export function ProductDetail() {
                     </div>
                   </div>
                   <a
-                    )}?text=${encodeURIComponent(`Hello 👋\nI saw your store on LAUTECH Market and I'm interested in your products.\n\nBefore I decide, please confirm:\n– Is your store currently open?\n– can you deliver around lautech?\n\nThank you 😊`)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-emerald-600 hover:text-emerald-700 text-xs sm:text-sm font-medium flex-shrink-0 ml-2"
+                    href={`https://wa.me/${product.whatsappNumber.replace(
+                      /[^0-9]/g,
+                      ""
+                    )}?text=${encodeURIComponent(`Hi ${product.vendorName} , I saw your store on LAUTECH Marketplace and I will like to...`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-emerald-600 hover:text-emerald-700 text-xs sm:text-sm font-medium flex-shrink-0 ml-2"
                   >
-                  Contact
-                </a>
-              </div>
-            </div>
-
-            <div className="space-y-3 sm:space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-                  Quantity
-                </label>
-                <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
-                  <div className="flex items-center border border-gray-300 rounded-lg self-start">
-                    <button
-                      onClick={() => handleQuantityChange(-1)}
-                      className="px-3 sm:px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-l-lg"
-                    >
-                      -
-                    </button>
-                    <span className="px-3 sm:px-4 py-2 border-l border-r border-gray-300 min-w-10 sm:min-w-12 text-center font-semibold text-sm sm:text-base">
-                      {quantity}
-                    </span>
-                    <button
-                      onClick={() => handleQuantityChange(1)}
-                      className="px-3 sm:px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-r-lg"
-                    >
-                      +
-                    </button>
-                  </div>
-                  <span className="text-lg sm:text-xl font-semibold text-gray-900">
-                    Total: ₦{formatPrice(product.price * quantity)}
-                  </span>
+                    Contact
+                  </a>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-3">
-                <button
-                  onClick={handleAddToCart}
-                  disabled={!product.inStock || isInCart}
-                  className={`w-full py-3 sm:py-4 px-4 sm:px-6 rounded-lg font-semibold flex items-center justify-center space-x-2 transition-colors text-sm sm:text-base ${isInCart
-                    ? "bg-gray-600 text-white cursor-not-allowed"
-                    : product.inStock
-                      ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    }`}
-                >
-                  {isInCart ? (
-                    <>
-                      <Check className="w-4 h-4 sm:w-5 sm:h-5" />
-                      <span>Added to Cart</span>
-                    </>
-                  ) : product.inStock ? (
-                    <>
-                      <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
-                      <span>Add to Cart</span>
-                    </>
-                  ) : (
-                    <span>Out of Stock</span>
-                  )}
-                </button>
+              <div className="space-y-3 sm:space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                    Quantity
+                  </label>
+                  <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+                    <div className="flex items-center border border-gray-300 rounded-lg self-start">
+                      <button
+                        onClick={() => handleQuantityChange(-1)}
+                        className="px-3 sm:px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-l-lg"
+                      >
+                        -
+                      </button>
+                      <span className="px-3 sm:px-4 py-2 border-l border-r border-gray-300 min-w-10 sm:min-w-12 text-center font-semibold text-sm sm:text-base">
+                        {quantity}
+                      </span>
+                      <button
+                        onClick={() => handleQuantityChange(1)}
+                        className="px-3 sm:px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-r-lg"
+                      >
+                        +
+                      </button>
+                    </div>
+                    <span className="text-lg sm:text-xl font-semibold text-gray-900">
+                      Total: ₦{formatPrice(product.price * quantity)}
+                    </span>
+                  </div>
+                </div>
 
-                <button
-                  onClick={handleWhatsAppOrder}
-                  disabled={!product.inStock}
-                  className="w-full bg-green-600 text-white py-3 sm:py-4 px-4 sm:px-6 rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors font-semibold flex items-center justify-center space-x-2 text-sm sm:text-base"
-                >
-                  <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-                  <span>Order on WhatsApp</span>
-                </button>
+                <div className="flex flex-col gap-3">
+                  <button
+                    onClick={handleAddToCart}
+                    disabled={!product.inStock || isInCart}
+                    className={`w-full py-3 sm:py-4 px-4 sm:px-6 rounded-lg font-semibold flex items-center justify-center space-x-2 transition-colors text-sm sm:text-base ${isInCart
+                      ? "bg-gray-600 text-white cursor-not-allowed"
+                      : product.inStock
+                        ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      }`}
+                  >
+                    {isInCart ? (
+                      <>
+                        <Check className="w-4 h-4 sm:w-5 sm:h-5" />
+                        <span>Added to Cart</span>
+                      </>
+                    ) : product.inStock ? (
+                      <>
+                        <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
+                        <span>Add to Cart</span>
+                      </>
+                    ) : (
+                      <span>Out of Stock</span>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={handleWhatsAppOrder}
+                    disabled={!product.inStock}
+                    className="w-full bg-green-600 text-white py-3 sm:py-4 px-4 sm:px-6 rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors font-semibold flex items-center justify-center space-x-2 text-sm sm:text-base"
+                  >
+                    <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <span>Order on WhatsApp</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {relatedProducts.length > 0 && (
-          <div className="mt-8 sm:mt-12 lg:mt-16">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">
-              More from {product.category}
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
-              {relatedProducts.map((relatedProduct) => (
-                <div
-                  key={relatedProduct.id}
-                  className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => navigate(`/product/${relatedProduct.id}`)}
-                >
-                  <div className="aspect-square overflow-hidden bg-gray-100">
-                    <img
-                      src={relatedProduct.image}
-                      alt={relatedProduct.name}
-                      className="w-full h-full object-cover hover:scale-105 transition-transform"
-                    />
-                  </div>
-                  <div className="p-2 sm:p-3 lg:p-4">
-                    <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-1 truncate">
-                      {relatedProduct.name}
-                    </h3>
-                    <p className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-3 line-clamp-2">
-                      {relatedProduct.description}
-                    </p>
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-1 sm:space-y-0">
-                      <span className="text-base sm:text-lg font-bold text-emerald-600">
-                        ₦{formatPrice(relatedProduct.price)}
-                      </span>
-                      <span className="text-xs sm:text-sm text-gray-500 text-right">
-                        by {relatedProduct.vendorName}
-                      </span>
+          {relatedProducts.length > 0 && (
+            <div className="mt-8 sm:mt-12 lg:mt-16">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">
+                More from {product.category}
+              </h2>
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+                {relatedProducts.map((relatedProduct) => (
+                  <div
+                    key={relatedProduct.id}
+                    className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => navigate(`/product/${relatedProduct.id}`)}
+                  >
+                    <div className="aspect-square overflow-hidden bg-gray-100">
+                      <img
+                        src={relatedProduct.image}
+                        alt={relatedProduct.name}
+                        className="w-full h-full object-cover hover:scale-105 transition-transform"
+                      />
+                    </div>
+                    <div className="p-2 sm:p-3 lg:p-4">
+                      <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-1 truncate">
+                        {relatedProduct.name}
+                      </h3>
+                      <p className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-3 line-clamp-2">
+                        {relatedProduct.description}
+                      </p>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-1 sm:space-y-0">
+                        <span className="text-base sm:text-lg font-bold text-emerald-600">
+                          ₦{formatPrice(relatedProduct.price)}
+                        </span>
+                        <span className="text-xs sm:text-sm text-gray-500 text-right">
+                          by {relatedProduct.vendorName}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        )}
-    </div>
-      </main >
+          )}
+        </div>
+      </main>
 
-    <Footer />
-    </div >
+      <Footer />
+    </div>
   );
 }
