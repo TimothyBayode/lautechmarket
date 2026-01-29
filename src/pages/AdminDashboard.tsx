@@ -12,6 +12,8 @@ import {
   Menu,
   Search,
   Tag,
+  Flame,
+  Eye,
 } from "lucide-react";
 import {
   getDoc,
@@ -108,7 +110,7 @@ export function AdminDashboard() {
       const topSearchesData = Object.entries(searchCounts)
         .map(([query, count]) => ({ query, count }))
         .sort((a, b) => b.count - a.count)
-        .slice(0, 5);
+        .slice(0, 10);
       setTopSearches(topSearchesData);
 
       // Load site analytics
@@ -389,10 +391,10 @@ export function AdminDashboard() {
 
             {/* Interaction Analytics */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-              <h3 className="text-lg font-bold text-gray-900 mb-6">Interaction Metrics</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-6 font-display">Interaction Metrics</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100">
-                  <p className="text-orange-600 text-sm font-bold uppercase tracking-wider mb-1">WhatsApp Orders (Clicks)</p>
+                  <p className="text-orange-600 text-sm font-bold uppercase tracking-wider mb-1">Total Clicks to Order</p>
                   <p className="text-3xl font-black text-orange-900">{totalOrders.toLocaleString()}</p>
                 </div>
                 <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
@@ -400,6 +402,54 @@ export function AdminDashboard() {
                   <p className="text-3xl font-black text-blue-900">{totalProductViews.toLocaleString()}</p>
                 </div>
               </div>
+            </div>
+
+            {/* Most Interacted Products */}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+              <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
+                <Flame className="w-5 h-5 mr-2 text-orange-600" />
+                Most Interacted Products
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {allProducts
+                  .filter(p => (p.orderCount || 0) > 0 || (p.viewCount || 0) > 0)
+                  .sort((a, b) => ((b.orderCount || 0) + (b.viewCount || 0)) - ((a.orderCount || 0) + (a.viewCount || 0)))
+                  .slice(0, 6)
+                  .map(product => (
+                    <div
+                      key={product.id}
+                      onClick={() => navigate(`/product/${product.id}`)}
+                      className="group p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-emerald-300 hover:bg-emerald-50 transition-all cursor-pointer flex items-center space-x-4"
+                    >
+                      <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
+                        <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-bold text-gray-900 truncate group-hover:text-emerald-700 transition-colors">{product.name}</h4>
+                        <p className="text-xs text-gray-500 truncate flex items-center">
+                          <Store className="w-3 h-3 mr-1" />
+                          {product.vendorName}
+                        </p>
+                        <div className="mt-2 flex items-center space-x-3 text-[10px] font-bold uppercase tracking-tighter">
+                          <span className="text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full flex items-center">
+                            <Flame className="w-2 h-2 mr-1" />
+                            {product.orderCount || 0} clicks
+                          </span>
+                          <span className="text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full flex items-center">
+                            <Eye className="w-2 h-2 mr-1" />
+                            {product.viewCount || 0} views
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+              {allProducts.filter(p => (p.orderCount || 0) > 0 || (p.viewCount || 0) > 0).length === 0 && (
+                <div className="text-center py-8">
+                  <Package className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+                  <p className="text-gray-500 text-sm">No product interactions yet</p>
+                </div>
+              )}
             </div>
             {/* Quick Actions or Recent Stats could go here */}
           </div>

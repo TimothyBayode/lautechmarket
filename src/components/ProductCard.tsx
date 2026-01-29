@@ -103,7 +103,7 @@ export function ProductCard({ product, isVendorVerified }: ProductCardProps) {
           {product.orderCount && product.orderCount > 0 && (
             <div className="absolute top-2 left-12 bg-orange-100 text-orange-700 px-2 py-1 rounded-full text-[10px] font-bold flex items-center shadow-sm border border-orange-200 animate-pulse">
               <Flame className="w-3 h-3 mr-1" />
-              {product.orderCount} {product.orderCount === 1 ? 'order' : 'orders'}
+              {product.orderCount} {product.orderCount === 1 ? 'click' : 'clicks'}
             </div>
           )}
 
