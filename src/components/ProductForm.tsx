@@ -412,7 +412,7 @@ export function ProductForm({ product, onSave, onCancel, vendorName, whatsappNum
                         htmlFor="description"
                         className="block text-sm font-medium text-gray-700 mb-2"
                     >
-                        Description *
+                        Description (Min 40 characters) *
                     </label>
                     <textarea
                         id="description"
