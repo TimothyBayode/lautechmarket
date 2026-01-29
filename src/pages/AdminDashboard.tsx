@@ -37,6 +37,7 @@ import { AdminCategories } from "../components/AdminCategories";
 import { AdminVerificationRequests } from "../components/AdminVerificationRequests";
 import { db } from "../firebase";
 import { VerifiedBadge } from "../components/VerifiedBadge";
+import { getAnalytics } from "../services/analytics";
 import { getVisitsLeaderboard, VendorVisitData } from "../services/vendorVisits";
 import { AdminSidebar } from "../components/AdminSidebar";
 import { AdminStats } from "../components/AdminStats";
@@ -110,9 +111,13 @@ export function AdminDashboard() {
         .slice(0, 5);
       setTopSearches(topSearchesData);
 
-      // Calculate total metrics from products
-      const orders = allProducts.reduce((sum, p) => sum + (p.orderCount || 0), 0);
-      const views = allProducts.reduce((sum, p) => sum + (p.viewCount || 0), 0);
+      // Load site analytics
+      const siteAnalytics = await getAnalytics();
+      setAnalytics(siteAnalytics);
+
+      // Calculate total interaction metrics from products
+      const orders = allVendorProducts.reduce((sum, p) => sum + (p.orderCount || 0), 0);
+      const views = allVendorProducts.reduce((sum, p) => sum + (p.viewCount || 0), 0);
       setTotalOrders(orders);
       setTotalProductViews(views);
 

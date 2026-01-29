@@ -4,7 +4,9 @@ import {
     serverTimestamp,
     increment,
     doc,
-    updateDoc
+    updateDoc,
+    getDoc,
+    setDoc
 } from "firebase/firestore";
 import { db } from "../firebase";
 
@@ -71,4 +73,62 @@ const updateProductCounter = async (productId: string, field: "orderCount" | "vi
     } catch (error) {
         console.error(`Error updating product ${field}:`, error);
     }
+};
+
+/**
+ * Tracks a general site visit
+ */
+export const trackVisit = async () => {
+    try {
+        const statsRef = doc(db, "analytics", "dashboard");
+        const statsDoc = await getDoc(statsRef);
+
+        if (!statsDoc.exists()) {
+            await setDoc(statsRef, {
+                totalVisits: 1,
+                uniqueVisitors: 1,
+                lastUpdated: serverTimestamp()
+            });
+        } else {
+            // Simple logic: increment totalVisits
+            // In a real app, unique visitors would check localStorage
+            await updateDoc(statsRef, {
+                totalVisits: increment(1),
+                lastUpdated: serverTimestamp()
+            });
+
+            // Increment uniqueVisitors if not visited today (simplified)
+            const lastVisit = localStorage.getItem('last_visit');
+            const today = new Date().toDateString();
+            if (lastVisit !== today) {
+                await updateDoc(statsRef, {
+                    uniqueVisitors: increment(1)
+                });
+                localStorage.setItem('last_visit', today);
+            }
+        }
+    } catch (error) {
+        console.error("Error tracking visit:", error);
+    }
+};
+
+/**
+ * Gets general site analytics
+ */
+export const getAnalytics = async () => {
+    try {
+        const statsRef = doc(db, "analytics", "dashboard");
+        const statsDoc = await getDoc(statsRef);
+
+        if (statsDoc.exists()) {
+            const data = statsDoc.data();
+            return {
+                totalVisits: data.totalVisits || 0,
+                uniqueVisitors: data.uniqueVisitors || 0
+            };
+        }
+    } catch (error) {
+        console.error("Error getting analytics:", error);
+    }
+    return { totalVisits: 0, uniqueVisitors: 0 };
 };
