@@ -1,7 +1,6 @@
 import { compressImage } from './imageCompression';
 
-const WORKER_URL = import.meta.env.VITE_CLOUDFLARE_WORKER_URL;
-const UPLOAD_SECRET = import.meta.env.VITE_UPLOAD_SECRET;
+
 
 export interface UploadResult {
     url: string;
@@ -12,6 +11,15 @@ export interface UploadResult {
  * Includes automatic client-side compression
  */
 export const uploadImage = async (file: File): Promise<UploadResult> => {
+    const WORKER_URL = import.meta.env.VITE_CLOUDFLARE_WORKER_URL;
+    const UPLOAD_SECRET = import.meta.env.VITE_UPLOAD_SECRET;
+
+    console.log('[Storage] Config Check:', {
+        hasUrl: !!WORKER_URL,
+        hasSecret: !!UPLOAD_SECRET,
+        url: WORKER_URL
+    });
+
     if (!WORKER_URL || !UPLOAD_SECRET) {
         throw new Error("Cloudflare configuration missing in .env");
     }
