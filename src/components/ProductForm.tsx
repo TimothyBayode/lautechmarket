@@ -6,7 +6,7 @@ import {
     addCategory,
     categoryExists,
 } from "../services/categories";
-import { uploadImage } from "../services/cloudinary";
+import { uploadImage } from "../services/storage";
 
 interface ProductFormProps {
     product: Product | null;

@@ -25,7 +25,7 @@ import {
     updateAnnouncement,
     deleteAnnouncement,
 } from "../services/announcements";
-import { uploadImage } from "../services/cloudinary";
+import { uploadImage } from "../services/storage";
 
 interface AdminAnnouncementsProps {
     onClose?: () => void;

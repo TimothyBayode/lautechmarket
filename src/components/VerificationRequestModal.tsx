@@ -7,7 +7,7 @@
 
 import { useState } from "react";
 import { X, MapPin, Upload, CreditCard, Loader2, CheckCircle } from "lucide-react";
-import { uploadImage } from "../services/cloudinary";
+import { uploadImage } from "../services/storage";
 import { submitVerificationRequest, hasPendingRequest } from "../services/verificationRequests";
 
 interface VerificationRequestModalProps {

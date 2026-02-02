@@ -32,10 +32,9 @@ import {
     vendorAuthStateListener,
     updateVendorProfile,
 } from "../../services/vendorAuth";
-import { uploadImage } from "../../services/cloudinary";
+import { uploadImage } from "../../services/storage";
 import { Header } from "../../components/Header";
 import { VerificationRequestModal } from "../../components/VerificationRequestModal";
-import { hasPendingRequest } from "../../services/verificationRequests";
 import { getVisitsLeaderboard, VendorVisitData } from "../../services/vendorVisits";
 import { Trophy } from "lucide-react";
 
