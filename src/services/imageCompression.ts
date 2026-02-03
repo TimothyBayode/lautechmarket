@@ -13,8 +13,8 @@ export const compressImage = async (file: File): Promise<File> => {
         const compressedFile = await imageCompression(file, options);
         console.log(`[Compression] Finished. New size: ${(compressedFile.size / 1024).toFixed(2)} KB`);
 
-        // Rename to .webp for the storage
-        const baseName = file.name.split('.')[0];
+        // Rename to .webp and remove spaces/special chars from name
+        const baseName = file.name.split('.')[0].replace(/\s+/g, '-');
         return new File([compressedFile], `${baseName}-${Date.now()}.webp`, {
             type: 'image/webp',
         });

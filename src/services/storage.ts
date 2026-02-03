@@ -29,7 +29,7 @@ export const uploadImage = async (file: File): Promise<UploadResult> => {
         const compressedFile = await compressImage(file);
 
         // 2. Upload via Worker
-        const response = await fetch(`${WORKER_URL}?filename=${compressedFile.name}`, {
+        const response = await fetch(`${WORKER_URL}?filename=${encodeURIComponent(compressedFile.name)}`, {
             method: 'POST',
             headers: {
                 'X-Upload-Secret': UPLOAD_SECRET,
