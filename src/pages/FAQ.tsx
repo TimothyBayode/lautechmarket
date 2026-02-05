@@ -5,9 +5,8 @@ import {
   ChevronDown,
   ChevronUp,
   ShoppingBag,
-  Truck,
+  ShieldCheck,
   CreditCard,
-  Package,
   User,
   MessageCircle,
   Search
@@ -39,59 +38,49 @@ export function FAQ() {
         {
           id: 'faq-1',
           question: 'What is LAUTECH Market?',
-          answer: 'Lautech Market is the #1 online directory for student vendors in Ogbomoso. We replace the chaos of messy WhatsApp groups with a clean, searchable platform.'
+          answer: 'LAUTECH Market is the official digital marketplace directory for the LAUTECH student community. We provide a safe, organized alternative to chaotic WhatsApp groups, allowing you to search, compare, and connect with verified student vendors instantly.'
         },
         {
           id: 'faq-2',
-          question: 'How do I create an account?',
-          answer: 'As a buyer, you do not need to create an account before you can purchase products. However, a vendor has to go through the admins before their product go live.'
-        },
-        {
-          id: 'faq-3',
-          question: 'Is LAUTECH Market available nationwide?',
-          answer: 'No! LAUTECH Market is specifically available for students/vendors within LAUTECH and Ogbomoso. We plan to expand to other universities and cities in the future.'
+          question: 'Do I need an account to buy?',
+          answer: 'No! Buyers can explore the marketplace, use the "Top 3 Picks" comparison tool, and contact vendors directly without creating an account. Only vendors require verified accounts to list their products.'
         },
         {
           id: 'faq-21',
           question: 'What is the "Instant Buy" ⚡ icon?',
-          answer: 'The ⚡ icon indicates an "Instant Buy" vendor. These are vendors who historically respond to students in under 30 minutes. The 🟢 icon means the vendor is currently online and active on the platform.'
+          answer: 'The ⚡ icon indicates an "Instant Buy" vendor. These are high-reliability vendors who typically respond to students in under 30 minutes. The 🟢 icon means the vendor is currently active on their dashboard and ready to chat.'
         },
         {
           id: 'faq-22',
           question: 'How does the "Compare" tool work?',
-          answer: 'You can select up to 3 products by clicking the comparison icon (double arrows) on search results. This allows you to see a side-by-side view of prices, vendor trust scores, and response times in one place.'
+          answer: 'Select up to 3 products using the comparison icon (double arrows). On desktop, you get a side-by-side technical breakdown. On mobile, we switch to a beautiful sectioned view for easy vertical scrolling through your top picks.'
         },
         {
-          id: 'faq-4',
-          question: 'How do I contact customer support?',
-          answer: 'You can reach our customer support team through: 1) The contact form on our Contact page 2) Email: lautechmarket.help@gmail.com 3) WhatsApp: +234 815 199 3706 4) Live chat also available on our website'
+          id: 'faq-g1',
+          question: 'Is my data safe here?',
+          answer: 'Absolutely. We use a custom-built "Safe-DOM" shield and Firebase industrial-grade encryption. Your browsing history is stored locally to provide personalized recommendations without compromising your privacy.'
         }
       ]
     },
     {
-      id: 'orders',
-      title: 'Orders & Shipping',
-      icon: <Truck className="w-5 h-5" />,
+      id: 'safety',
+      title: 'Safety & Trust',
+      icon: <ShieldCheck className="w-5 h-5" />,
       faqs: [
         {
-          id: 'faq-5',
-          question: 'How long does delivery take?',
-          answer: 'Delivery times vary based on your location and the vendor\'s processing time. Typically, orders are delivered within 1-3 business days for Ogbomoso locations.'
+          id: 'faq-s1',
+          question: 'How do I know a vendor is verified?',
+          answer: 'Look for the "Verified Vendor" badge on their profile. These vendors have submitted their student IDs and business details to our admin team for manual review.'
         },
         {
-          id: 'faq-6',
-          question: 'How do I track my order?',
-          answer: 'A feature for order tracking is coming soon! For now, you can contact the vendor directly through the contact information provided on the website.'
+          id: 'faq-s2',
+          question: 'What should I do if a vendor is unresponsive?',
+          answer: 'If a vendor doesn\'t respond within 24 hours, we recommend checking their "Trust Score." If you have a serious issue, report it via the "Contact Admin" section, and we will investigate their status.'
         },
         {
-          id: 'faq-7',
-          question: 'What are the shipping costs?',
-          answer: 'Shipping costs is calculated by the vendor typically based on your location and the size/weight of the items.'
-        },
-        {
-          id: 'faq-8',
-          question: 'Do you offer express shipping?',
-          answer: 'No! We do not offer shipping at the moment.'
+          id: 'faq-s3',
+          question: 'Can I pay before seeing the item?',
+          answer: 'For your security, we strongly recommend "Payment on Delivery" for physical goods, especially when meeting on campus. Only pay in advance for trusted, long-standing vendors with high Trust Scores.'
         }
       ]
     },
@@ -102,50 +91,18 @@ export function FAQ() {
       faqs: [
         {
           id: 'faq-9',
-          question: 'What payment methods do you accept?',
-          answer: 'Vendors are responsible for their payment methods. Very soon the website will support several payment methods.'
-        },
-        {
-          id: 'faq-10',
-          question: 'Is payment on delivery available?',
-          answer: 'We strictly advise support for payment on delivery as a payment method. However, some vendors may offer it at their discretion.'
+          question: 'How do payments work?',
+          answer: 'Payments happen directly between you and the vendor. Most student vendors accept Bank Transfers, Cash on Delivery, and OPay/PalmPay. We are currently testing a unified checkout system for future release.'
         },
         {
           id: 'faq-11',
-          question: 'Why are prices different from vendors?',
-          answer: 'LAUTECH Market is a multi-vendor platform, so different vendors may sell the same product at different prices based on their sourcing and business strategy. You can compare prices from multiple vendors before purchasing.'
+          question: 'Why are prices different for the same item?',
+          answer: 'LAUTECH Market is an open marketplace. Different vendors have different sourcing costs. Use our "Compare" tool to find the best deal based on both price and the vendor\'s Trust Score.'
         },
         {
           id: 'faq-12',
-          question: 'Are there any hidden fees?',
-          answer: 'No hidden fees! The price you see is what you pay.'
-        }
-      ]
-    },
-    {
-      id: 'returns',
-      title: 'Returns & Refunds',
-      icon: <Package className="w-5 h-5" />,
-      faqs: [
-        {
-          id: 'faq-13',
-          question: 'What is your return policy?',
-          answer: 'Contact the vendor directly to discuss the return process.'
-        },
-        {
-          id: 'faq-14',
-          question: 'How do I initiate a return?',
-          answer: 'Vendors handle their own return processes. But if you still need help, contact our support team through the Contact page.'
-        },
-        {
-          id: 'faq-15',
-          question: 'How long do refunds take?',
-          answer: 'Refund processing vary according to the vendor and is at their discretion.'
-        },
-        {
-          id: 'faq-16',
-          question: 'Who pays for return shipping?',
-          answer: 'This totally depends on the discussion you must have had with the vendor.'
+          question: 'Are there hidden charges?',
+          answer: 'There are zero hidden platform fees. The price listed is the price you discuss with the vendor. Delivery fees (if applicable) are handled separately between you and the vendor.'
         }
       ]
     },
@@ -156,38 +113,45 @@ export function FAQ() {
       faqs: [
         {
           id: 'faq-17',
-          question: 'How do I become a vendor?',
-          answer: 'To become a vendor: 1) Click "Sell on LAUTECH Market" in the footer 2) Complete the application form 3) Submit required documents 4) Our team will review and contact you.'
+          question: 'How do I start selling?',
+          answer: 'Click "Sell on LAUTECH Market" in the footer. Fill out the application with your business name, WhatsApp contact, and category. Once approved by the Supreme Admin, you can start listing products instantly.'
         },
         {
-          id: 'faq-18',
-          question: 'What are the vendor fees?',
-          answer: 'We currently do not charge any fees at the moment.'
+          id: 'faq-v1',
+          question: 'How can I rank #1 in search results?',
+          answer: 'Rankings are dynamic! To stay at the top: 1) Maintain a high Trust Score by responding quickly. 2) Keep your dashboard open to show the 🟢 Active status. 3) Use high-quality product images.'
+        },
+        {
+          id: 'faq-v2',
+          question: 'What is a "Professional Slug"?',
+          answer: 'It is your unique shop link (e.g., lautechmarket.com/store/your-name). You can share this on your WhatsApp Status or Instagram Bio to direct students straight to your verified catalog.'
         },
         {
           id: 'faq-23',
-          question: 'What is the "Trust Score" on my dashboard?',
-          answer: 'The Trust Score is a dynamic rating from 0-100 based on student feedback about your response time and helpfulness. A higher score increases your product visibility in search results.'
+          question: 'How is my "Trust Score" calculated?',
+          answer: 'Our AI calculates your score based on: Average response time to queries, product availability consistency, and direct student feedback/ratings. Scores above 90% get featured on the "Top Visits" leaderboard.'
         },
         {
-          id: 'faq-24',
-          question: 'How do I get the "Active Now"🟢 status?',
-          answer: 'Simply keep your Vendor Dashboard open while you are available to chat. The system detects your presence and displays a live indicator to students, showing them you are ready to respond.'
+          id: 'faq-18',
+          question: 'Is it free to use?',
+          answer: 'Yes! LAUTECH Market is currently 100% free for student vendors to list and sell. We are dedicated to supporting the university\'s entrepreneurial spirit.'
+        }
+      ]
+    },
+    {
+      id: 'support',
+      title: 'Support',
+      icon: <MessageCircle className="w-5 h-5" />,
+      faqs: [
+        {
+          id: 'faq-4',
+          question: 'How do I contact the Admin?',
+          answer: 'For critical issues, email lautechmarket.help@gmail.com. For quick support, use the WhatsApp button on the Contact page. Our team is usually active between 8:00 AM and 10:00 PM.'
         },
         {
-          id: 'faq-25',
-          question: 'What are "Slugs" and "Taglines"?',
-          answer: 'Slugs allow you to have a professional link (e.g., lautechmarket.com/store/your-business) for your marketing. Taglines are short catchy phrases that appear on your storefront and business cards.'
-        },
-        {
-          id: 'faq-19',
-          question: 'How do vendors get paid?',
-          answer: 'Vendors receive payments directly from buyers according to the goods being purchased.'
-        },
-        {
-          id: 'faq-20',
-          question: 'What support do vendors get?',
-          answer: 'Vendors receive: • Dedicated account manager • Marketing and promotion • Customer support handling.'
+          id: 'faq-sup1',
+          question: 'Can I report a fraudulent vendor?',
+          answer: 'Yes. Safety is our priority. If you encounter a scam or suspicious activity, use the "Report" button on the product page or message the Admin immediately. We have a zero-tolerance policy for fraud.'
         }
       ]
     }
