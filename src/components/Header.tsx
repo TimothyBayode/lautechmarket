@@ -171,6 +171,10 @@ export function Header({ onSearch, categories = [] }: HeaderProps) {
               Contact Support
             </Link>
 
+            <Link to="/faq" className="text-gray-700 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+              FAQ
+            </Link>
+
             {/* Dynamic Vendor Links */}
             {currentVendor ? (
               // Logged in as vendor
@@ -286,8 +290,15 @@ export function Header({ onSearch, categories = [] }: HeaderProps) {
         <div className="md:hidden border-t border-gray-200 bg-white">
           <nav className="px-4 py-2 space-y-4">
             <Link to="/contact"
-              className="block py-2 text-gray-700 hover:text-emerald-600">
+              className="block py-2 text-gray-700 hover:text-emerald-600"
+              onClick={() => setMobileMenuOpen(false)}>
               Contact Support
+            </Link>
+
+            <Link to="/faq"
+              className="block py-2 text-gray-700 hover:text-emerald-600"
+              onClick={() => setMobileMenuOpen(false)}>
+              FAQ
             </Link>
 
             {/* Dynamic Vendor Links for Mobile */}
