@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
-import { 
-  ChevronDown, 
-  ChevronUp, 
-  ShoppingBag, 
-  Truck, 
-  CreditCard, 
-  Package, 
-  User, 
+import {
+  ChevronDown,
+  ChevronUp,
+  ShoppingBag,
+  Truck,
+  CreditCard,
+  Package,
+  User,
   MessageCircle,
   Search
 } from 'lucide-react';
@@ -50,6 +50,16 @@ export function FAQ() {
           id: 'faq-3',
           question: 'Is LAUTECH Market available nationwide?',
           answer: 'No! LAUTECH Market is specifically available for students/vendors within LAUTECH and Ogbomoso. We plan to expand to other universities and cities in the future.'
+        },
+        {
+          id: 'faq-21',
+          question: 'What is the "Instant Buy" ⚡ icon?',
+          answer: 'The ⚡ icon indicates an "Instant Buy" vendor. These are vendors who historically respond to students in under 30 minutes. The 🟢 icon means the vendor is currently online and active on the platform.'
+        },
+        {
+          id: 'faq-22',
+          question: 'How does the "Compare" tool work?',
+          answer: 'You can select up to 3 products by clicking the comparison icon (double arrows) on search results. This allows you to see a side-by-side view of prices, vendor trust scores, and response times in one place.'
         },
         {
           id: 'faq-4',
@@ -155,6 +165,21 @@ export function FAQ() {
           answer: 'We currently do not charge any fees at the moment.'
         },
         {
+          id: 'faq-23',
+          question: 'What is the "Trust Score" on my dashboard?',
+          answer: 'The Trust Score is a dynamic rating from 0-100 based on student feedback about your response time and helpfulness. A higher score increases your product visibility in search results.'
+        },
+        {
+          id: 'faq-24',
+          question: 'How do I get the "Active Now"🟢 status?',
+          answer: 'Simply keep your Vendor Dashboard open while you are available to chat. The system detects your presence and displays a live indicator to students, showing them you are ready to respond.'
+        },
+        {
+          id: 'faq-25',
+          question: 'What are "Slugs" and "Taglines"?',
+          answer: 'Slugs allow you to have a professional link (e.g., lautechmarket.com/store/your-business) for your marketing. Taglines are short catchy phrases that appear on your storefront and business cards.'
+        },
+        {
           id: 'faq-19',
           question: 'How do vendors get paid?',
           answer: 'Vendors receive payments directly from buyers according to the goods being purchased.'
@@ -170,7 +195,7 @@ export function FAQ() {
 
   const filteredCategories = categories.map(category => ({
     ...category,
-    faqs: category.faqs.filter(faq => 
+    faqs: category.faqs.filter(faq =>
       faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
       faq.answer.toLowerCase().includes(searchTerm.toLowerCase())
     )
@@ -178,8 +203,8 @@ export function FAQ() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Header onSearch={() => {}} categories={[]} />
-      
+      <Header onSearch={() => { }} categories={[]} />
+
       <main className="flex-1">
         {/* Hero Section */}
         <div className="bg-emerald-600 text-white py-16">
@@ -222,11 +247,10 @@ export function FAQ() {
               <button
                 key={category.id}
                 onClick={() => setOpenCategory(openCategory === category.id ? null : category.id)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-colors ${
-                  openCategory === category.id
-                    ? 'bg-emerald-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-colors ${openCategory === category.id
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
               >
                 {category.icon}
                 <span>{category.title}</span>
@@ -245,7 +269,7 @@ export function FAQ() {
                       <span>{category.title}</span>
                     </h2>
                   </div>
-                  
+
                   <div className="divide-y divide-gray-200">
                     {category.faqs.map((faq) => (
                       <div key={faq.id} className="p-6">
@@ -262,7 +286,7 @@ export function FAQ() {
                             <ChevronDown className="w-5 h-5 text-gray-500 flex-shrink-0" />
                           )}
                         </button>
-                        
+
                         {openFaqs.has(faq.id) && (
                           <div className="mt-4 pl-2">
                             <div className="border-l-2 border-emerald-500 pl-4">

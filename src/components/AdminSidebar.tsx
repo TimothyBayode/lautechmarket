@@ -1,5 +1,3 @@
-import React from "react";
-import { Link, useLocation } from "react-router-dom";
 import {
     BarChart2,
     Users,
@@ -8,8 +6,16 @@ import {
     ShieldCheck,
     Trophy,
     LogOut,
-    X
+    X,
+    PieChart,
+    Search,
+    Flame,
+    Activity,
+    MoveDown,
+    Star,
+    Mail
 } from "lucide-react";
+import { getCurrentUser } from "../services/auth";
 
 interface AdminSidebarProps {
     activeTab: string;
@@ -22,9 +28,15 @@ interface AdminSidebarProps {
 export function AdminSidebar({ activeTab, onTabChange, onLogout, isOpen, onClose }: AdminSidebarProps) {
     const menuItems = [
         { id: "overview", label: "Overview", icon: BarChart2 },
+        { id: "category-stats", label: "Category Stats", icon: PieChart },
+        { id: "market-intelligence", label: "Market Intelligence", icon: Activity },
+        { id: "demand-gap", label: "Demand Gap", icon: MoveDown },
+        { id: "search-analytics", label: "Search Analytics", icon: Search },
+        { id: "product-interactions", label: "Product Hotlist", icon: Flame },
         { id: "vendors", label: "Vendors", icon: Users },
         { id: "banners", label: "Homepage Banners", icon: Megaphone },
         { id: "categories", label: "Categories", icon: Tag },
+        { id: "curation", label: "Curation & Top 3", icon: Star },
         { id: "verification", label: "Verification", icon: ShieldCheck },
         { id: "leaderboard", label: "Top Visits", icon: Trophy },
     ];
@@ -57,7 +69,7 @@ export function AdminSidebar({ activeTab, onTabChange, onLogout, isOpen, onClose
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 py-6 px-3 space-y-1">
+                <nav className="flex-1 py-6 px-3 space-y-1 overflow-y-auto scrollbar-hide">
                     {menuItems.map((item) => {
                         const Icon = item.icon;
                         const isActive = activeTab === item.id;
@@ -82,6 +94,17 @@ export function AdminSidebar({ activeTab, onTabChange, onLogout, isOpen, onClose
                         );
                     })}
                 </nav>
+
+                {/* User Info */}
+                <div className="px-6 py-4 border-t border-white/10 bg-black/10">
+                    <div className="flex items-center space-x-3 mb-1">
+                        <Mail className="w-4 h-4 text-white/40" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Logged in as</span>
+                    </div>
+                    <p className="text-xs font-bold truncate text-emerald-400">
+                        {getCurrentUser()?.email || "Unknown Admin"}
+                    </p>
+                </div>
 
                 {/* Footer/Logout */}
                 <div className="p-4 border-t border-white/10">

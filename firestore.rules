@@ -12,7 +12,12 @@ service cloud.firestore {
     
     // Check if user is the admin
     function isAdmin() {
-      return isAuthenticated() && request.auth.token.email == "admin@lautech.edu.ng";
+      return isAuthenticated() && 
+        request.auth.token.email.lower() in [
+          "lautechmarket.help@gmail.com",
+          "admin@lautech.edu.ng", 
+          "admin@lautechmarket.com.ng"
+        ];
     }
     
     // Check if user is the vendor who owns the resource
@@ -21,84 +26,100 @@ service cloud.firestore {
     }
     
     // ===== PRODUCTS =====
-    // Anyone can read products
-    // Vendors can create products
-    // Vendors can update/delete their own products
-    // Admin can do anything
     match /products/{productId} {
       allow read: if true;
-      allow create: if isAuthenticated();
-      allow update, delete: if isAdmin() || 
-        (isAuthenticated() && resource.data.vendorId == request.auth.uid);
+      allow create: if isAuthenticated() && 
+        request.resource.data.vendorId == request.auth.uid &&
+        request.resource.data.name.size() > 0 &&
+        request.resource.data.price >= 0;
+      allow update: if isAdmin() || (isVendor(resource.data.vendorId) && 
+        request.resource.data.vendorId == resource.data.vendorId) ||
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['orderCount', 'viewCount', 'cartCount', 'compareCount']));
+      allow delete: if isAdmin() || isVendor(resource.data.vendorId);
     }
     
     // ===== VENDORS =====
-    // Anyone can read vendor info (for store pages)
-    // Vendors can create their own profile and update it
-    // Admin can do anything
     match /vendors/{vendorId} {
       allow read: if true;
       allow create: if isAuthenticated() && request.auth.uid == vendorId;
-      allow update: if isAdmin() || isVendor(vendorId);
+      allow update: if isAdmin() || (isVendor(vendorId) && 
+        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['isVerified'])));
       allow delete: if isAdmin();
     }
     
     // ===== CATEGORIES =====
-    // Anyone can read categories
-    // Only admin can manage categories
     match /categories/{categoryId} {
       allow read: if true;
       allow write: if isAdmin();
     }
     
     // ===== ANNOUNCEMENTS =====
-    // Anyone can read announcements
-    // Only admin can manage announcements
     match /announcements/{announcementId} {
       allow read: if true;
       allow write: if isAdmin();
     }
     
     // ===== VERIFICATION REQUESTS =====
-    // Logged-in users can read and create verification requests
-    // Only admin can update/delete (approve/reject)
     match /verificationRequests/{requestId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.vendorId == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.vendorId == request.auth.uid;
       allow update, delete: if isAdmin();
     }
     
     // ===== ANALYTICS =====
-    // Anyone can write (to track visits from homepage)
-    // Only admin can read (for dashboard)
     match /analytics/{docId} {
-      allow read: if true;
-      allow write: if true;
+      allow read, write: if true;
     }
     
-    // ===== ADMIN COLLECTION (if exists) =====
-    match /admins/{adminId} {
-      allow read, write: if isAdmin();
+    match /analytics_events/{docId} {
+      allow read, write: if true;
     }
     
     // ===== VENDOR VISITS =====
-    // Anyone can read vendor visit counts (for leaderboard)
-    // Write handled by API (server-side with admin SDK)
-    // Admin can manage all
     match /vendorVisits/{vendorId} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read, write: if true;
       
-      // Subcollection for IP hashes
       match /ips/{ipHash} {
-        allow read, write: if isAdmin();
+        allow read: if isAdmin() || isVendor(vendorId);
+        allow write: if true;
       }
     }
     
     // ===== VISIT HISTORY =====
-    // Only admin can read/write visit history
     match /visitHistory/{periodId} {
-      allow read, write: if isAdmin();
+      allow read: if isAuthenticated(); // Allow vendors to see past rankings
+      allow write: if isAdmin();
+    }
+
+    // ===== SEARCHES =====
+    match /searches/{searchId} {
+      allow read: if isAdmin();
+      allow create: if true;
+      allow update, delete: if isAdmin();
+    }
+
+    // ===== BUCKETS =====
+    match /buckets/{bucketId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ===== CURATION =====
+    match /curatedLists/{listId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ===== VENDOR CONTACTS =====
+    match /vendorContacts/{contactId} {
+      allow create, read: if true;
+      allow update: if isAdmin();
+    }
+
+    // ===== VENDOR METRICS =====
+    match /vendorMetrics/{vendorId} {
+      allow read: if true;
+      allow write: if true; // Required for student feedback triggers to update trust scores
     }
   }
 }

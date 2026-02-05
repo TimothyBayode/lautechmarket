@@ -1,11 +1,17 @@
 # LAUTECH Market - Robots.txt
-# Allow all search engines to crawl the site
+# Empowering Ogbomoso Students and Vendors
 
 User-agent: *
 Allow: /
+Allow: /product/
+Allow: /store/
+Allow: /category/
 
-# Block admin pages from indexing
-Disallow: /admin
+# Block administrative and sensitive paths
+Disallow: /admin/
+Disallow: /vendor/dashboard/
+Disallow: /vendor/register/
+Disallow: /vendor/login/
 
-# Sitemap location
+# Sitemap location for AI and Search Engines
 Sitemap: https://lautechmarket.com.ng/sitemap.xml

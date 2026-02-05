@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Search, ShoppingCart, Menu, X, ChevronDown } from "lucide-react";
+import { Search, ShoppingCart, Menu, X, Mic } from "lucide-react";
 import { getCart } from "../utils/cart";
-import { vendorAuthStateListener, logoutVendor } from "../services/vendorAuth";
-import { Vendor } from "../types";
-import { logSearch } from "../services/analytics";
+import { vendorAuthStateListener, logoutVendor, getAllVendors } from "../services/vendorAuth";
+import { getAllProducts } from "../services/products";
+import { getSearchSuggestions } from "../services/ranking";
+import { Vendor, Product } from "../types";
+import { SearchSuggestions } from "./SearchSuggestions";
+
 
 interface HeaderProps {
   onSearch?: (query: string) => void;
@@ -21,11 +24,16 @@ export function Header({ onSearch, categories = [] }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [cartCount, setCartCount] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [currentVendor, setCurrentVendor] = useState<Vendor | null>(null);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [suggestions, setSuggestions] = useState({ products: [], vendors: [], categories: [] });
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [allVendors, setAllVendors] = useState<Vendor[]>([]);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
 
   const location = useLocation();
   const navigate = useNavigate();
+
   const isOnDashboard = location.pathname === "/vendor/dashboard";
 
   // Handle vendor logout
@@ -57,71 +65,109 @@ export function Header({ onSearch, categories = [] }: HeaderProps) {
     return () => window.removeEventListener("cartUpdated", updateCartCount);
   }, []);
 
-  // Debounced search logging
+  // Fetch data for suggestions
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (searchQuery.trim().length >= 3) {
-        logSearch(searchQuery);
-      }
-    }, 1500); // Wait 1.5 seconds after typing stops
+    const fetchData = async () => {
+      const [p, v] = await Promise.all([getAllProducts(), getAllVendors()]);
+      setAllProducts(p);
+      setAllVendors(v);
+    };
+    fetchData();
+  }, []);
 
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
+  // Keyboard Shortcuts (Cmd+K)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        document.getElementById('header-search')?.focus();
+      }
+
+      if (isSearchFocused) {
+        if (e.key === 'ArrowDown') {
+          setSelectedIndex(prev => Math.min(prev + 1, suggestions.products.length + suggestions.vendors.length + suggestions.categories.length - 1));
+        } else if (e.key === 'ArrowUp') {
+          setSelectedIndex(prev => Math.max(prev - 1, -1));
+        } else if (e.key === 'Escape') {
+          setIsSearchFocused(false);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSearchFocused, suggestions]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
     onSearch?.(query);
+
+    if (query.length > 0) {
+      const results = getSearchSuggestions(query, allProducts, allVendors, categories);
+      setSuggestions(results as any);
+      setIsSearchFocused(true);
+    } else {
+      setSuggestions({ products: [], vendors: [], categories: [] });
+    }
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+    <header className="glass-header">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center space-x-2">
-            <img src="/both.svg" alt="LAUTECH Market" className="w-40" />
+            <img src="/both.svg" alt="LAUTECH Market" className="w-40 dark:invert" />
           </Link>
 
-          <div className="hidden md:flex flex-1 max-w-2xl mx-8">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <div className="hidden md:flex flex-1 max-w-2xl mx-8 relative">
+            <div className={`relative w-full group transition-all duration-300 ${isSearchFocused ? 'scale-[1.02] z-[101]' : ''}`}>
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-emerald-600 transition-colors group-focus-within:text-emerald-500" />
               <input
+                id="header-search"
                 type="text"
-                placeholder="Search products and vendors..."
+                placeholder="Search products and vendors... (Ctrl+K)"
                 value={searchQuery}
                 onChange={handleSearchChange}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                onFocus={() => setIsSearchFocused(true)}
+                className="w-full pl-10 pr-12 py-2.5 border-2 border-emerald-600 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100/50 dark:focus:ring-emerald-900/30 focus:border-emerald-600 transition-all shadow-sm placeholder:text-gray-400 bg-white dark:bg-slate-800 dark:text-white"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const recognition = new (window as any).webkitSpeechRecognition();
+                  recognition.onresult = (event: any) => {
+                    const speechToText = event.results[0][0].transcript;
+                    setSearchQuery(speechToText);
+                    onSearch?.(speechToText);
+                  };
+                  recognition.start();
+                }}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 hover:bg-gray-100 dark:hover:bg-slate-700/50 rounded-full text-emerald-600 transition-colors"
+                title="Voice Search"
+              >
+                <Mic className="w-5 h-5" />
+              </button>
+              <SearchSuggestions
+                suggestions={suggestions}
+                onSearch={(q) => { setSearchQuery(q); onSearch?.(q); }}
+                onClose={() => setIsSearchFocused(false)}
+                isVisible={isSearchFocused}
+                selectedIndex={selectedIndex}
               />
             </div>
+
+            {/* Spotlight Overlay */}
+            {isSearchFocused && (
+              <div
+                className="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-[100] transition-all duration-300"
+                onClick={() => setIsSearchFocused(false)}
+              />
+            )}
           </div>
 
           <nav className="hidden md:flex items-center space-x-6">
-            <div className="relative">
-              <button
-                onClick={() => setCategoriesOpen(!categoriesOpen)}
-                className="flex items-center space-x-1 text-gray-700 hover:text-emerald-600 transition-colors"
-              >
-                <span>Categories</span>
-                <ChevronDown className="w-4 h-4" />
-              </button>
 
-              {categoriesOpen && (
-                <div className="absolute top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2">
-                  {categories.map((category) => (
-                    <Link
-                      key={category}
-                      to={`/category/${category.toLowerCase()}`}
-                      className="block px-4 py-2 text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
-                      onClick={() => setCategoriesOpen(false)}
-                    >
-                      {category}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <Link to="/contact" className="text-gray-700 hover:text-emerald-600 transition-colors">
+            <Link to="/contact" className="text-gray-700 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
               Contact Support
             </Link>
 
@@ -132,7 +178,7 @@ export function Header({ onSearch, categories = [] }: HeaderProps) {
                 // On dashboard - show Logout
                 <button
                   onClick={handleLogout}
-                  className="text-gray-700 hover:text-emerald-600 transition-colors"
+                  className="text-gray-700 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                 >
                   Logout
                 </button>
@@ -140,7 +186,7 @@ export function Header({ onSearch, categories = [] }: HeaderProps) {
                 // On other pages - show My Store
                 <Link
                   to="/vendor/dashboard"
-                  className="text-gray-700 hover:text-emerald-600 transition-colors"
+                  className="text-gray-700 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                 >
                   My Store
                 </Link>
@@ -150,21 +196,22 @@ export function Header({ onSearch, categories = [] }: HeaderProps) {
               <>
                 <Link
                   to="/vendor/register"
-                  className="text-gray-700 hover:text-emerald-600 transition-colors"
+                  className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-emerald-700 transition-all shadow-sm hover:shadow-md"
                 >
                   Sell Now
                 </Link>
                 <Link
                   to="/vendor/login"
-                  className="text-gray-700 hover:text-emerald-600 transition-colors"
+                  className="text-gray-700 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                 >
                   Vendor Login
                 </Link>
               </>
             )}
 
+
             <Link to="/cart" className="relative">
-              <ShoppingCart className="w-6 h-6 text-gray-700 hover:text-emerald-600 transition-colors" />
+              <ShoppingCart className="w-6 h-6 text-gray-700 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors" />
               {cartCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-emerald-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                   {cartCount}
@@ -196,15 +243,40 @@ export function Header({ onSearch, categories = [] }: HeaderProps) {
           </div>
         </div>
 
-        <div className="md:hidden pb-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+        <div className="md:hidden pb-4 relative z-[101]">
+          <div className={`relative w-full group transition-all duration-300 ${isSearchFocused ? 'scale-[1.02]' : ''}`}>
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-emerald-600 transition-colors group-focus-within:text-emerald-500" />
             <input
+              id="mobile-header-search"
               type="text"
               placeholder="Search products..."
               value={searchQuery}
               onChange={handleSearchChange}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              onFocus={() => setIsSearchFocused(true)}
+              className="w-full pl-10 pr-12 py-2.5 border-2 border-emerald-600 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100/50 dark:focus:ring-emerald-900/30 focus:border-emerald-600 transition-all shadow-sm placeholder:text-gray-400 bg-white dark:bg-slate-800 dark:text-white"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                const recognition = new (window as any).webkitSpeechRecognition();
+                recognition.onresult = (event: any) => {
+                  const speechToText = event.results[0][0].transcript;
+                  setSearchQuery(speechToText);
+                  onSearch?.(speechToText);
+                };
+                recognition.start();
+              }}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 hover:bg-gray-100 dark:hover:bg-slate-700/50 rounded-full text-emerald-600 transition-colors"
+              title="Voice Search"
+            >
+              <Mic className="w-5 h-5" />
+            </button>
+            <SearchSuggestions
+              suggestions={suggestions}
+              onSearch={(q) => { setSearchQuery(q); onSearch?.(q); }}
+              onClose={() => setIsSearchFocused(false)}
+              isVisible={isSearchFocused}
+              selectedIndex={selectedIndex}
             />
           </div>
         </div>

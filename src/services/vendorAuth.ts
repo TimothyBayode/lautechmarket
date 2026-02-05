@@ -35,7 +35,13 @@ const fetchVendorData = async (userId: string): Promise<Vendor | null> => {
     try {
         const vendorDoc = await getDoc(doc(db, "vendors", userId));
         if (vendorDoc.exists()) {
-            return { id: vendorDoc.id, ...vendorDoc.data() } as Vendor;
+            const data = vendorDoc.data();
+            return {
+                id: vendorDoc.id,
+                ...data,
+                createdAt: data.createdAt?.toDate() || new Date(),
+                verifiedAt: data.verifiedAt?.toDate() || null,
+            } as Vendor;
         }
     } catch (error) {
         console.error("Error fetching vendor data:", error);
@@ -66,12 +72,15 @@ export const registerVendor = async (
         await sendEmailVerification(user);
 
         // Create vendor document in Firestore
+        const baseSlug = businessName.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
         const vendorData: Omit<Vendor, "id"> = {
             name: name.trim(),
             email: email.toLowerCase().trim(),
             password: "", // Don't store password in Firestore
             whatsappNumber: whatsappNumber.trim(),
             businessName: businessName.trim(),
+            slug: baseSlug,
+            tagline: "",
             description: description?.trim() || "",
             storeAddress: storeAddress?.trim() || "",
             createdAt: new Date(),
@@ -208,6 +217,34 @@ export const updateVendorProfile = async (
         throw error;
     }
 };
+
+// Get vendor by ID
+export const getVendorById = async (vendorId: string): Promise<Vendor | null> => {
+    return fetchVendorData(vendorId);
+};
+
+// Get vendor by slug
+export const getVendorBySlug = async (slug: string): Promise<Vendor | null> => {
+    try {
+        const q = query(collection(db, "vendors"), where("slug", "==", slug));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+            const doc = querySnapshot.docs[0];
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                createdAt: data.createdAt?.toDate() || new Date(),
+                verifiedAt: data.verifiedAt?.toDate() || null,
+            } as Vendor;
+        }
+    } catch (error) {
+        console.error("Error fetching vendor by slug:", error);
+    }
+    return null;
+};
+
 
 // Get all vendors from Firestore
 export const getAllVendors = async (): Promise<Vendor[]> => {

@@ -11,12 +11,14 @@ import {
     doc,
     getDoc,
     getDocs,
-    setDoc,
     writeBatch,
     query,
     orderBy,
     limit,
     Timestamp,
+    setDoc,
+    updateDoc,
+    increment,
 } from "firebase/firestore";
 
 const COLLECTION_NAME = "vendorVisits";
@@ -50,49 +52,95 @@ export const trackStoreVisit = async (vendorId: string, isExternal: boolean): Pr
             body: JSON.stringify({ vendorId, isExternal }),
         });
 
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+
         const data = await response.json();
         return data.counted === true;
     } catch (error) {
-        console.error("Error tracking store visit:", error);
-        return false;
+        console.warn("API tracking failed, falling back to client-side write (Dev Mode):", error);
+
+        // Fallback: Direct Firestore write for development/offline handling
+        try {
+            console.log("[VendorVisits] Tracking visit for ID:", vendorId);
+            const visitRef = doc(db, COLLECTION_NAME, vendorId);
+            const visitDoc = await getDoc(visitRef);
+
+            if (visitDoc.exists()) {
+                await updateDoc(visitRef, {
+                    count: increment(1),
+                    lastVisit: Timestamp.now()
+                });
+                console.log("[VendorVisits] Updated visit count for:", vendorId);
+            } else {
+                await setDoc(visitRef, {
+                    count: 1,
+                    vendorId: vendorId,
+                    lastVisit: Timestamp.now()
+                });
+                console.log("[VendorVisits] Created first visit for:", vendorId);
+            }
+            return true;
+        } catch (dbError) {
+            console.error("[VendorVisits] Client-side fallback failed:", dbError);
+            return false;
+        }
     }
 };
 
-/**
- * Get the visits leaderboard (all vendors ranked by visit count)
- */
 export const getVisitsLeaderboard = async (): Promise<VendorVisitData[]> => {
     try {
+        console.log("[VendorVisits] Fetching leaderboard...");
         const visitsRef = collection(db, COLLECTION_NAME);
         const snapshot = await getDocs(visitsRef);
+        console.log("[VendorVisits] Found", snapshot.size, "visit records");
 
-        const leaderboard: VendorVisitData[] = [];
-
-        for (const docSnap of snapshot.docs) {
-            const data = docSnap.data();
-
-            // Get vendor name from vendors collection
-            const vendorDoc = await getDoc(doc(db, "vendors", docSnap.id));
-            const vendorName = vendorDoc.exists()
-                ? vendorDoc.data()?.businessName || "Unknown Vendor"
-                : "Unknown Vendor";
-
-            leaderboard.push({
-                vendorId: docSnap.id,
-                vendorName,
-                count: data.count || 0,
-            });
+        if (snapshot.empty) {
+            return [];
         }
 
-        // Sort by count descending and add ranks
-        leaderboard.sort((a, b) => b.count - a.count);
-        leaderboard.forEach((item, index) => {
-            item.rank = index + 1;
+        const leaderboardPromises = snapshot.docs.map(async (docSnap) => {
+            const data = docSnap.data();
+            const vendorId = docSnap.id;
+
+            try {
+                // Get vendor name from vendors collection
+                const vendorRef = doc(db, "vendors", vendorId);
+                const vendorDoc = await getDoc(vendorRef);
+                const vendorName = vendorDoc.exists()
+                    ? vendorDoc.data()?.businessName || "Unknown Vendor"
+                    : "Unknown Vendor";
+
+                return {
+                    vendorId,
+                    vendorName,
+                    count: data.count || 0,
+                };
+            } catch (nameError) {
+                console.warn(`[VendorVisits] Could not fetch name for vendor ${vendorId}:`, nameError);
+                return {
+                    vendorId,
+                    vendorName: "Unknown Vendor",
+                    count: data.count || 0,
+                };
+            }
         });
 
-        return leaderboard;
+        const leaderboard = await Promise.all(leaderboardPromises);
+
+        // Sort by count descending and add ranks
+        const sorted = leaderboard
+            .sort((a, b) => b.count - a.count)
+            .map((item, index) => ({
+                ...item,
+                rank: index + 1,
+            }));
+
+        console.log("[VendorVisits] Leaderboard prepared with", sorted.length, "ranked items");
+        return sorted;
     } catch (error) {
-        console.error("Error getting visits leaderboard:", error);
+        console.error("[VendorVisits] FATAL Error getting visits leaderboard:", error);
         return [];
     }
 };

@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { User, Mail, Lock, Phone, Store, MapPin, Eye, EyeOff } from "lucide-react";
+import { User, Mail, Lock, Store, MapPin, Eye, EyeOff } from "lucide-react";
 import { registerVendor } from "../../services/vendorAuth";
 
 /**

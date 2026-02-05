@@ -18,9 +18,11 @@ import { trackVisit } from "./services/analytics";
 import { ChatbotButton } from "./components/ChatbotButton";
 import ScrollToTop from "./components/ScrollToTop";
 import { auth } from "./firebase";
+import { FeedbackPrompter } from "./components/FeedbackPrompter";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import { ToastContainer } from "./components/ToastContainer";
 
-// Track visit on app load
-trackVisit();
+
 
 /**
  * AdminProtectedRoute Component
@@ -30,14 +32,20 @@ trackVisit();
  */
 function AdminProtectedRoute({ children }: { children: JSX.Element }) {
   const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
+    const adminEmails = [
+      "lautechmarket.help@gmail.com",
+      "admin@lautech.edu.ng",
+      "admin@lautechmarket.com.ng"
+    ];
+
     const unsubscribe = authStateListener((user) => {
-      if (user) {
-        setIsAuthenticated(true);
+      if (user && user.email && adminEmails.includes(user.email.toLowerCase())) {
+        setIsAuthorized(true);
       } else {
-        setIsAuthenticated(false);
+        setIsAuthorized(false);
       }
       setLoading(false);
     });
@@ -52,7 +60,7 @@ function AdminProtectedRoute({ children }: { children: JSX.Element }) {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthorized) {
     return <Navigate to="/admin/login" />;
   }
 
@@ -111,49 +119,57 @@ function VendorProtectedRoute({ children }: { children: JSX.Element }) {
  * Main application component with routing configuration.
  */
 export default function App() {
+  useEffect(() => {
+    trackVisit();
+  }, []);
+
   return (
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <ScrollToTop />
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<Home />} />
-        <Route path="/category/:category" element={<Home />} />
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/faq" element={<FAQ />} />
-        <Route path="/product/:id" element={<ProductDetail />} />
+      <ErrorBoundary>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<Home />} />
+          <Route path="/category/:category" element={<Home />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/faq" element={<FAQ />} />
+          <Route path="/product/:id" element={<ProductDetail />} />
 
-        {/* Admin Routes */}
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route
-          path="/admin/dashboard"
-          element={
-            <AdminProtectedRoute>
-              <AdminDashboard />
-            </AdminProtectedRoute>
-          }
-        />
+          {/* Admin Routes */}
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route
+            path="/admin/dashboard"
+            element={
+              <AdminProtectedRoute>
+                <AdminDashboard />
+              </AdminProtectedRoute>
+            }
+          />
 
-        {/* Vendor Routes */}
-        <Route path="/vendor/register" element={<VendorRegister />} />
-        <Route path="/vendor/login" element={<VendorLogin />} />
-        <Route path="/vendor/verify-email" element={<VerifyEmail />} />
-        <Route
-          path="/vendor/dashboard"
-          element={
-            <VendorProtectedRoute>
-              <VendorDashboard />
-            </VendorProtectedRoute>
-          }
-        />
+          {/* Vendor Routes */}
+          <Route path="/vendor/register" element={<VendorRegister />} />
+          <Route path="/vendor/login" element={<VendorLogin />} />
+          <Route path="/vendor/verify-email" element={<VerifyEmail />} />
+          <Route
+            path="/vendor/dashboard"
+            element={
+              <VendorProtectedRoute>
+                <VendorDashboard />
+              </VendorProtectedRoute>
+            }
+          />
 
-        {/* Public Vendor Store */}
-        <Route path="/store/:vendorId" element={<VendorStore />} />
+          {/* Public Vendor Store */}
+          <Route path="/store/:vendorId" element={<VendorStore />} />
 
-        {/* Fallback Route */}
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
+          {/* Fallback Route */}
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </ErrorBoundary>
       <ChatbotButton />
+      <FeedbackPrompter />
+      <ToastContainer />
     </BrowserRouter>
   );
 }

@@ -1,0 +1,16 @@
+﻿src/pages/vendor/VendorDashboard.tsx(10,5): error TS6133: 'Menu' is declared but its value is never read.
+src/pages/vendor/VendorDashboard.tsx(12,5): error TS6133: 'PlusCircle' is declared but its value is never read.
+src/pages/vendor/VendorDashboard.tsx(13,5): error TS6133: 'CheckCircle' is declared but its value is never read.
+src/pages/vendor/VendorDashboard.tsx(14,14): error TS6133: 'ClockIcon' is declared but its value is never read.
+src/pages/vendor/VendorDashboard.tsx(28,5): error TS6133: 'Camera' is declared but its value is never read.
+src/pages/vendor/VendorDashboard.tsx(29,5): error TS6133: 'ShoppingCart' is declared but its value is never read.
+src/pages/vendor/VendorDashboard.tsx(30,5): error TS6133: 'LogOut' is declared but its value is never read.
+src/pages/vendor/VendorDashboard.tsx(31,5): error TS6133: 'Eye' is declared but its value is never read.
+src/pages/vendor/VendorDashboard.tsx(32,5): error TS6133: 'Search' is declared but its value is never read.
+src/pages/vendor/VendorDashboard.tsx(33,5): error TS6133: 'BarChart3' is declared but its value is never read.
+src/pages/vendor/VendorDashboard.tsx(34,5): error TS6133: 'Users' is declared but its value is never read.
+src/pages/vendor/VendorDashboard.tsx(35,5): error TS6133: 'DollarSign' is declared but its value is never read.
+src/pages/vendor/VendorDashboard.tsx(36,5): error TS6133: 'ShoppingBag' is declared but its value is never read.
+src/pages/vendor/VendorDashboard.tsx(37,5): error TS6133: 'Save' is declared but its value is never read.
+src/pages/vendor/VendorDashboard.tsx(38,5): error TS6133: 'Sparkles' is declared but its value is never read.
+src/pages/vendor/VendorDashboard.tsx(56,5): error TS6133: 'trackStoreVisit' is declared but its value is never read.

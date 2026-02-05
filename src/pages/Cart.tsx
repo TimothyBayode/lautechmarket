@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Trash2, Plus, Minus, MessageCircle, ShoppingBag } from "lucide-react";
 import { Header } from "../components/Header";
@@ -19,22 +19,6 @@ const formatPrice = (price: number): string => {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(price);
-};
-
-export const addToCart = (product: Product, quantity: number = 1) => {
-  const cart = getCart();
-  const existingItem = cart.find((item) => item.id === product.id);
-
-  if (existingItem) {
-    existingItem.quantity += quantity;
-  } else {
-    cart.push({
-      ...product,
-      quantity: quantity,
-    });
-  }
-
-  localStorage.setItem("cart", JSON.stringify(cart));
 };
 
 export function Cart() {
@@ -87,16 +71,16 @@ export function Cart() {
 
   if (cart.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
-        <Header onSearch={() => {}} categories={[]} />
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex flex-col">
+        <Header onSearch={() => { }} categories={[]} />
 
         <main className="flex-1 flex items-center justify-center px-4">
           <div className="text-center">
-            <ShoppingBag className="w-24 h-24 text-gray-300 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            <ShoppingBag className="w-24 h-24 text-gray-300 dark:text-slate-700 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
               Your cart is empty
             </h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-slate-400 mb-6">
               Add some products to get started!
             </p>
             <Link
@@ -114,11 +98,11 @@ export function Cart() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Header onSearch={() => {}} categories={[]} />
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex flex-col transition-colors duration-300">
+      <Header onSearch={() => { }} categories={[]} />
 
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Shopping Cart</h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Shopping Cart</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Cart Items */}
@@ -126,10 +110,10 @@ export function Cart() {
             {Array.from(vendorGroups.entries()).map(([vendor, items]) => (
               <div
                 key={vendor}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
+                className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden"
               >
-                <div className="bg-gray-50 px-6 py-3 border-b border-gray-200 flex items-center justify-between">
-                  <h3 className="font-semibold text-gray-900">
+                <div className="bg-gray-50 dark:bg-slate-900/50 px-6 py-3 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
+                  <h3 className="font-semibold text-gray-900 dark:text-white">
                     Vendor: {vendor}
                   </h3>
                   <a
@@ -146,7 +130,7 @@ export function Cart() {
                   </a>
                 </div>
 
-                <div className="divide-y divide-gray-200">
+                <div className="divide-y divide-gray-200 dark:divide-slate-700">
                   {items.map((item) => (
                     <div
                       key={item.product.id}
@@ -161,14 +145,14 @@ export function Cart() {
                       <div className="flex-1 min-w-0">
                         <Link
                           to={`/product/${item.product.id}`}
-                          className="font-semibold text-gray-900 hover:text-emerald-600 transition-colors block mb-1"
+                          className="font-semibold text-gray-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors block mb-1"
                         >
                           {item.product.name}
                         </Link>
-                        <p className="text-sm text-gray-600 mb-2">
+                        <p className="text-sm text-gray-600 dark:text-slate-400 mb-2">
                           {item.product.category}
                         </p>
-                        <p className="text-lg font-bold text-gray-900">
+                        <p className="text-lg font-bold text-gray-900 dark:text-white">
                           ₦{formatPrice(item.product.price)}
                         </p>
                       </div>
@@ -182,11 +166,11 @@ export function Cart() {
                                 item.quantity - 1
                               )
                             }
-                            className="w-8 h-8 rounded-lg border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                            className="w-8 h-8 rounded-lg border border-gray-300 dark:border-slate-600 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
                           >
-                            <Minus className="w-4 h-4" />
+                            <Minus className="w-4 h-4 text-gray-600 dark:text-slate-400" />
                           </button>
-                          <span className="text-lg font-semibold w-12 text-center">
+                          <span className="text-lg font-semibold w-12 text-center dark:text-white">
                             {item.quantity}
                           </span>
                           <button
@@ -196,9 +180,9 @@ export function Cart() {
                                 item.quantity + 1
                               )
                             }
-                            className="w-8 h-8 rounded-lg border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                            className="w-8 h-8 rounded-lg border border-gray-300 dark:border-slate-600 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
                           >
-                            <Plus className="w-4 h-4" />
+                            <Plus className="w-4 h-4 text-gray-600 dark:text-slate-400" />
                           </button>
                         </div>
 
@@ -218,22 +202,22 @@ export function Cart() {
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-24">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 p-6 sticky top-24">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
                 Order Summary
               </h2>
 
               <div className="space-y-4 mb-6">
-                <div className="flex justify-between text-gray-600">
+                <div className="flex justify-between text-gray-600 dark:text-slate-400">
                   <span>
                     Subtotal (
                     {cart.reduce((sum, item) => sum + item.quantity, 0)} items)
                   </span>
-                  <span className="font-semibold">₦{formatPrice(total)}</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">₦{formatPrice(total)}</span>
                 </div>
 
-                <div className="border-t border-gray-200 pt-4">
-                  <div className="flex justify-between text-lg font-bold text-gray-900">
+                <div className="border-t border-gray-200 dark:border-slate-700 pt-4">
+                  <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white">
                     <span>Total</span>
                     <span>₦{formatPrice(total)}</span>
                   </div>
@@ -241,13 +225,13 @@ export function Cart() {
               </div>
 
               <div className="space-y-3">
-                <p className="text-sm text-gray-600 text-center">
+                <p className="text-sm text-gray-600 dark:text-slate-400 text-center">
                   Order from each vendor separately via WhatsApp
                 </p>
 
                 <Link
                   to="/"
-                  className="block w-full text-center bg-gray-100 text-gray-700 py-3 px-6 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                  className="block w-full text-center bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 py-3 px-6 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors font-medium"
                 >
                   Continue Shopping
                 </Link>

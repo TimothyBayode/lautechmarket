@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Lock, Mail, Store, Loader2 } from "lucide-react";
 import { loginVendor, sendVendorPasswordReset } from "../../services/vendorAuth";
+import { trackVendorActivity } from "../../services/vendorActivity";
+import { auth } from "../../firebase";
 
 /**
  * VendorLogin Component
@@ -47,6 +49,10 @@ export function VendorLogin() {
 
         try {
             await loginVendor(email, password);
+            // Track activity
+            if (auth.currentUser) {
+                await trackVendorActivity(auth.currentUser.uid);
+            }
             navigate("/vendor/dashboard");
         } catch (err: any) {
             console.error("Login error:", err);

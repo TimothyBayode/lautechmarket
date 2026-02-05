@@ -10,6 +10,7 @@ export const fetchProducts = async (): Promise<Product[]> => {
       return {
         id: docSnapshot.id,
         ...data,
+        price: Number(data.price) || 0,
         createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : undefined),
         updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : (data.updatedAt ? new Date(data.updatedAt) : undefined),
       } as Product;

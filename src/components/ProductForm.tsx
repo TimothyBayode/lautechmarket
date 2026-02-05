@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useRef } from "react";
-import { X, Upload, Loader2 } from "lucide-react";
+import { X, Upload, Loader2, ChevronDown, Layers, Tag } from "lucide-react";
 import { Product } from "../types";
 import {
+    fetchBuckets,
     fetchCategories,
-    addCategory,
-    categoryExists,
+    Bucket,
+    Category
 } from "../services/categories";
 import { uploadImage } from "../services/storage";
 
@@ -14,25 +15,24 @@ interface ProductFormProps {
     onCancel: () => void;
     vendorName?: string; // Pre-filled vendor name (read-only)
     whatsappNumber?: string; // Pre-filled whatsapp number (read-only)
-    canAddCategory?: boolean; // Allow adding new categories (admin only)
 }
 
-export function ProductForm({ product, onSave, onCancel, vendorName, whatsappNumber, canAddCategory = false }: ProductFormProps) {
-    const [formData, setFormData] = useState<Product>({
+export function ProductForm({ product, onSave, onCancel, vendorName, whatsappNumber }: ProductFormProps) {
+    const [formData, setFormData] = useState<Omit<Product, 'price'> & { price: number | string }>({
         id: "",
         name: "",
         description: "",
-        price: 0,
+        price: product ? product.price : "",
         category: "",
+        bucketId: "",
         image: "",
         inStock: true,
         whatsappNumber: "",
         vendorName: "",
     });
 
-    const [categories, setCategories] = useState<string[]>([]);
-    const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
-    const [newCategory, setNewCategory] = useState("");
+    const [buckets, setBuckets] = useState<Bucket[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [imagePreview, setImagePreview] = useState<string>("");
@@ -40,29 +40,51 @@ export function ProductForm({ product, onSave, onCancel, vendorName, whatsappNum
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        loadCategories();
+        loadInitialData();
     }, []);
 
     useEffect(() => {
         if (product) {
             setFormData(product);
             setImagePreview(product.image);
-        } else if (categories.length > 0 && !formData.category) {
-            setFormData((prev) => ({ ...prev, category: categories[0] }));
+            if (product.bucketId) {
+                loadCategories(product.bucketId);
+            }
         }
-    }, [product, categories]);
+    }, [product]);
 
-    const loadCategories = async () => {
+    const loadInitialData = async () => {
         try {
-            const categoriesData = await fetchCategories();
-            const categoryNames = categoriesData.map((cat) => cat.name);
-            setCategories(categoryNames);
+            setLoading(true);
+            const bucketsData = await fetchBuckets();
+            setBuckets(bucketsData);
+
+            // If editing and has bucket, categories already loading via useEffect
+            // If new product, we wait for bucket selection
         } catch (err) {
-            console.error("Failed to load categories:", err);
-            setError("Failed to load categories");
-            setCategories([]);
+            console.error("Failed to load buckets:", err);
+            setError("Failed to load categories infrastructure");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const loadCategories = async (bucketId: string) => {
+        try {
+            const data = await fetchCategories(bucketId);
+            setCategories(data);
+        } catch (err) {
+            console.error("Failed to load subcategories:", err);
+        }
+    };
+
+    const handleBucketChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const bucketId = e.target.value;
+        setFormData(prev => ({ ...prev, bucketId, category: "" })); // Reset category when bucket changes
+        if (bucketId) {
+            loadCategories(bucketId);
+        } else {
+            setCategories([]);
         }
     };
 
@@ -73,18 +95,11 @@ export function ProductForm({ product, onSave, onCancel, vendorName, whatsappNum
     ) => {
         const { name, value, type } = e.target;
 
-        if (name === "category" && value === "add-new") {
-            setShowNewCategoryInput(true);
-            setFormData((prev) => ({ ...prev, category: "" }));
-            setError("");
-            return;
-        }
-
         setFormData((prev) => ({
             ...prev,
             [name]:
-                type === "number"
-                    ? parseFloat(value)
+                name === "price"
+                    ? value
                     : type === "checkbox"
                         ? (e.target as HTMLInputElement).checked
                         : value,
@@ -124,51 +139,14 @@ export function ProductForm({ product, onSave, onCancel, vendorName, whatsappNum
         }
     };
 
-    const handleNewCategoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setNewCategory(e.target.value);
-        setError("");
-    };
-
-    const handleAddNewCategory = async () => {
-        if (!newCategory.trim()) {
-            setError("Category name cannot be empty");
-            return;
-        }
-
-        try {
-            const exists = await categoryExists(newCategory);
-            if (exists) {
-                setError("Category already exists");
-                return;
-            }
-
-            await addCategory(newCategory);
-            await loadCategories();
-
-            setFormData((prev) => ({ ...prev, category: newCategory.trim() }));
-            setShowNewCategoryInput(false);
-            setNewCategory("");
-            setError("");
-        } catch (err) {
-            console.error("Failed to add category:", err);
-            setError("Failed to add category");
-        }
-    };
-
-    const handleCancelNewCategory = () => {
-        setShowNewCategoryInput(false);
-        setNewCategory("");
-        setError("");
-        setFormData((prev) => ({
-            ...prev,
-            category: categories.length > 0 ? categories[0] : "",
-        }));
-    };
-
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formData.category) {
-            setError("Please select a category");
+        if (!formData.bucketId) {
+            setError("Please select a main category (Bucket)");
+            return;
+        }
+        if (categories.length > 0 && !formData.category) {
+            setError("Please select a subcategory");
             return;
         }
         if (formData.description.trim().length < 40) {
@@ -176,14 +154,26 @@ export function ProductForm({ product, onSave, onCancel, vendorName, whatsappNum
             return;
         }
         setError("");
-        onSave(formData);
+
+        // Convert price back to number for saving
+        const finalPrice = typeof formData.price === 'string'
+            ? parseFloat(formData.price) || 0
+            : formData.price;
+
+        onSave({
+            ...formData,
+            name: formData.name.trim(),
+            description: formData.description.trim(),
+            price: finalPrice
+        } as Product);
     };
 
     if (loading) {
         return (
             <div className="p-6">
-                <div className="flex items-center justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+                <div className="flex flex-col items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-600 mb-4"></div>
+                    <p className="text-gray-500 font-medium font-black uppercase text-xs tracking-widest">Waking up the database...</p>
                 </div>
             </div>
         );
@@ -191,115 +181,112 @@ export function ProductForm({ product, onSave, onCancel, vendorName, whatsappNum
 
     return (
         <div className="p-6">
-            <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">
-                    {product ? "Edit Product" : "Add New Product"}
-                </h2>
+            <div className="flex items-center justify-between mb-8">
+                <div>
+                    <h2 className="text-3xl font-black text-gray-900 tracking-tight">
+                        {product ? "Edit Listing" : "Create New Listing"}
+                    </h2>
+                    <p className="text-gray-500 font-medium">Fill in the details for your product or service</p>
+                </div>
                 <button
                     onClick={onCancel}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="p-3 hover:bg-gray-100 rounded-2xl transition-all text-gray-400 hover:text-gray-900 border border-transparent hover:border-gray-200"
                 >
                     <X className="w-6 h-6" />
                 </button>
             </div>
 
             {error && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-red-700 text-sm">{error}</p>
+                <div className="mb-6 p-4 bg-red-50 border-2 border-red-100 rounded-2xl animate-in shake duration-500">
+                    <p className="text-red-700 text-sm font-bold flex items-center gap-2">
+                        <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                        {error}
+                    </p>
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <form onSubmit={handleSubmit} className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <InputField
-                        label="Product Name"
+                        label="What are you listing?"
                         name="name"
                         value={formData.name}
                         onChange={handleChange}
+                        placeholder="e.g. iPhone 13 Pro, Professional Laundry Service..."
                     />
                     <InputField
-                        label="Price (N)"
+                        label="Price (₦)"
                         name="price"
                         type="number"
                         value={formData.price}
                         onChange={handleChange}
+                        placeholder="0.00"
                         step="0.01"
                     />
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Category *
+                    {/* Bucket Selection */}
+                    <div className="space-y-2">
+                        <label className="block text-xs font-black text-gray-400 uppercase tracking-widest">
+                            Main Category (Bucket) *
                         </label>
-                        {showNewCategoryInput ? (
-                            <div className="space-y-2">
-                                <input
-                                    type="text"
-                                    value={newCategory}
-                                    onChange={handleNewCategoryChange}
-                                    placeholder="Enter new category name"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                                    autoFocus
-                                />
-                                <div className="flex space-x-2">
-                                    <button
-                                        type="button"
-                                        onClick={handleAddNewCategory}
-                                        disabled={!newCategory.trim()}
-                                        className="px-3 py-1 bg-emerald-600 text-white rounded text-sm hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-                                    >
-                                        Add
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={handleCancelNewCategory}
-                                        className="px-3 py-1 border border-gray-300 text-gray-700 rounded text-sm hover:bg-gray-50 transition-colors"
-                                    >
-                                        Cancel
-                                    </button>
-                                </div>
+                        <div className="relative group">
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-emerald-500 transition-colors">
+                                <Layers className="w-5 h-5" />
                             </div>
-                        ) : categories.length > 0 ? (
+                            <select
+                                name="bucketId"
+                                value={formData.bucketId}
+                                onChange={handleBucketChange}
+                                required
+                                className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border-2 border-transparent rounded-2xl focus:outline-none focus:ring-0 focus:border-emerald-500 focus:bg-white transition-all appearance-none font-bold text-gray-700"
+                            >
+                                <option value="">Select Category Type</option>
+                                {buckets.map((b) => (
+                                    <option key={b.id} value={b.id}>
+                                        {b.name}
+                                    </option>
+                                ))}
+                            </select>
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                                <ChevronDown className="w-5 h-5" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Subcategory Selection */}
+                    <div className="space-y-2">
+                        <label className="block text-xs font-black text-gray-400 uppercase tracking-widest">
+                            Subcategory {categories.length > 0 ? "*" : "(Optional)"}
+                        </label>
+                        <div className="relative group">
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-emerald-500 transition-colors">
+                                <Tag className="w-5 h-5" />
+                            </div>
                             <select
                                 name="category"
                                 value={formData.category}
                                 onChange={handleChange}
-                                required
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                                required={categories.length > 0}
+                                disabled={!formData.bucketId || categories.length === 0}
+                                className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border-2 border-transparent rounded-2xl focus:outline-none focus:ring-0 focus:border-emerald-500 focus:bg-white transition-all appearance-none font-bold text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                <option value="">Select a category</option>
-                                {categories.map((opt) => (
-                                    <option key={opt} value={opt}>
-                                        {opt}
+                                <option value="">
+                                    {!formData.bucketId
+                                        ? "Pick a Main Category First"
+                                        : categories.length === 0
+                                            ? "No subcategories available"
+                                            : "Select Subcategory"}
+                                </option>
+                                {categories.map((cat) => (
+                                    <option key={cat.id} value={cat.name}>
+                                        {cat.name}
                                     </option>
                                 ))}
-                                {canAddCategory && (
-                                    <option value="add-new" className="text-emerald-600 font-medium">
-                                        + Add New Category
-                                    </option>
-                                )}
                             </select>
-                        ) : (
-                            <div className="space-y-2">
-                                <p className="text-sm text-gray-500">
-                                    No categories found. Add the first one!
-                                </p>
-                                <input
-                                    type="text"
-                                    value={newCategory}
-                                    onChange={handleNewCategoryChange}
-                                    placeholder="Enter category name"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={handleAddNewCategory}
-                                    disabled={!newCategory.trim()}
-                                    className="px-3 py-1 bg-emerald-600 text-white rounded text-sm hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    Add Category
-                                </button>
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                                <ChevronDown className="w-5 h-5" />
                             </div>
-                        )}
+                        </div>
                     </div>
 
                     {/* Vendor Name - Read-only if provided via props */}

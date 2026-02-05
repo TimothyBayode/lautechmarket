@@ -14,13 +14,16 @@ import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
 import { Product, Vendor } from "../types";
 import { getProductById, fetchProducts } from "../services/products";
+import { getVendorMetrics } from "../services/vendorMetrics";
+import { trackProductView, getSimilarProducts } from "../services/recommendations";
 import { addToCart } from "../utils/cart";
 import { ShareButton } from "../components/ShareButton";
-import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { SEO } from "../components/SEO";
 import { VerifiedBadge } from "../components/VerifiedBadge";
 import { db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { logEvent } from "../services/analytics";
+import { showToast } from "../components/ToastContainer";
 
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -28,12 +31,31 @@ export function ProductDetail() {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isInCart, setIsInCart] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [vendor, setVendor] = useState<Vendor | null>(null);
-  useDocumentTitle(product?.name || "Product Details");
+  const [vendorMetrics, setVendorMetrics] = useState<any>(null);
+
+  const productSchema = product ? {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": product.name,
+    "image": product.image,
+    "description": product.description,
+    "sku": product.id,
+    "offers": {
+      "@type": "Offer",
+      "url": window.location.href,
+      "priceCurrency": "NGN",
+      "price": product.price,
+      "availability": product.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      "seller": {
+        "@type": "Organization",
+        "name": product.vendorName
+      }
+    }
+  } : undefined;
 
   useEffect(() => {
     loadProduct();
@@ -49,15 +71,8 @@ export function ProductDetail() {
 
       if (data) {
         const allProducts = await fetchProducts();
-        const sameCategoryProducts = allProducts.filter(
-          (p) => p.id !== data.id && p.category === data.category
-        );
-
-        const uniqueProducts = Array.from(
-          new Map(sameCategoryProducts.map((p) => [p.id, p])).values()
-        ).slice(0, 4);
-
-        setRelatedProducts(uniqueProducts);
+        const similar = getSimilarProducts(data, allProducts);
+        setRelatedProducts(similar);
 
         const allCategories = Array.from(
           new Set(allProducts.map((p) => p.category))
@@ -80,8 +95,22 @@ export function ProductDetail() {
               isVerified: vendorData.isVerified || false,
               createdAt: vendorData.createdAt?.toDate() || new Date(),
             });
+
+            // Fetch vendor metrics for badges
+            const metrics = await getVendorMetrics(data.vendorId);
+            setVendorMetrics(metrics);
           }
         }
+
+        // Log product view
+        logEvent("product_view", {
+          productId: data.id,
+          vendorId: data.vendorId,
+          category: data.category
+        });
+
+        // Add to AI recommendation history
+        trackProductView(data.id);
       }
     } catch (error) {
       console.error("Error loading product:", error);
@@ -109,17 +138,7 @@ export function ProductDetail() {
     });
     window.dispatchEvent(new Event("cartUpdated"));
 
-    const toast = document.createElement("div");
-    toast.className =
-      "fixed top-4 right-4 bg-emerald-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in flex items-center space-x-2";
-    toast.innerHTML = `
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-      </svg>
-      <span>Added ${quantity} item(s) to cart</span>
-    `;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
+    showToast(`Added ${quantity} item(s) to cart`);
   };
 
   const handleWhatsAppOrder = () => {
@@ -187,10 +206,18 @@ export function ProductDetail() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
+      <SEO
+        title={product.name}
+        description={product.description}
+        image={product.image}
+        url={`/product/${id}`}
+        type="product"
+        schema={productSchema}
+      />
       <Header onSearch={() => { }} categories={categories} />
 
       <main className="flex-1">
-        <div className="bg-white border-b border-gray-200">
+        <div className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700">
           <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3">
             <div className="flex items-center">
               <button
@@ -201,7 +228,7 @@ export function ProductDetail() {
                 <span className="text-sm sm:text-base">Back</span>
               </button>
 
-              <nav className="hidden xs:flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600">
+              <nav className="hidden xs:flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 dark:text-slate-400">
                 <Link to="/" className="hover:text-emerald-600 truncate">
                   Home
                 </Link>
@@ -247,7 +274,7 @@ export function ProductDetail() {
               <div>
                 <div className="flex items-start justify-between">
                   <div className="pr-2">
-                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2 sm:mb-4 leading-tight">
+                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-4 leading-tight">
                       {product.name}
                     </h1>
                     {product.inStock ? (
@@ -282,7 +309,7 @@ export function ProductDetail() {
                 </p>
               </div>
 
-              <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+              <div className="bg-gray-50 dark:bg-slate-800/50 rounded-lg p-3 sm:p-4">
                 <div className="grid grid-cols-1 gap-2 sm:gap-3">
                   <div>
                     <span className="text-xs sm:text-sm text-gray-500">
@@ -301,7 +328,7 @@ export function ProductDetail() {
                 </h3>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2 sm:space-x-3">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center flex-shrink-0">
                       <span className="text-emerald-600 font-semibold text-sm sm:text-base">
                         {product.vendorName.charAt(0)}
                       </span>
@@ -336,30 +363,52 @@ export function ProductDetail() {
                 </div>
               </div>
 
+              {/* Trust Badges */}
+              <div className="flex flex-wrap gap-2 mb-6">
+                {vendorMetrics?.isActiveNow && (
+                  <div className="bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider flex items-center border border-emerald-100 shadow-sm">
+                    <span className="w-2 h-2 bg-emerald-500 rounded-full mr-2 animate-pulse"></span>
+                    Vendor Online
+                  </div>
+                )}
+                {vendorMetrics?.badges?.some((b: any) => b.type === 'quick_response') && (
+                  <div className="bg-amber-50 text-amber-700 px-3 py-1.5 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider flex items-center border border-amber-100 shadow-sm">
+                    <span className="mr-1.5">⚡</span>
+                    Fast Response
+                  </div>
+                )}
+                {vendor?.isVerified && (
+                  <div className="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider flex items-center border border-blue-100 shadow-sm">
+                    <Check className="w-3.5 h-3.5 mr-1.5" />
+                    Verified Vendor
+                  </div>
+                )}
+              </div>
+
               <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1 sm:mb-2">
                     Quantity
                   </label>
                   <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
-                    <div className="flex items-center border border-gray-300 rounded-lg self-start">
+                    <div className="flex items-center border border-gray-300 dark:border-slate-600 rounded-lg self-start overflow-hidden bg-white dark:bg-slate-800">
                       <button
                         onClick={() => handleQuantityChange(-1)}
-                        className="px-3 sm:px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-l-lg"
+                        className="px-3 sm:px-4 py-2 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700"
                       >
                         -
                       </button>
-                      <span className="px-3 sm:px-4 py-2 border-l border-r border-gray-300 min-w-10 sm:min-w-12 text-center font-semibold text-sm sm:text-base">
+                      <span className="px-3 sm:px-4 py-2 border-l border-r border-gray-300 dark:border-slate-600 min-w-10 sm:min-w-12 text-center font-semibold text-sm sm:text-base dark:text-white">
                         {quantity}
                       </span>
                       <button
                         onClick={() => handleQuantityChange(1)}
-                        className="px-3 sm:px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-r-lg"
+                        className="px-3 sm:px-4 py-2 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700"
                       >
                         +
                       </button>
                     </div>
-                    <span className="text-lg sm:text-xl font-semibold text-gray-900">
+                    <span className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
                       Total: ₦{formatPrice(product.price * quantity)}
                     </span>
                   </div>
@@ -413,7 +462,7 @@ export function ProductDetail() {
                 {relatedProducts.map((relatedProduct) => (
                   <div
                     key={relatedProduct.id}
-                    className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                    className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
                     onClick={() => navigate(`/product/${relatedProduct.id}`)}
                   >
                     <div className="aspect-square overflow-hidden bg-gray-100">

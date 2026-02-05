@@ -1,0 +1,89 @@
+﻿
+C:\Users\PREMIUM\Documents\Lautech market\lautechmarket\api\track-visit.ts
+    6:5   warning  'app' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  132:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\PREMIUM\Documents\Lautech market\lautechmarket\src\components\AdminSidebar.tsx
+  2:10  warning  'Link' is defined but never used         @typescript-eslint/no-unused-vars
+  2:16  warning  'useLocation' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\PREMIUM\Documents\Lautech market\lautechmarket\src\components\FilterSidebar.tsx
+  7:7  warning  'categoryNames' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\PREMIUM\Documents\Lautech market\lautechmarket\src\components\ProductForm.tsx
+   53:8   warning  React Hook useEffect has a missing dependency: 'formData.category'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  119:23  warning  Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+
+C:\Users\PREMIUM\Documents\Lautech market\lautechmarket\src\index.tsx
+  7:34  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+C:\Users\PREMIUM\Documents\Lautech market\lautechmarket\src\pages\AdminDashboard.tsx
+  21:3  warning  'getDoc' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\PREMIUM\Documents\Lautech market\lautechmarket\src\pages\AdminLogin.tsx
+  14:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  44:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\PREMIUM\Documents\Lautech market\lautechmarket\src\pages\Cart.tsx
+   24:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+   24:45  error    Type number trivially inferred from a number literal, remove type annotation                                                    @typescript-eslint/no-inferrable-types
+   91:33  error    Unexpected empty arrow function                                                                                                 @typescript-eslint/no-empty-function
+  118:31  error    Unexpected empty arrow function                                                                                                 @typescript-eslint/no-empty-function
+
+C:\Users\PREMIUM\Documents\Lautech market\lautechmarket\src\pages\Contact.tsx
+  56:31  error  Unexpected empty arrow function  @typescript-eslint/no-empty-function
+
+C:\Users\PREMIUM\Documents\Lautech market\lautechmarket\src\pages\FAQ.tsx
+  181:31  error  Unexpected empty arrow function  @typescript-eslint/no-empty-function
+
+C:\Users\PREMIUM\Documents\Lautech market\lautechmarket\src\pages\ProductDetail.tsx
+   40:6   warning  React Hook useEffect has a missing dependency: 'loadProduct'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  154:33  error    Unexpected empty arrow function                                                                                 @typescript-eslint/no-empty-function
+  166:33  error    Unexpected empty arrow function                                                                                 @typescript-eslint/no-empty-function
+  214:31  error    Unexpected empty arrow function                                                                                 @typescript-eslint/no-empty-function
+
+C:\Users\PREMIUM\Documents\Lautech market\lautechmarket\src\pages\vendor\VendorDashboard.tsx
+  79:12  warning  'hasPendingVerification' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\PREMIUM\Documents\Lautech market\lautechmarket\src\pages\vendor\VendorLogin.tsx
+  30:45  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  51:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  71:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\PREMIUM\Documents\Lautech market\lautechmarket\src\pages\vendor\VendorRegister.tsx
+   3:28  warning  'Phone' is defined but never used         @typescript-eslint/no-unused-vars
+  93:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\PREMIUM\Documents\Lautech market\lautechmarket\src\pages\vendor\VerifyEmail.tsx
+  45:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\PREMIUM\Documents\Lautech market\lautechmarket\src\services\cloudinary.ts
+   77:5  error  Type string trivially inferred from a string literal, remove type annotation  @typescript-eslint/no-inferrable-types
+  116:5  error  Type string trivially inferred from a string literal, remove type annotation  @typescript-eslint/no-inferrable-types
+  152:5  error  Type number trivially inferred from a number literal, remove type annotation  @typescript-eslint/no-inferrable-types
+  153:5  error  Type string trivially inferred from a string literal, remove type annotation  @typescript-eslint/no-inferrable-types
+
+C:\Users\PREMIUM\Documents\Lautech market\lautechmarket\src\services\products.ts
+  29:11  warning  'id' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  42:15  warning  '_' is assigned a value but never used   @typescript-eslint/no-unused-vars
+
+C:\Users\PREMIUM\Documents\Lautech market\lautechmarket\src\services\storage.ts
+  48:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\PREMIUM\Documents\Lautech market\lautechmarket\src\services\vendorAuth.ts
+   91:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  129:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  205:16  warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  276:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\PREMIUM\Documents\Lautech market\lautechmarket\src\services\vendorVisits.ts
+   14:5   warning  'setDoc' is defined but never used                                            @typescript-eslint/no-unused-vars
+  162:39  error    Type number trivially inferred from a number literal, remove type annotation  @typescript-eslint/no-inferrable-types
+
+C:\Users\PREMIUM\Documents\Lautech market\lautechmarket\src\utils\cart.ts
+   30:45  error    Type number trivially inferred from a number literal, remove type annotation  @typescript-eslint/no-inferrable-types
+  101:5   warning  Forbidden non-null assertion                                                  @typescript-eslint/no-non-null-assertion
+
+Γ£û 43 problems (14 errors, 29 warnings)
+  7 errors and 0 warnings potentially fixable with the `--fix` option.
+

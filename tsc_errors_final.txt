@@ -1,0 +1,24 @@
+﻿src/components/CompareFloatingBar.tsx(3,10): error TS6133: 'X' is declared but its value is never read.
+src/components/CuratedCarousel.tsx(143,37): error TS2322: Type 'string | null' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+src/components/CuratedCarousel.tsx(154,46): error TS2339: Property 'badges' does not exist on type '{ responsivenessScore: number; trustScore: number; averageResponseMinutes: number; responseRate: number; }'.
+src/components/CuratedCarousel.tsx(154,59): error TS7006: Parameter 'b' implicitly has an 'any' type.
+src/components/FeedbackPrompter.tsx(68,13): error TS2322: Type '{ contact: VendorContact; isOpen: boolean; onClose: () => void; onSubmit: () => void; }' is not assignable to type 'IntrinsicAttributes & FeedbackModalProps'.
+  Property 'isOpen' does not exist on type 'IntrinsicAttributes & FeedbackModalProps'.
+src/components/ProductCard.tsx(7,1): error TS6133: 'VendorMetricsDisplay' is declared but its value is never read.
+src/components/ProductCard.tsx(10,1): error TS6133: 'auth' is declared but its value is never read.
+src/pages/AdminDashboard.tsx(19,3): error TS6133: 'BarChart2' is declared but its value is never read.
+src/pages/vendor/VendorDashboard.tsx(15,5): error TS6133: 'Camera' is declared but its value is never read.
+src/pages/vendor/VendorDashboard.tsx(24,5): error TS6133: 'ShoppingCart' is declared but its value is never read.
+src/pages/vendor/VendorDashboard.tsx(25,5): error TS6133: 'LogOut' is declared but its value is never read.
+src/pages/vendor/VendorDashboard.tsx(27,5): error TS6133: 'Eye' is declared but its value is never read.
+src/pages/vendor/VendorDashboard.tsx(28,5): error TS6133: 'Search' is declared but its value is never read.
+src/pages/vendor/VendorDashboard.tsx(29,5): error TS6133: 'BarChart3' is declared but its value is never read.
+src/pages/vendor/VendorDashboard.tsx(30,5): error TS6133: 'Users' is declared but its value is never read.
+src/pages/vendor/VendorDashboard.tsx(31,5): error TS6133: 'DollarSign' is declared but its value is never read.
+src/pages/vendor/VendorDashboard.tsx(32,5): error TS6133: 'ShoppingBag' is declared but its value is never read.
+src/pages/vendor/VendorDashboard.tsx(33,5): error TS6133: 'Save' is declared but its value is never read.
+src/pages/vendor/VendorDashboard.tsx(34,5): error TS6133: 'Sparkles' is declared but its value is never read.
+src/pages/vendor/VendorDashboard.tsx(51,49): error TS6133: 'trackStoreVisit' is declared but its value is never read.
+src/services/curation.ts(19,5): error TS6133: 'limit' is declared but its value is never read.
+src/services/vendorMetrics.ts(17,5): error TS6133: 'Timestamp' is declared but its value is never read.

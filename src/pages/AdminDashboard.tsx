@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Plus,
@@ -15,15 +15,22 @@ import {
   Flame,
   Eye,
   ShoppingCart,
-  BarChart3,
+  RefreshCw,
+  PieChart,
+  MoveDown,
+  AlertCircle,
+  Trophy,
+  Activity,
+  TrendingUp,
+  Clock
 } from "lucide-react";
 import {
-  getDoc,
   getDocs,
   query,
   collection,
   orderBy,
   limit,
+  onSnapshot,
 } from "firebase/firestore";
 import { Product, Vendor } from "../types";
 import {
@@ -44,8 +51,10 @@ import { VerifiedBadge } from "../components/VerifiedBadge";
 import { getAnalytics } from "../services/analytics";
 import { getVisitsLeaderboard, VendorVisitData } from "../services/vendorVisits";
 import { AdminSidebar } from "../components/AdminSidebar";
+import { AdminCuration } from "../components/AdminCuration";
 import { AdminStats } from "../components/AdminStats";
 import { AdminLeaderboard } from "../components/AdminLeaderboard";
+import { getProxiedImageUrl } from "../utils/imageUrl";
 
 export function AdminDashboard() {
   const navigate = useNavigate();
@@ -65,7 +74,7 @@ export function AdminDashboard() {
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [authChecked, setAuthChecked] = useState(false);
 
-  const [analytics, setAnalytics] = useState({ uniqueVisitors: 0, totalVisits: 0 });
+  const [analytics, setAnalytics] = useState<any>(null);
 
   // Leaderboard state
   const [leaderboard, setLeaderboard] = useState<VendorVisitData[]>([]);
@@ -74,7 +83,14 @@ export function AdminDashboard() {
   const [totalOrders, setTotalOrders] = useState(0);
   const [totalProductViews, setTotalProductViews] = useState(0);
   const [totalCartAdditions, setTotalCartAdditions] = useState(0);
-  const [showDetailedStats, setShowDetailedStats] = useState<null | 'orders' | 'views' | 'cart'>(null);
+
+  const [demandGaps, setDemandGaps] = useState<{ query: string; count: number }[]>([]);
+  const [peakTraffic, setPeakTraffic] = useState<{ hour: number; count: number }[]>([]);
+  const [keywordPriceIndex, setKeywordPriceIndex] = useState<{ query: string; avgPrice: number; productCount: number }[]>([]);
+  const [reliabilityRanking, setReliabilityRanking] = useState<{ vendorName: string; businessName: string; responseTime: number; trustScore: number }[]>([]);
+  const [comparisonLeaderboard, setComparisonLeaderboard] = useState<{ productId: string; name: string; vendorName: string; compareCount: number; image?: string }[]>([]);
+  const [categoryConversion, setCategoryConversion] = useState<{ category: string; rate: number; orders: number; views: number }[]>([]);
+  const [searchError, setSearchError] = useState<string | null>(null);
   // Dashboard data loading - initial load
   useEffect(() => {
     const unsubscribe = authStateListener((user) => {
@@ -82,6 +98,22 @@ export function AdminDashboard() {
         navigate("/admin/login");
         return;
       }
+
+      // Security: verify user is an authorized admin
+      const adminEmails = [
+        "lautechmarket.help@gmail.com",
+        "admin@lautech.edu.ng",
+        "admin@lautechmarket.com.ng"
+      ];
+
+      if (!user.email || !adminEmails.includes(user.email.toLowerCase())) {
+        console.error("[AdminDashboard] Unauthorized access attempt:", user.email);
+        alert("Unauthorized: This account does not have admin privileges.");
+        logoutUser();
+        navigate("/admin/login");
+        return;
+      }
+
       setAuthChecked(true);
       loadDashboardData();
     });
@@ -92,34 +124,24 @@ export function AdminDashboard() {
   // Load vendors and all products for stats
   const loadDashboardData = async () => {
     setLoading(true);
+    console.log("[AdminDashboard] Loading data...");
+
+    // Each block is wrapped in its own try-catch or handled independently 
+    // to prevent one failure from zeroing out the entire dashboard
+
+    let vendorsData: Vendor[] = [];
+    let allVendorProducts: Product[] = [];
+
     try {
-      const vendorsData = await getAllVendors();
+      vendorsData = await getAllVendors();
       setVendors(vendorsData);
+    } catch (err) {
+      console.error("[AdminDashboard] Error loading vendors:", err);
+    }
 
-      const allVendorProducts = await fetchProducts();
+    try {
+      allVendorProducts = await fetchProducts();
       setAllProducts(allVendorProducts);
-
-      // Load leaderboard
-      const leaderboardData = await getVisitsLeaderboard();
-      setLeaderboard(leaderboardData);
-
-      // Fetch top searches
-      const searchesQuery = query(collection(db, "searches"), orderBy("timestamp", "desc"), limit(100));
-      const searchesSnap = await getDocs(searchesQuery);
-      const searchCounts: { [key: string]: number } = {};
-      searchesSnap.docs.forEach(doc => {
-        const q = doc.data().query;
-        searchCounts[q] = (searchCounts[q] || 0) + 1;
-      });
-      const topSearchesData = Object.entries(searchCounts)
-        .map(([query, count]) => ({ query, count }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 20);
-      setTopSearches(topSearchesData);
-
-      // Load site analytics
-      const siteAnalytics = await getAnalytics();
-      setAnalytics(siteAnalytics);
 
       // Calculate total interaction metrics from products
       const orders = allVendorProducts.reduce((sum, p) => sum + (p.orderCount || 0), 0);
@@ -128,13 +150,219 @@ export function AdminDashboard() {
       setTotalOrders(orders);
       setTotalProductViews(views);
       setTotalCartAdditions(cart);
-
-      setLoading(false);
-    } catch (error) {
-      console.error("Error loading dashboard data:", error);
-      setLoading(false);
+    } catch (err) {
+      console.error("[AdminDashboard] Error loading products:", err);
     }
+
+    try {
+      const leaderboardData = await getVisitsLeaderboard();
+      setLeaderboard(leaderboardData);
+    } catch (err) {
+      console.error("[AdminDashboard] Error loading leaderboard:", err);
+    }
+
+    try {
+      const siteAnalytics = await getAnalytics();
+      if (siteAnalytics) {
+        setAnalytics(siteAnalytics);
+      }
+    } catch (err) {
+      console.error("[AdminDashboard] Error loading site analytics:", err);
+    }
+
+    try {
+      // Enhanced logging
+      console.log("[AdminDashboard] Fetching searches initially...");
+      let searchesQuery = query(collection(db, "searches"), orderBy("timestamp", "desc"), limit(200));
+      let searchesSnap;
+
+      try {
+        searchesSnap = await getDocs(searchesQuery);
+      } catch (indexErr) {
+        console.warn("[AdminDashboard] Initial search query failed with ordering (index missing). Falling back to unordered.");
+        searchesQuery = query(collection(db, "searches"), limit(200));
+        searchesSnap = await getDocs(searchesQuery);
+      }
+
+      console.log(`[AdminDashboard] Found ${searchesSnap.size} search records.`);
+
+      const searchCounts: { [key: string]: number } = {};
+      const gapCounts: { [key: string]: number } = {};
+      const hourCounts: { [key: number]: number } = Array(24).fill(0).reduce((acc, _, i) => ({ ...acc, [i]: 0 }), {});
+
+      searchesSnap.docs.forEach(doc => {
+        const data = doc.data();
+        const q = data.query;
+        const count = data.resultsCount || 0;
+        const ts = data.timestamp?.toDate ? data.timestamp.toDate() : null;
+
+        if (q) {
+          searchCounts[q] = (searchCounts[q] || 0) + 1;
+          if (count === 0) {
+            gapCounts[q] = (gapCounts[q] || 0) + 1;
+          }
+        }
+
+        if (ts) {
+          const hour = ts.getHours();
+          hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+        }
+      });
+
+      const topSearchesData = Object.entries(searchCounts)
+        .map(([query, count]) => ({ query, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 20);
+      setTopSearches(topSearchesData);
+
+      const demandGapsData = Object.entries(gapCounts)
+        .map(([query, count]) => ({ query, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 20);
+      setDemandGaps(demandGapsData);
+
+      const peakTrafficData = Object.entries(hourCounts)
+        .map(([hour, count]) => ({ hour: parseInt(hour), count }))
+        .sort((a, b) => a.hour - b.hour);
+      setPeakTraffic(peakTrafficData);
+
+      // --- Market Intelligence logic ---
+      const intelPriceIndex = topSearchesData.map(ts => {
+        const matchingProducts = allVendorProducts.filter(p =>
+          p.name.toLowerCase().includes(ts.query.toLowerCase()) ||
+          p.category.toLowerCase().includes(ts.query.toLowerCase())
+        );
+        const avg = matchingProducts.length > 0
+          ? matchingProducts.reduce((sum, p) => sum + p.price, 0) / matchingProducts.length
+          : 0;
+        return { query: ts.query, avgPrice: avg, productCount: matchingProducts.length };
+      }).filter(item => item.productCount > 0);
+      setKeywordPriceIndex(intelPriceIndex);
+
+      const intelReliability = vendorsData
+        .filter(v => v.metrics)
+        .map(v => ({
+          vendorName: v.name,
+          businessName: v.businessName,
+          responseTime: v.metrics?.averageResponseMinutes || 999,
+          trustScore: v.metrics?.trustScore || 0
+        }))
+        .sort((a, b) => {
+          if (a.responseTime !== b.responseTime) return a.responseTime - b.responseTime;
+          return b.trustScore - a.trustScore;
+        })
+        .slice(0, 10);
+      setReliabilityRanking(intelReliability);
+
+      const intelComparison = allVendorProducts
+        .filter(p => (p.compareCount || 0) > 0)
+        .map(p => ({
+          productId: p.id,
+          name: p.name,
+          vendorName: p.vendorName,
+          compareCount: p.compareCount || 0,
+          image: p.image
+        }))
+        .sort((a, b) => b.compareCount - a.compareCount)
+        .slice(0, 5);
+      setComparisonLeaderboard(intelComparison);
+
+      const categories = [...new Set(allVendorProducts.map(p => p.category))];
+      const intelConversion = categories.map(cat => {
+        const catProds = allVendorProducts.filter(p => p.category === cat);
+        const orders = catProds.reduce((sum, p) => sum + (p.orderCount || 0), 0);
+        const views = catProds.reduce((sum, p) => sum + (p.viewCount || 0), 0);
+        const rate = views > 0 ? (orders / views) * 100 : 0;
+        return { category: cat, rate, orders, views };
+      }).sort((a, b) => b.rate - a.rate);
+      setCategoryConversion(intelConversion);
+
+
+    } catch (err) {
+      console.error("[AdminDashboard] Error loading searches or intelligence:", err);
+    }
+
+    setLoading(false);
   };
+
+  // Real-time search listener
+  useEffect(() => {
+    if (!authChecked) return;
+
+    console.log("[AdminDashboard] Setting up real-time search listener...");
+    const searchesColl = collection(db, "searches");
+    const orderedQuery = query(searchesColl, orderBy("timestamp", "desc"), limit(100));
+
+    const processSnapshot = (snapshot: any, label: string) => {
+      console.log(`[AdminDashboard] ${label} update: Processing ${snapshot.size} records...`);
+      setSearchError(null);
+      const searchCounts: { [key: string]: number } = {};
+      const gapCounts: { [key: string]: number } = {};
+      const hourCounts: { [key: number]: number } = Array(24).fill(0).reduce((acc, _, i) => ({ ...acc, [i]: 0 }), {});
+
+      snapshot.docs.forEach((doc: any) => {
+        const data = doc.data();
+        const qText = data.query;
+        const count = data.resultsCount || 0;
+        const ts = data.timestamp?.toDate ? data.timestamp.toDate() : null;
+
+        if (qText) {
+          searchCounts[qText] = (searchCounts[qText] || 0) + 1;
+          if (count === 0) {
+            gapCounts[qText] = (gapCounts[qText] || 0) + 1;
+          }
+        }
+
+        if (ts) {
+          const hour = ts.getHours();
+          hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+        }
+      });
+
+      const topSearchesData = Object.entries(searchCounts)
+        .map(([query, count]) => ({ query, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 20);
+      setTopSearches(topSearchesData);
+
+      const demandGapsData = Object.entries(gapCounts)
+        .map(([query, count]) => ({ query, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 20);
+      setDemandGaps(demandGapsData);
+
+      const peakTrafficData = Object.entries(hourCounts)
+        .map(([hour, count]) => ({ hour: parseInt(hour), count }))
+        .sort((a, b) => a.hour - b.hour);
+      setPeakTraffic(peakTrafficData);
+    };
+
+    let unsubscribe: () => void;
+
+    const startListener = () => {
+      return onSnapshot(orderedQuery, (snap) => processSnapshot(snap, "Ordered Search"), (err) => {
+        if (err.message?.includes("permission-denied")) {
+          setSearchError("Permission Denied: Please ensure Firestore rules are deployed.");
+        }
+
+        if (err.message?.includes("index")) {
+          console.warn("[AdminDashboard] Missing search index. Falling back to unordered listener.");
+          const unorderedQuery = query(searchesColl, limit(100));
+          unsubscribe = onSnapshot(unorderedQuery, (snap) => processSnapshot(snap, "Unordered Search"), (err2) => {
+            console.error("[AdminDashboard] Fallback search listener failed:", err2);
+            if (err2.message?.includes("permission-denied")) {
+              setSearchError("Permission Denied: Access to 'searches' collection is blocked.");
+            }
+          });
+        } else {
+          console.error("[AdminDashboard] Search listener error:", err);
+        }
+      });
+    };
+
+    unsubscribe = startListener();
+    return () => unsubscribe();
+  }, [authChecked]);
 
   // Load products for selected vendor
   const loadVendorProducts = async (vendorId: string) => {
@@ -247,7 +475,7 @@ export function AdminDashboard() {
 
   const handleBulkDelete = async () => {
     if (selectedProducts.size === 0) return;
-    if (!window.confirm(`Delete ${selectedProducts.size} selected products?`)) return;
+    if (!window.confirm(`Delete ${selectedProducts.size} selected products ? `)) return;
 
     try {
       for (const id of selectedProducts) {
@@ -268,8 +496,8 @@ export function AdminDashboard() {
 
     const productCount = getVendorProductCount(vendor.id);
     const confirmMessage = productCount > 0
-      ? `Are you sure you want to delete "${vendor.businessName}" and their ${productCount} products? This action cannot be undone.`
-      : `Are you sure you want to delete "${vendor.businessName}"? This action cannot be undone.`;
+      ? `Are you sure you want to delete "${vendor.businessName}" and their ${productCount} products ? This action cannot be undone.`
+      : `Are you sure you want to delete "${vendor.businessName}" ? This action cannot be undone.`;
 
     if (!window.confirm(confirmMessage)) return;
 
@@ -295,7 +523,7 @@ export function AdminDashboard() {
     const newStatus = !vendor.isVerified;
     const action = newStatus ? "verify" : "unverify";
 
-    if (!window.confirm(`Are you sure you want to ${action} "${vendor.businessName}"?`)) {
+    if (!window.confirm(`Are you sure you want to ${action} "${vendor.businessName}" ? `)) {
       return;
     }
 
@@ -329,179 +557,43 @@ export function AdminDashboard() {
   const renderContent = () => {
     switch (activeTab) {
       case "overview":
-        if (showDetailedStats) {
-          return (
-            <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-              <div className="bg-white p-6 rounded-2xl shadow-xl border-2 border-emerald-100">
-                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
-                  <div>
-                    <h3 className="text-2xl font-black text-gray-900 flex items-center gap-3">
-                      <BarChart3 className="w-8 h-8 text-emerald-600" />
-                      Detailed Report: {showDetailedStats === 'orders' ? 'Click to Order' : showDetailedStats === 'views' ? 'Product Views' : 'Cart Additions'}
-                    </h3>
-                    <p className="text-gray-500 mt-1">Comprehensive breakdown of performance and buyer intent across all products</p>
-                  </div>
-                  <button
-                    onClick={() => setShowDetailedStats(null)}
-                    className="flex items-center space-x-2 text-sm font-bold text-gray-600 hover:text-emerald-600 transition-colors bg-gray-50 hover:bg-emerald-50 px-6 py-3 rounded-xl border border-gray-200"
-                  >
-                    <ArrowLeft className="w-5 h-5" />
-                    <span>Back to Overview</span>
-                  </button>
-                </div>
-
-                <div className="bg-gray-50 rounded-2xl border border-gray-100 overflow-hidden shadow-inner">
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="bg-emerald-600 text-white text-left">
-                          <th className="px-6 py-4 text-xs font-black uppercase tracking-widest">Product Details</th>
-                          <th className="px-6 py-4 text-xs font-black uppercase tracking-widest">Vendor</th>
-                          <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-center">Interactions</th>
-                          <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-right">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200">
-                        {allProducts
-                          .filter(p => {
-                            if (showDetailedStats === 'orders') return (p.orderCount || 0) > 0;
-                            if (showDetailedStats === 'views') return (p.viewCount || 0) > 0;
-                            if (showDetailedStats === 'cart') return (p.cartCount || 0) > 0;
-                            return false;
-                          })
-                          .sort((a, b) => {
-                            const valA = showDetailedStats === 'orders' ? (a.orderCount || 0) : showDetailedStats === 'views' ? (a.viewCount || 0) : (a.cartCount || 0);
-                            const valB = showDetailedStats === 'orders' ? (b.orderCount || 0) : showDetailedStats === 'views' ? (b.viewCount || 0) : (b.cartCount || 0);
-                            return valB - valA;
-                          })
-                          .map(product => (
-                            <tr key={product.id} className="hover:bg-white transition-colors group">
-                              <td className="px-6 py-4">
-                                <div className="flex items-center space-x-4">
-                                  <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-200 border border-gray-100 flex-shrink-0 shadow-sm">
-                                    <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                                  </div>
-                                  <div className="min-w-0">
-                                    <div className="font-black text-gray-900 truncate">{product.name}</div>
-                                    <div className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">{product.category}</div>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4">
-                                <div className="flex items-center font-bold text-gray-600 text-sm">
-                                  <Store className="w-4 h-4 mr-2 text-emerald-500" />
-                                  {product.vendorName}
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 text-center">
-                                <span className={`px-5 py-2 rounded-full text-xs font-black shadow-sm ${showDetailedStats === 'orders' ? 'bg-orange-100 text-orange-700 border border-orange-200' :
-                                  showDetailedStats === 'views' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
-                                    'bg-emerald-100 text-emerald-700 border border-emerald-200'
-                                  }`}>
-                                  {showDetailedStats === 'orders' ? `${product.orderCount} clicks` :
-                                    showDetailedStats === 'views' ? `${product.viewCount} views` :
-                                      `${product.cartCount} in cart`}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 text-right">
-                                <button
-                                  onClick={() => navigate(`/product/${product.id}`)}
-                                  className="bg-white border border-gray-200 text-gray-700 hover:text-emerald-600 hover:border-emerald-200 px-4 py-2 rounded-lg font-bold text-xs transition-all shadow-sm flex items-center gap-2 ml-auto"
-                                >
-                                  View Item
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        }
-
         return (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            {/* Dashboard Headers and Refresh */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-black text-gray-900">Platform Overview</h2>
+                <p className="text-sm text-gray-500">Real-time performance metrics and buyer intent</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={loadDashboardData}
+                  disabled={loading}
+                  className="flex items-center space-x-2 px-6 py-3 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50"
+                >
+                  <RefreshCw className={`w - 4 h - 4 ${loading ? 'animate-spin' : ''} `} />
+                  <span>{loading ? "Refreshing..." : "Refresh Metrics"}</span>
+                </button>
+              </div>
+            </div>
+
             <AdminStats
               vendorsCount={vendors.length}
               productsCount={allProducts.length}
               inStockCount={allProducts.filter((p) => p.inStock).length}
               outOfStockCount={allProducts.filter((p) => !p.inStock).length}
-              uniqueVisitors={analytics.uniqueVisitors}
-              totalVisits={analytics.totalVisits}
+              analytics={analytics}
             />
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Category Distribution */}
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
-                  <Tag className="w-5 h-5 mr-2 text-emerald-600" />
-                  Category Distribution
-                </h3>
-                <div className="space-y-4">
-                  {Array.from(new Set(allProducts.map(p => p.category)))
-                    .map(category => ({
-                      name: category,
-                      count: allProducts.filter(p => p.category === category).length
-                    }))
-                    .sort((a, b) => b.count - a.count)
-                    .map(({ name: category, count }) => {
-                      const percentage = Math.round((count / allProducts.length) * 100) || 0;
-                      return (
-                        <div key={category} className="space-y-2">
-                          <div className="flex justify-between text-sm font-medium">
-                            <span className="capitalize text-gray-700">{category}</span>
-                            <span className="text-gray-500">{count} products ({percentage}%)</span>
-                          </div>
-                          <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
-                            <div
-                              className="bg-emerald-500 h-full rounded-full transition-all duration-1000"
-                              style={{ width: `${percentage}%` }}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                </div>
-              </div>
-
-              {/* Top Searches */}
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
-                  <Search className="w-5 h-5 mr-2 text-emerald-600" />
-                  Top Search Queries
-                </h3>
-                {topSearches.length > 0 ? (
-                  <div className="space-y-3">
-                    {topSearches.map((item, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 hover:bg-emerald-50 hover:border-emerald-100 transition-colors">
-                        <span className="text-sm font-semibold text-gray-700">"{item.query}"</span>
-                        <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg text-xs font-bold font-mono">
-                          {item.count}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <Search className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-                    <p className="text-gray-500">No search data yet</p>
-                  </div>
-                )}
-              </div>
-            </div>
 
             {/* Interaction Analytics */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-bold text-gray-900 font-display">Interaction Metrics</h3>
-                <span className="text-xs text-gray-400 font-medium italic">Click a card for full details</span>
+                <h3 className="text-lg font-bold text-gray-900 font-display">Engagement Overview</h3>
+                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest border border-gray-100 px-2 py-1 rounded bg-gray-50">Click to view full list</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                 <div
-                  onClick={() => setShowDetailedStats('orders')}
+                  onClick={() => setActiveTab('product-interactions')}
                   className="p-4 bg-orange-50 rounded-2xl border border-orange-100 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all group"
                 >
                   <div className="flex items-center justify-between mb-1">
@@ -512,7 +604,7 @@ export function AdminDashboard() {
                 </div>
 
                 <div
-                  onClick={() => setShowDetailedStats('views')}
+                  onClick={() => setActiveTab('product-interactions')}
                   className="p-4 bg-blue-50 rounded-2xl border border-blue-100 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all group"
                 >
                   <div className="flex items-center justify-between mb-1">
@@ -523,7 +615,7 @@ export function AdminDashboard() {
                 </div>
 
                 <div
-                  onClick={() => setShowDetailedStats('cart')}
+                  onClick={() => setActiveTab('product-interactions')}
                   className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all group"
                 >
                   <div className="flex items-center justify-between mb-1">
@@ -534,155 +626,468 @@ export function AdminDashboard() {
                 </div>
               </div>
             </div>
+          </div>
+        );
 
-            {/* Detailed Stats View (Conditionally Rendered) */}
-            {showDetailedStats && (
-              <div className="bg-white p-6 rounded-2xl shadow-xl border-2 border-emerald-100 animate-in zoom-in-95 duration-300">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h3 className="text-xl font-black text-gray-900 flex items-center gap-2">
-                      <BarChart3 className="w-6 h-6 text-emerald-600" />
-                      Detailed Report: {showDetailedStats === 'orders' ? 'Click to Order' : showDetailedStats === 'views' ? 'Product Views' : 'Cart Additions'}
-                    </h3>
-                    <p className="text-sm text-gray-500">Full breakdown of user interactions across all listed products</p>
-                  </div>
-                  <button
-                    onClick={() => setShowDetailedStats(null)}
-                    className="flex items-center space-x-2 text-sm font-bold text-gray-500 hover:text-emerald-600 transition-colors bg-gray-50 px-4 py-2 rounded-xl"
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                    <span>Back to Overview</span>
-                  </button>
-                </div>
-
-                <div className="bg-gray-50 rounded-2xl border border-gray-100 overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="bg-emerald-600 text-white text-left">
-                          <th className="px-6 py-4 text-xs font-black uppercase tracking-widest">Product</th>
-                          <th className="px-6 py-4 text-xs font-black uppercase tracking-widest">Vendor</th>
-                          <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-center">Interactions</th>
-                          <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-right">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200">
-                        {allProducts
-                          .filter(p => {
-                            if (showDetailedStats === 'orders') return (p.orderCount || 0) > 0;
-                            if (showDetailedStats === 'views') return (p.viewCount || 0) > 0;
-                            if (showDetailedStats === 'cart') return (p.cartCount || 0) > 0;
-                            return false;
-                          })
-                          .sort((a, b) => {
-                            const valA = showDetailedStats === 'orders' ? (a.orderCount || 0) : showDetailedStats === 'views' ? (a.viewCount || 0) : (a.cartCount || 0);
-                            const valB = showDetailedStats === 'orders' ? (b.orderCount || 0) : showDetailedStats === 'views' ? (b.viewCount || 0) : (b.cartCount || 0);
-                            return valB - valA;
-                          })
-                          .map(product => (
-                            <tr key={product.id} className="hover:bg-white transition-colors group">
-                              <td className="px-6 py-4">
-                                <div className="flex items-center space-x-3">
-                                  <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-200 border border-gray-100 flex-shrink-0">
-                                    <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
-                                  </div>
-                                  <span className="font-bold text-gray-900 line-clamp-1">{product.name}</span>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 text-sm text-gray-600 font-medium">
-                                <div className="flex items-center">
-                                  <Store className="w-4 h-4 mr-1.5 text-emerald-500" />
-                                  {product.vendorName}
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 text-center">
-                                <span className={`px-4 py-1.5 rounded-full text-sm font-black ${showDetailedStats === 'orders' ? 'bg-orange-100 text-orange-700' :
-                                  showDetailedStats === 'views' ? 'bg-blue-100 text-blue-700' :
-                                    'bg-emerald-100 text-emerald-700'
-                                  }`}>
-                                  {showDetailedStats === 'orders' ? product.orderCount :
-                                    showDetailedStats === 'views' ? product.viewCount :
-                                      product.cartCount}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 text-right">
-                                <button
-                                  onClick={() => navigate(`/product/${product.id}`)}
-                                  className="text-emerald-600 hover:text-emerald-700 font-bold text-sm underline-offset-4 hover:underline"
-                                >
-                                  View Item
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Most Interacted Products */}
+      case "category-stats":
+        return (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
               <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
-                <Flame className="w-5 h-5 mr-2 text-orange-600" />
-                Most Interacted Products (Top 20)
+                <Tag className="w-5 h-5 mr-2 text-emerald-600" />
+                Category Distribution
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                {allProducts
-                  .filter(p => (p.orderCount || 0) > 0 || (p.viewCount || 0) > 0)
-                  .sort((a, b) => ((b.orderCount || 0) + (b.viewCount || 0)) - ((a.orderCount || 0) + (a.viewCount || 0)))
-                  .slice(0, 20)
-                  .map(product => (
-                    <div
-                      key={product.id}
-                      onClick={() => navigate(`/product/${product.id}`)}
-                      className="group p-3 bg-gray-50 rounded-xl border border-gray-100 hover:border-emerald-300 hover:bg-emerald-50 transition-all cursor-pointer flex flex-col"
-                    >
-                      <div className="aspect-square rounded-lg overflow-hidden bg-gray-200 mb-3 relative">
-                        <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <h4 className="font-bold text-gray-900 truncate group-hover:text-emerald-700 transition-colors text-sm">{product.name}</h4>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter truncate flex items-center mt-0.5">
-                          <Store className="w-2.5 h-2.5 mr-1" />
-                          {product.vendorName}
-                        </p>
-                        <div className="mt-3 flex items-center justify-between">
-                          <div className="flex -space-x-1 overflow-hidden">
-                            {product.orderCount && product.orderCount > 0 && (
-                              <span className="inline-flex items-center justify-center p-1.5 rounded-full bg-orange-100 border border-white ring-2 ring-white" title={`${product.orderCount} clicks`}>
-                                <Flame className="w-3 h-3 text-orange-600" />
-                              </span>
-                            )}
-                            {product.viewCount && product.viewCount > 0 && (
-                              <span className="inline-flex items-center justify-center p-1.5 rounded-full bg-blue-100 border border-white ring-2 ring-white" title={`${product.viewCount} views`}>
-                                <Eye className="w-3 h-3 text-blue-600" />
-                              </span>
-                            )}
-                            {product.cartCount && product.cartCount > 0 && (
-                              <span className="inline-flex items-center justify-center p-1.5 rounded-full bg-emerald-100 border border-white ring-2 ring-white" title={`${product.cartCount} in cart`}>
-                                <ShoppingCart className="w-3 h-3 text-emerald-600" />
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-[10px] font-black text-gray-400">DETAIL ›</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {Array.from(new Set(allProducts.map(p => p.category)))
+                  .map(category => ({
+                    name: category,
+                    count: allProducts.filter(p => p.category === category).length
+                  }))
+                  .sort((a, b) => b.count - a.count)
+                  .map(({ name: category, count }) => {
+                    const percentage = Math.round((count / (allProducts.length || 1)) * 100) || 0;
+                    return (
+                      <div key={category} className="space-y-2 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                        <div className="flex justify-between text-sm font-medium">
+                          <span className="capitalize text-gray-700">{category}</span>
+                          <span className="text-gray-500">{count} products ({percentage}%)</span>
                         </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-emerald-500 h-full rounded-full transition-all duration-1000"
+                            style={{ width: `${percentage}% ` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          </div>
+        );
+
+      case "market-intelligence":
+        const conversionRate = totalProductViews > 0 ? ((totalOrders / totalProductViews) * 100).toFixed(1) : "0";
+        const avgPriceIndex = allProducts.length > 0
+          ? allProducts.reduce((sum, p) => sum + p.price, 0) / allProducts.length
+          : 0;
+
+        return (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            {/* Market Intelligence Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Reliability Leaders */}
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-sm font-bold text-gray-900 flex items-center uppercase tracking-tight">
+                    <Trophy className="w-4 h-4 mr-2 text-amber-500" />
+                    Reliability Kings (Supply Quality)
+                  </h3>
+                  <span className="text-[10px] bg-amber-50 text-amber-600 px-2 py-1 rounded font-black">Top 10</span>
+                </div>
+                <div className="space-y-4">
+                  {reliabilityRanking.map((vendor, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center text-xs font-bold text-amber-700">
+                          #{i + 1}
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-gray-800">{vendor.businessName}</p>
+                          <p className="text-[10px] text-gray-400">Trust: {vendor.trustScore}%</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs font-black text-emerald-600 italic">~{vendor.responseTime}m</p>
+                        <p className="text-[9px] text-gray-400 uppercase font-bold tracking-tighter">Response</p>
                       </div>
                     </div>
                   ))}
-              </div>
-              {allProducts.filter(p => (p.orderCount || 0) > 0 || (p.viewCount || 0) > 0).length === 0 && (
-                <div className="text-center py-8">
-                  <Package className="w-12 h-12 text-gray-200 mx-auto mb-3" />
-                  <p className="text-gray-500 text-sm">No product interactions yet</p>
                 </div>
-              )}
+              </div>
+
+              {/* Comparison Trends */}
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-sm font-bold text-gray-900 flex items-center uppercase tracking-tight">
+                    <RefreshCw className="w-4 h-4 mr-2 text-purple-600" />
+                    Comparison Leaderboard (Student Research)
+                  </h3>
+                  <span className="text-[10px] bg-purple-50 text-purple-600 px-2 py-1 rounded font-black">Top Compared</span>
+                </div>
+                <div className="space-y-4">
+                  {comparisonLeaderboard.map((item, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-white rounded-lg overflow-hidden border border-gray-100 p-1">
+                          {item.image ? (
+                            <img src={getProxiedImageUrl(item.image) || undefined} className="w-full h-full object-contain" />
+                          ) : (
+                            <Package className="w-full h-full text-gray-200 p-1" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-gray-800 truncate max-w-[120px]">{item.name}</p>
+                          <p className="text-[9px] text-gray-400">by {item.vendorName}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-black text-purple-600">{item.compareCount}</p>
+                        <p className="text-[9px] text-gray-400 uppercase font-bold tracking-tighter">Comparisons</p>
+                      </div>
+                    </div>
+                  ))}
+                  {comparisonLeaderboard.length === 0 && (
+                    <p className="text-center py-8 text-gray-400 text-sm italic">Waiting for comparison data...</p>
+                  )}
+                </div>
+              </div>
             </div>
-            {/* Quick Actions or Recent Stats could go here */}
+
+            {/* Price Index Card */}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-sm font-bold text-gray-900 flex items-center uppercase tracking-tight">
+                  <Activity className="w-4 h-4 mr-2 text-blue-600" />
+                  Demand Price Index (Market Value)
+                </h3>
+                <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded font-black">Real-time Avg</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {keywordPriceIndex.slice(0, 8).map((item, i) => (
+                  <div key={i} className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex flex-col justify-between">
+                    <div>
+                      <span className="text-[10px] font-black text-blue-600 uppercase italic">"{item.query}"</span>
+                      <p className="text-[9px] text-gray-400 font-bold uppercase tracking-tighter mt-1">{item.productCount} products</p>
+                    </div>
+                    <p className="text-sm font-black text-gray-900 mt-2 font-mono">₦{Math.round(item.avgPrice).toLocaleString()}</p>
+                  </div>
+                ))}
+                {keywordPriceIndex.length === 0 && (
+                  <p className="text-center py-4 text-gray-400 text-xs italic">Waiting for more search data...</p>
+                )}
+              </div>
+            </div>
+
+            {/* Category Conversion Heatmap */}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-sm font-bold text-gray-900 flex items-center uppercase tracking-tight">
+                  <TrendingUp className="w-4 h-4 mr-2 text-emerald-600" />
+                  Category Conversion Heatmap (Order Intent)
+                </h3>
+                <span className="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-1 rounded font-black">Sorted by Rate</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {categoryConversion.map((item, i) => (
+                  <div key={i} className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-xs font-black text-gray-700 capitalize">{item.category}</span>
+                      <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${item.rate > 10 ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-500'}`}>
+                        {item.rate.toFixed(1)}%
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-[9px] text-gray-400 uppercase font-bold">
+                      <span>{item.orders} Orders</span>
+                      <span>{item.views} Views</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-1 mt-2">
+                      <div
+                        className="bg-emerald-500 h-full rounded-full transition-all"
+                        style={{ width: `${Math.min(100, item.rate * 2)}% ` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Global Health Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                <div className="flex items-center space-x-3 mb-4">
+                  <Activity className="w-5 h-5 text-emerald-600" />
+                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-tight">Global Conv.</h3>
+                </div>
+                <p className="text-3xl font-black text-emerald-600">{conversionRate}%</p>
+                <p className="text-[10px] text-gray-400 mt-2 font-medium">Platform-wide average</p>
+              </div>
+
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                <div className="flex items-center space-x-3 mb-4">
+                  <Tag className="w-5 h-5 text-blue-600" />
+                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-tight">Market Price</h3>
+                </div>
+                <p className="text-3xl font-black text-blue-600">₦{Math.round(avgPriceIndex).toLocaleString()}</p>
+                <p className="text-[10px] text-gray-400 mt-2 font-medium">Avg listing price</p>
+              </div>
+
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                <div className="flex items-center space-x-3 mb-4">
+                  <Clock className="w-5 h-5 text-orange-600" />
+                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-tight">Peak Activity</h3>
+                </div>
+                <div className="h-10 flex items-end gap-1">
+                  {peakTraffic.slice(10, 22).map((pt, i) => (
+                    <div
+                      key={i}
+                      className="flex-1 bg-orange-100 rounded-sm hover:bg-orange-500 transition-colors cursor-help group relative"
+                      style={{ height: `${Math.min(100, (pt.count / (Math.max(...peakTraffic.map(p => p.count)) || 1)) * 100)}% ` }}
+                    >
+                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 bg-gray-900 text-white text-[8px] px-1 py-0.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap">
+                        {pt.hour}:00 - {pt.count}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[10px] text-gray-400 mt-2 font-medium">Daily traffic distribution</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                <h3 className="text-sm font-bold text-gray-900 mb-6 flex items-center uppercase tracking-tight">
+                  <PieChart className="w-4 h-4 mr-2 text-blue-600" />
+                  Categorical Price Index
+                </h3>
+                <div className="space-y-4">
+                  {Array.from(new Set(allProducts.map(p => p.category)))
+                    .map(cat => {
+                      const catProducts = allProducts.filter(p => p.category === cat);
+                      const avg = catProducts.reduce((sum, p) => sum + p.price, 0) / (catProducts.length || 1);
+                      return { name: cat, avg };
+                    })
+                    .sort((a, b) => b.avg - a.avg)
+                    .map(item => (
+                      <div key={item.name} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                        <span className="text-xs font-bold text-gray-700 capitalize">{item.name}</span>
+                        <span className="text-xs font-black text-blue-600 font-mono">₦{Math.round(item.avg).toLocaleString()}</span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                <h3 className="text-sm font-bold text-gray-900 mb-6 flex items-center uppercase tracking-tight">
+                  <AlertCircle className="w-4 h-4 mr-2 text-red-600" />
+                  Stagnant Products (L14D)
+                </h3>
+                <div className="space-y-4">
+                  {allProducts
+                    .filter(p => (p.viewCount || 0) < 5 && (p.orderCount || 0) === 0)
+                    .slice(0, 5)
+                    .map(product => (
+                      <div key={product.id} className="flex items-center justify-between p-3 bg-red-50/30 rounded-xl border border-red-50">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                            {product.image && <img src={product.image} className="w-full h-full object-cover" />}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[10px] font-bold text-gray-900 truncate">{product.name}</p>
+                            <p className="text-[9px] text-gray-400">by {product.vendorName}</p>
+                          </div>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <p className="text-[9px] font-black text-red-600 uppercase">Attention</p>
+                          <p className="text-[9px] text-gray-400">{product.viewCount || 0} views</p>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            </div>
           </div>
         );
+
+
+      case "demand-gap":
+        return (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 relative max-w-2xl mx-auto">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 flex items-center">
+                    <MoveDown className="w-5 h-5 mr-2 text-emerald-600" />
+                    Market Demand Gaps
+                  </h3>
+                  <p className="text-xs text-gray-500">Queries that returned 0 results</p>
+                </div>
+                <div className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+                  High Priority
+                </div>
+              </div>
+
+              {demandGaps.length > 0 ? (
+                <div className="space-y-3">
+                  {demandGaps.map((item, index) => (
+                    <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-emerald-200 hover:bg-emerald-50/30 transition-all group">
+                      <div>
+                        <span className="text-sm font-semibold text-gray-700 font-display italic">"{item.query}"</span>
+                        <p className="text-[9px] text-gray-400 mt-1 uppercase font-bold tracking-wider">Unmet Student Request</p>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <span className="bg-white shadow-sm border border-gray-100 text-gray-600 px-3 py-1 rounded-lg text-xs font-black font-mono">
+                          {item.count} searches
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Package className="w-12 h-12 text-gray-200 mx-auto mb-4" />
+                  <p className="text-gray-500 font-medium font-display">No demand gaps identified yet</p>
+                </div>
+              )}
+
+              <div className="mt-8 p-4 bg-emerald-600 rounded-xl text-white">
+                <p className="text-xs font-bold leading-relaxed">
+                  <TrendingUp className="w-4 h-4 inline-block mr-1 mb-1" />
+                  Strategy: Reach out to vendors in the category of these missing products to stock up.
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+
+      case "search-analytics":
+        return (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 relative max-w-2xl mx-auto">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-bold text-gray-900 flex items-center">
+                  <Search className="w-5 h-5 mr-2 text-emerald-600" />
+                  Top Search Queries
+                </h3>
+                <div className={`text - [10px] font - bold uppercase tracking - widest px - 2 py - 1 rounded ${searchError ? 'bg-red-50 text-red-600 animate-pulse' : 'bg-gray-50 text-gray-400'} `}>
+                  {searchError ? 'Access Denied' : 'Real-time Active'}
+                </div>
+              </div>
+              {searchError ? (
+                <div className="text-center py-10 bg-red-50 rounded-xl border border-red-100 px-6">
+                  <ShieldX className="w-10 h-10 text-red-400 mx-auto mb-3" />
+                  <p className="text-sm font-bold text-red-700">Analytics Blocked</p>
+                  <p className="text-[10px] text-red-600 mt-1">{searchError}</p>
+                </div>
+              ) : topSearches.length > 0 ? (
+                <div className="space-y-3 px-2">
+                  {topSearches.map((item, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 hover:bg-emerald-50 hover:border-emerald-100 transition-colors">
+                      <span className="text-sm font-semibold text-gray-700 font-display">"{item.query}"</span>
+                      <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg text-xs font-black font-mono">
+                        {item.count}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Search className="w-12 h-12 text-gray-200 mx-auto mb-4" />
+                  <p className="text-gray-500 font-medium font-display">No search data yet</p>
+                </div>
+              )}
+              <div className="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between">
+                <span className="text-[10px] text-gray-400 italic">{searchError ? 'Sync failed' : 'Syncing with Firestore...'}</span>
+                <span className="text-[10px] text-gray-400 font-mono">{new Date().toLocaleTimeString()}</span>
+              </div>
+            </div>
+          </div>
+        );
+
+      case "product-interactions":
+        return (
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 px-1">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
+                <div>
+                  <h3 className="text-2xl font-black text-gray-900 flex items-center gap-3 font-display uppercase tracking-tight">
+                    <Flame className="w-8 h-8 text-orange-500" />
+                    Product Hotlist (Top 20)
+                  </h3>
+                  <p className="text-gray-500 mt-1 text-sm font-medium">Ranked by total engagement (Orders, Views, and Cart Additions)</p>
+                </div>
+              </div>
+
+              <div className="bg-gray-50/50 rounded-2xl border border-gray-100 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-emerald-600 text-white text-left">
+                        <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest">Product Details</th>
+                        <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-center">Score Breakdown</th>
+                        <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 bg-white">
+                      {allProducts
+                        .map(p => ({
+                          ...p,
+                          totalScore: (p.orderCount || 0) + (p.viewCount || 0) + (p.cartCount || 0)
+                        }))
+                        .sort((a, b) => b.totalScore - a.totalScore)
+                        .slice(0, 20)
+                        .map((product) => (
+                          <tr key={product.id} className="hover:bg-emerald-50/30 transition-colors group">
+                            <td className="px-6 py-4">
+                              <div className="flex items-center space-x-4">
+                                <div className="w-14 h-14 rounded-2xl bg-gray-200 overflow-hidden shadow-sm border border-gray-100 flex-shrink-0">
+                                  {product.image ? (
+                                    <img src={product.image} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                  ) : (
+                                    <Package className="w-full h-full p-4 text-gray-400" />
+                                  )}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="font-bold text-gray-900 group-hover:text-emerald-700 transition-colors uppercase tracking-tight text-sm truncate">
+                                    {product.name}
+                                  </p>
+                                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5 flex items-center">
+                                    <Tag className="w-3 h-3 mr-1" />
+                                    {product.category}
+                                  </p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center justify-center gap-8">
+                                <div className="text-center">
+                                  <p className="text-xs font-black text-orange-600">{(product.orderCount || 0).toLocaleString()}</p>
+                                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Orders</p>
+                                </div>
+                                <div className="text-center">
+                                  <p className="text-xs font-black text-blue-600">{(product.viewCount || 0).toLocaleString()}</p>
+                                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Views</p>
+                                </div>
+                                <div className="text-center">
+                                  <p className="text-xs font-black text-emerald-600">{(product.cartCount || 0).toLocaleString()}</p>
+                                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">In Cart</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <button
+                                onClick={() => navigate(`/ product / ${product.id} `)}
+                                className="px-4 py-2 bg-white text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-widest border border-emerald-100 hover:bg-emerald-600 hover:text-white transition-all shadow-sm active:scale-95"
+                              >
+                                View Item
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                  {allProducts.length === 0 && (
+                    <div className="text-center py-20 bg-white">
+                      <Package className="w-16 h-16 text-gray-100 mx-auto mb-4" />
+                      <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No analytics data found</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
       case "vendors":
         return (
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
@@ -716,8 +1121,6 @@ export function AdminDashboard() {
                   </p>
                 </div>
 
-                {/* Products Table implementation remains similar but refreshed */}
-                {/* ... (existing products table logic) */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full">
@@ -761,7 +1164,7 @@ export function AdminDashboard() {
                             <td className="px-6 py-4 text-sm text-gray-600 font-medium">{product.category}</td>
                             <td className="px-6 py-4 text-sm font-bold text-gray-900">₦{product.price.toLocaleString()}</td>
                             <td className="px-6 py-4">
-                              <span className={`inline-flex px-3 py-1 text-xs font-bold rounded-full ${product.inStock ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                              <span className={`inline - flex px - 3 py - 1 text - xs font - bold rounded - full ${product.inStock ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"} `}>
                                 {product.inStock ? "In Stock" : "Out of Stock"}
                               </span>
                             </td>
@@ -801,17 +1204,16 @@ export function AdminDashboard() {
                     )
                     .map((vendor) => (
                       <div key={vendor.id} onClick={() => handleVendorClick(vendor)} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden cursor-pointer hover:shadow-xl hover:border-emerald-300 transition-all duration-300 group">
-                        <div className="h-28 bg-gradient-to-br from-emerald-600 to-emerald-800 relative overflow-hidden">
-                          {vendor.bannerImage && <img src={vendor.bannerImage} alt="" className="w-full h-full object-cover opacity-60 group-hover:scale-110 transition-transform duration-500" />}
-                          <div className="absolute inset-0 bg-black/10" />
+                        <div className="relative h-24 bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-t-lg overflow-hidden">
+                          {vendor.bannerImage && <img src={getProxiedImageUrl(vendor.bannerImage) || vendor.bannerImage} alt="" className="w-full h-full object-cover opacity-60 group-hover:scale-110 transition-transform duration-500" />}
                         </div>
-                        <div className="p-6 pt-0 relative">
-                          <div className="w-20 h-20 rounded-2xl border-4 border-white bg-white shadow-lg overflow-hidden -mt-10 relative z-10 mx-auto">
+                        <div className="p-4 text-center">
+                          <div className="w-16 h-16 mx-auto -mt-10 mb-3 rounded-full border-4 border-white shadow-lg overflow-hidden bg-white">
                             {vendor.profileImage ? (
-                              <img src={vendor.profileImage} alt={vendor.businessName} className="w-full h-full object-cover" />
+                              <img src={getProxiedImageUrl(vendor.profileImage) || vendor.profileImage} alt={vendor.businessName} className="w-full h-full object-cover" />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-emerald-50">
-                                <Store className="w-10 h-10 text-emerald-600" />
+                              <div className="w-full h-full flex items-center justify-center bg-emerald-100">
+                                <Store className="w-8 h-8 text-emerald-600" />
                               </div>
                             )}
                           </div>
@@ -828,7 +1230,7 @@ export function AdminDashboard() {
                               </div>
                             </div>
                             <div className="flex items-center justify-center gap-2">
-                              <button onClick={(e) => handleVerifyVendor(vendor, e)} className={`flex-1 flex items-center justify-center px-3 py-2 text-xs font-bold rounded-xl border transition-all ${vendor.isVerified ? 'text-amber-600 border-amber-200 hover:bg-amber-50' : 'text-emerald-600 border-emerald-200 hover:bg-emerald-50'}`}>
+                              <button onClick={(e) => handleVerifyVendor(vendor, e)} className={`flex - 1 flex items - center justify - center px - 3 py - 2 text - xs font - bold rounded - xl border transition - all ${vendor.isVerified ? 'text-amber-600 border-amber-200 hover:bg-amber-50' : 'text-emerald-600 border-emerald-200 hover:bg-emerald-50'} `}>
                                 {vendor.isVerified ? <ShieldX className="w-3.5 h-3.5 mr-1" /> : <ShieldCheck className="w-3.5 h-3.5 mr-1" />}
                                 {vendor.isVerified ? 'Unverify' : 'Verify'}
                               </button>
@@ -849,18 +1251,20 @@ export function AdminDashboard() {
       case "banners":
         return <div className="animate-in fade-in slide-in-from-bottom-2 duration-500"><AdminAnnouncements /></div>;
       case "categories":
-        return <div className="animate-in fade-in slide-in-from-bottom-2 duration-500"><AdminCategories /></div>;
+        return <div className="animate-in fade-in slide-in-from-bottom-2 duration-500"><AdminCategories allProducts={allProducts} /></div>;
       case "verification":
         return <div className="animate-in fade-in slide-in-from-bottom-2 duration-500"><AdminVerificationRequests /></div>;
       case "leaderboard":
         return <div className="animate-in fade-in slide-in-from-bottom-2 duration-500"><AdminLeaderboard initialLeaderboard={leaderboard} /></div>;
+      case "curation":
+        return <div className="animate-in fade-in slide-in-from-bottom-2 duration-500"><AdminCuration vendors={vendors} /></div>;
       default:
         return null;
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex overflow-hidden">
+    <div className="h-screen bg-gray-50 flex overflow-hidden">
       {/* Sidebar Component */}
       <AdminSidebar
         activeTab={activeTab}
@@ -874,7 +1278,7 @@ export function AdminDashboard() {
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Header */}
         <header className="bg-white border-b border-gray-200 h-16 flex-shrink-0 flex items-center justify-between px-6 z-30">
           <div className="flex items-center gap-4">
@@ -895,19 +1299,18 @@ export function AdminDashboard() {
                   <ArrowLeft className="w-5 h-5" />
                 </button>
               )}
-              <h1 className="text-xl font-bold text-gray-900">
-                {selectedVendor ? selectedVendor.businessName : activeTab.charAt(0).toUpperCase() + activeTab.slice(1).replace("-", " ")}
+              <h1 className="text-xl font-black text-gray-900 uppercase tracking-tight font-display">
+                {selectedVendor ? selectedVendor.businessName : activeTab.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
               </h1>
             </div>
           </div>
           <div className="flex items-center gap-4">
-            {/* Admin Profile/Logout is now in sidebar but could duplicate here for mobile */}
-            <span className="text-sm font-medium text-gray-500 hidden sm:block">Admin Session</span>
+            <span className="text-xs font-black text-gray-400 uppercase tracking-widest hidden sm:block bg-gray-50 px-3 py-1 rounded-full border border-gray-200 italic">Secure Admin Session</span>
           </div>
         </header>
 
         {/* Scrollable Content */}
-        <main className="flex-1 overflow-y-auto p-6 scroll-smooth">
+        <main className="flex-1 overflow-y-auto p-6 scroll-smooth bg-gray-50/50">
           <div className="max-w-7xl mx-auto">
             {renderContent()}
           </div>
@@ -917,17 +1320,13 @@ export function AdminDashboard() {
       {/* Product Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200 border border-emerald-100">
             <ProductForm
               product={editingProduct}
               onSave={handleSave}
-              onCancel={() => {
-                setShowForm(false);
-                setEditingProduct(null);
-              }}
+              onCancel={() => setShowForm(false)}
               vendorName={selectedVendor?.businessName}
               whatsappNumber={selectedVendor?.whatsappNumber}
-              canAddCategory={true}
             />
           </div>
         </div>

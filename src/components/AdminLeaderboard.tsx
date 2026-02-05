@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Trophy, RotateCcw } from "lucide-react";
 import { VendorVisitData, resetVisits, getVisitsLeaderboard } from "../services/vendorVisits";
 

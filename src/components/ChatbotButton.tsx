@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from "react";
 import { MessageCircle, X, Bot } from 'lucide-react';
 
 const BOTPRESS_CHAT_URL = import.meta.env.VITE_BOTPRESS_CHAT_URL;

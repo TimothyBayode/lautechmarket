@@ -1,0 +1,41 @@
+﻿src/pages/AdminDashboard.tsx(19,3): error TS6133: 'BarChart2' is declared but its value is never read.
+src/pages/vendor/VendorDashboard.tsx(4,5): error TS2300: Duplicate identifier 'Plus'.
+src/pages/vendor/VendorDashboard.tsx(5,5): error TS2300: Duplicate identifier 'ArrowLeft'.
+src/pages/vendor/VendorDashboard.tsx(6,5): error TS2300: Duplicate identifier 'Edit2'.
+src/pages/vendor/VendorDashboard.tsx(7,5): error TS2300: Duplicate identifier 'Trash2'.
+src/pages/vendor/VendorDashboard.tsx(8,5): error TS2300: Duplicate identifier 'Plus'.
+src/pages/vendor/VendorDashboard.tsx(9,5): error TS2300: Duplicate identifier 'Edit2'.
+src/pages/vendor/VendorDashboard.tsx(10,5): error TS2300: Duplicate identifier 'Trash2'.
+src/pages/vendor/VendorDashboard.tsx(13,5): error TS2300: Duplicate identifier 'ArrowLeft'.
+src/pages/vendor/VendorDashboard.tsx(14,5): error TS6133: 'Menu' is declared but its value is never read.
+src/pages/vendor/VendorDashboard.tsx(16,5): error TS6133: 'PlusCircle' is declared but its value is never read.
+src/pages/vendor/VendorDashboard.tsx(17,5): error TS6133: 'CheckCircle' is declared but its value is never read.
+src/pages/vendor/VendorDashboard.tsx(18,14): error TS6133: 'ClockIcon' is declared but its value is never read.
+src/pages/vendor/VendorDashboard.tsx(36,1): error TS6192: All imports in import declaration are unused.
+src/pages/vendor/VendorDashboard.tsx(36,10): error TS2305: Module '"../../services/analytics"' has no exported member 'trackProductView'.
+src/pages/vendor/VendorDashboard.tsx(36,28): error TS2305: Module '"../../services/analytics"' has no exported member 'trackCartAddition'.
+src/pages/vendor/VendorDashboard.tsx(36,47): error TS2305: Module '"../../services/analytics"' has no exported member 'trackOrderInitiated'.
+src/pages/vendor/VendorDashboard.tsx(83,54): error TS2304: Cannot find name 'VendorVisitData'.
+src/pages/vendor/VendorDashboard.tsx(84,50): error TS2304: Cannot find name 'VendorVisitData'.
+src/pages/vendor/VendorDashboard.tsx(189,32): error TS2304: Cannot find name 'getVisitsLeaderboard'.
+src/pages/vendor/VendorDashboard.tsx(193,38): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/pages/vendor/VendorDashboard.tsx(494,34): error TS2304: Cannot find name 'Upload'.
+src/pages/vendor/VendorDashboard.tsx(500,26): error TS2304: Cannot find name 'Upload'.
+src/pages/vendor/VendorDashboard.tsx(530,38): error TS2304: Cannot find name 'Upload'.
+src/pages/vendor/VendorDashboard.tsx(565,34): error TS2304: Cannot find name 'Phone'.
+src/pages/vendor/VendorDashboard.tsx(574,34): error TS2304: Cannot find name 'Grid3X3'.
+src/pages/vendor/VendorDashboard.tsx(583,34): error TS2304: Cannot find name 'Share2'.
+src/pages/vendor/VendorDashboard.tsx(627,34): error TS2304: Cannot find name 'Share2'.
+src/pages/vendor/VendorDashboard.tsx(643,30): error TS2304: Cannot find name 'LinkIcon'.
+src/pages/vendor/VendorDashboard.tsx(656,34): error TS2304: Cannot find name 'Share2'.
+src/pages/vendor/VendorDashboard.tsx(694,34): error TS2304: Cannot find name 'TrendingUp'.
+src/pages/vendor/VendorDashboard.tsx(713,34): error TS2304: Cannot find name 'AlertCircle'.
+src/pages/vendor/VendorDashboard.tsx(727,30): error TS2304: Cannot find name 'Trophy'.
+src/pages/vendor/VendorDashboard.tsx(775,38): error TS2304: Cannot find name 'Grid3X3'.
+src/pages/vendor/VendorDashboard.tsx(785,38): error TS2304: Cannot find name 'List'.
+src/pages/vendor/VendorDashboard.tsx(988,54): error TS2304: Cannot find name 'Check'.
+src/pages/vendor/VendorDashboard.tsx(990,54): error TS2304: Cannot find name 'LinkIcon'.
+src/pages/vendor/VendorDashboard.tsx(1081,58): error TS2304: Cannot find name 'Check'.
+src/pages/vendor/VendorDashboard.tsx(1083,58): error TS2304: Cannot find name 'LinkIcon'.
+src/pages/vendor/VendorDashboard.tsx(1247,34): error TS2304: Cannot find name 'MessageCircle'.
+src/pages/vendor/VendorDashboard.tsx(1249,34): error TS2552: Cannot find name 'ExternalLink'. Did you mean 'External'?

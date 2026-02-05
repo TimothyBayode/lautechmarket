@@ -39,6 +39,20 @@ export function AdminLogin() {
 
     try {
       const user = await loginUser(email, password);
+
+      // Secondary check: ensure the email is an authorized admin
+      const adminEmails = [
+        "lautechmarket.help@gmail.com",
+        "admin@lautech.edu.ng",
+        "admin@lautechmarket.com.ng"
+      ];
+
+      if (!user.email || !adminEmails.includes(user.email.toLowerCase())) {
+        console.warn("Unauthorized admin login attempted:", user.email);
+        setError("Unauthorized: This account does not have admin privileges.");
+        return;
+      }
+
       console.log("Admin logged in:", user.email);
       navigate("/admin/dashboard");
     } catch (err: any) {
@@ -123,7 +137,7 @@ export function AdminLogin() {
               </div>
             </div>
 
-            
+
 
             <button
               type="submit"
