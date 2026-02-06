@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Lock, Mail, Eye, EyeOff } from "lucide-react";
-import { loginUser, isAdmin } from "../services/auth";
+import { Lock, Mail, Eye, EyeOff, ShieldCheck, Chrome } from "lucide-react";
+import { loginUser, isAdmin, verifyGoogleIdentity, isGoogleIdentityVerified } from "../services/auth";
 
 export function AdminLogin() {
   const navigate = useNavigate();
@@ -10,6 +10,13 @@ export function AdminLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState<1 | 2>(1);
+
+  useEffect(() => {
+    if (isGoogleIdentityVerified()) {
+      setStep(2);
+    }
+  }, []);
 
   const getFriendlyErrorMessage = (error: any): string => {
     const errorCode = error.code;
@@ -30,6 +37,18 @@ export function AdminLogin() {
       default:
         return "Login failed. Please try again.";
     }
+  };
+
+  const handleVerifyIdentity = async () => {
+    setError("");
+    setLoading(true);
+    const success = await verifyGoogleIdentity();
+    if (success) {
+      setStep(2);
+    } else {
+      setError("Identity Verification Failed: You must sign in with the authorized Google admin account.");
+    }
+    setLoading(false);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -65,83 +84,134 @@ export function AdminLogin() {
           <div className="inline-flex items-center justify-center">
             <img src="/both.svg" alt="Logo" className="w-32" />
           </div>
+          <h2 className="text-2xl font-black text-gray-900 mt-4">Admin Security</h2>
           <p className="text-gray-600">Access the LAUTECH Market admin dashboard</p>
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                {error}
-              </div>
-            )}
-
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  placeholder="admin@lautechmarket.com.ng"
-                />
-              </div>
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mb-6 flex items-start">
+              <ShieldCheck className="w-5 h-5 mr-3 shrink-0 mt-0.5 opacity-50" />
+              <span>{error}</span>
             </div>
+          )}
 
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700 mb-2"
+          {step === 1 ? (
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="text-center space-y-4">
+                <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto">
+                  <ShieldCheck className="w-8 h-8 text-emerald-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Identity Verification</h3>
+                  <p className="text-sm text-gray-500">Please verify your identity using your authorized Google account before accessing admin credentials.</p>
+                </div>
+              </div>
+
+              <button
+                onClick={handleVerifyIdentity}
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-200 text-gray-700 py-3.5 px-6 rounded-xl hover:bg-gray-50 disabled:opacity-50 transition-all font-bold group shadow-sm hover:shadow-md"
               >
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  placeholder="Enter your password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 focus:outline-none"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                  aria-pressed={showPassword}
+                {loading ? (
+                  <div className="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <Chrome className="w-5 h-5 text-emerald-600 group-hover:scale-110 transition-transform" />
+                    <span>Verify with Google</span>
+                  </>
+                )}
+              </button>
+
+              <p className="text-[10px] text-center text-gray-400 font-medium italic">
+                Authorized identity: lautechmarket.help@gmail.com
+              </p>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Identity Verified</span>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block text-xs font-black text-gray-500 uppercase tracking-wider mb-2"
                 >
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
-                </button>
+                  Admin Credentials
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-sm font-medium"
+                    placeholder="Enter admin email"
+                  />
+                </div>
               </div>
-            </div>
 
+              <div>
+                <label
+                  htmlFor="password"
+                  className="block text-xs font-black text-gray-500 uppercase tracking-wider mb-2"
+                >
+                  Admin Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="w-full pl-12 pr-12 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-sm font-medium"
+                    placeholder="Enter password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+              </div>
 
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-emerald-600 text-white py-4 px-6 rounded-xl hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all font-black uppercase tracking-widest text-sm shadow-md hover:shadow-lg active:scale-95"
+              >
+                {loading ? "Authenticating..." : "Enter Dashboard"}
+              </button>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-emerald-600 text-white py-3 px-6 rounded-lg hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
-            >
-              {loading ? "Signing In..." : "Sign In"}
-            </button>
-          </form>
+              <button
+                type="button"
+                onClick={() => {
+                  sessionStorage.removeItem("admin_identity_verified");
+                  setStep(1);
+                }}
+                className="w-full text-center text-[10px] text-gray-400 hover:text-emerald-600 font-bold uppercase tracking-widest transition-colors mt-2"
+              >
+                Reset Verification
+              </button>
+            </form>
+          )}
         </div>
+
+        <p className="text-center mt-8 text-gray-400 text-xs font-medium">
+          &copy; {new Date().getFullYear()} LAUTECH Market. All rights reserved.
+        </p>
       </div>
     </div>
   );
