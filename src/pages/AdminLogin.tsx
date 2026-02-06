@@ -42,11 +42,20 @@ export function AdminLogin() {
   const handleVerifyIdentity = async () => {
     setError("");
     setLoading(true);
-    const success = await verifyGoogleIdentity();
-    if (success) {
-      setStep(2);
-    } else {
-      setError("Identity Verification Failed: You must sign in with the authorized Google admin account.");
+    try {
+      const success = await verifyGoogleIdentity();
+      if (success) {
+        setStep(2);
+      } else {
+        setError("Identity Verification Failed: You must sign in with the authorized Google admin account (lautechmarket.help@gmail.com).");
+      }
+    } catch (err: any) {
+      console.error("Identity error:", err);
+      if (err.code === "auth/unauthorized-domain") {
+        setError("Domain Not Authorized: Please add 'www.lautechmarket.com.ng' to the Authorized Domains in your Firebase Console (Authentication -> Settings).");
+      } else {
+        setError("Verification Error: " + (err.message || "An unexpected error occurred."));
+      }
     }
     setLoading(false);
   };
