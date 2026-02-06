@@ -86,11 +86,47 @@
   @apply bg-white/40 dark:bg-slate-800/40 backdrop-blur-sm border border-white/40 dark:border-slate-700/40 shadow-xl;
 }
 
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
+@layer utilities {
 
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+  }
+
+  /* Custom class to force show scrollbar on Desktop (lg breakpoint) */
+  @media (min-width: 1024px) {
+    .desktop-scrollbar-visible::-webkit-scrollbar {
+      display: block;
+      height: 8px;
+    }
+
+    .desktop-scrollbar-visible::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .desktop-scrollbar-visible::-webkit-scrollbar-thumb {
+      background-color: #cbd5e1;
+      /* slate-300 */
+      border-radius: 4px;
+    }
+
+    .desktop-scrollbar-visible::-webkit-scrollbar-thumb:hover {
+      background-color: #94a3b8;
+      /* slate-400 */
+    }
+
+    .desktop-scrollbar-visible {
+      -ms-overflow-style: auto;
+      scrollbar-width: thin;
+      /* Firefox */
+    }
+  }
 }

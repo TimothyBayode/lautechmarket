@@ -155,8 +155,11 @@ export function Home() {
         const vendor = vendors.find((v) => v.id === p.vendorId);
         if (!vendor) return false;
 
-        // Criteria: In Stock AND (Fast Response OR Active Now)
-        const isFast = (vendor.metrics?.averageResponseMinutes || 999) < 30;
+        // Criteria: In Stock AND (Fast Response OR Active Now OR Verified)
+        // Relaxed constraint: If metrics are missing, we give benefit of doubt (assume fast) to encourage new vendors
+        const responseTime = vendor.metrics?.averageResponseMinutes;
+        // Default to TRUE if metrics are missing (new vendor logic)
+        const isFast = responseTime !== undefined ? responseTime < 30 : true;
         const isActive = vendor.isActiveNow || false;
 
         return p.inStock && (isFast || isActive);
@@ -170,7 +173,7 @@ export function Home() {
         if (!p.bucketId) return false;
         const pBucketId = p.bucketId.toLowerCase().trim();
         // Check for ID match OR name match (in case some products have names)
-        const bucket = buckets.find(b => b.id === p.bucketId || b.name.toLowerCase() === pBucketId);
+        const bucket = buckets.find(bucket => bucket.id === p.bucketId || bucket.name.toLowerCase() === pBucketId);
         const bucketMatch = normalizedSelectedBuckets.includes(pBucketId) ||
           (bucket && normalizedSelectedBuckets.includes(bucket.id.toLowerCase()));
         return bucketMatch;
@@ -215,6 +218,22 @@ export function Home() {
     } else {
       // Smart Default Sort: In-Stock > High Trust/Fast Response > Newest
       sorted = [...filtered].sort((a, b) => {
+        // 0. INSTANT BUY PRIORITY (Urgent Needs First)
+        if (filterOptions.instantBuy) {
+          const urgentBuckets = ["Hostel & Student Essentials", "Campus Services"];
+          const bucketObjA = buckets.find(bucket => bucket.id === a.bucketId);
+          const bucketObjB = buckets.find(bucket => bucket.id === b.bucketId);
+
+          const aName = bucketObjA?.name || "";
+          const bName = bucketObjB?.name || "";
+
+          const isUrgentA = urgentBuckets.includes(aName);
+          const isUrgentB = urgentBuckets.includes(bName);
+
+          if (isUrgentA && !isUrgentB) return -1;
+          if (!isUrgentA && isUrgentB) return 1;
+        }
+
         // 1. In stock status (true first)
         if (a.inStock && !b.inStock) return -1;
         if (!a.inStock && b.inStock) return 1;
@@ -397,7 +416,7 @@ export function Home() {
                   </div>
                 </div>
 
-                <div className="flex space-x-4 overflow-x-auto pb-6 -mx-4 px-4 scrollbar-hide snap-x">
+                <div className="flex space-x-4 overflow-x-auto pb-6 -mx-4 px-4 scrollbar-hide desktop-scrollbar-visible snap-x">
                   {recommendations.map((product) => (
                     <div key={product.id} className="min-w-[280px] max-w-[280px] snap-start">
                       <ProductCard
@@ -433,7 +452,7 @@ export function Home() {
             <div className="flex flex-col gap-4">
               {/* Top Tier: Buckets */}
               <div className="flex items-center justify-between mb-2">
-                <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide flex-1">
+                <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide desktop-scrollbar-visible flex-1">
                   {buckets.map(bucket => {
                     const bucketProductCount = products.filter(p => p.bucketId === bucket.id).length;
                     return (
@@ -475,7 +494,7 @@ export function Home() {
 
               {/* Second Tier: Subcategories (Filtering within active buckets) */}
               {selectedBuckets.length > 0 && (
-                <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide animate-in fade-in slide-in-from-left-2 duration-300">
+                <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide desktop-scrollbar-visible animate-in fade-in slide-in-from-left-2 duration-300">
                   {categoriesList
                     .filter(cat => selectedBuckets.includes(cat.bucketId))
                     .map(subCat => {

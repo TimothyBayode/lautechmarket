@@ -145,7 +145,12 @@ export function AdminCategories({ onClose, allProducts = [] }: AdminCategoriesPr
         setMigrating(true);
         try {
             const result = await migrateToBuckets();
-            alert(`Migration complete! ${result.updatedCategories} categories and ${result.updatedProducts} products updated.`);
+            alert(`Migration Report:\n
+✅ Success: ${result.success}
+📦 Categories Updated: ${result.movedCategories}
+🛍️ Products Updated: ${result.updatedProducts}
+🆕 Buckets Created: ${result.createdBuckets}
+⚠️ Unsorted Categories: ${result.unsortedCategories}`);
             loadData();
         } catch (err) {
             alert("Migration failed");
