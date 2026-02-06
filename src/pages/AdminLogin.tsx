@@ -47,7 +47,7 @@ export function AdminLogin() {
       if (success) {
         setStep(2);
       } else {
-        setError("Identity Verification Failed: You must sign in with the authorized Google admin account (lautechmarket.help@gmail.com).");
+        setError("Identity Verification Failed: You must sign in with the authorized Google admin account.");
       }
     } catch (err: any) {
       console.error("Identity error:", err);
@@ -135,7 +135,7 @@ export function AdminLogin() {
               </button>
 
               <p className="text-[10px] text-center text-gray-400 font-medium italic">
-                Authorized identity: lautechmarket.help@gmail.com
+                Authorized identity required
               </p>
             </div>
           ) : (
