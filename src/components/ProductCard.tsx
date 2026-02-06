@@ -8,6 +8,7 @@ import { logEvent } from "../services/analytics";
 import { logVendorContact } from "../services/vendorContacts";
 import { getStudentId } from "../utils/studentId";
 import { showToast } from "./ToastContainer";
+import { getProxiedImageUrl } from "../utils/imageUrl";
 
 interface ProductCardProps {
   product: Product;
@@ -123,7 +124,7 @@ export const ProductCard = React.memo(({
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-emerald-300 dark:hover:border-emerald-600">
         <div className="relative aspect-square overflow-hidden bg-gray-100 dark:bg-slate-900 border-b border-gray-100 dark:border-slate-700">
           <img
-            src={product.image}
+            src={getProxiedImageUrl(product.image) || product.image}
             alt={product.name}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           />

@@ -17,7 +17,6 @@ import {
     limit,
     Timestamp,
     setDoc,
-    updateDoc,
     increment,
 } from "firebase/firestore";
 
@@ -65,22 +64,15 @@ export const trackStoreVisit = async (vendorId: string, isExternal: boolean): Pr
         try {
             console.log("[VendorVisits] Tracking visit for ID:", vendorId);
             const visitRef = doc(db, COLLECTION_NAME, vendorId);
-            const visitDoc = await getDoc(visitRef);
 
-            if (visitDoc.exists()) {
-                await updateDoc(visitRef, {
-                    count: increment(1),
-                    lastVisit: Timestamp.now()
-                });
-                console.log("[VendorVisits] Updated visit count for:", vendorId);
-            } else {
-                await setDoc(visitRef, {
-                    count: 1,
-                    vendorId: vendorId,
-                    lastVisit: Timestamp.now()
-                });
-                console.log("[VendorVisits] Created first visit for:", vendorId);
-            }
+            // Use setDoc with merge: true to avoid needing read permissions
+            await setDoc(visitRef, {
+                count: increment(1),
+                vendorId: vendorId,
+                lastVisit: Timestamp.now()
+            }, { merge: true });
+
+            console.log("[VendorVisits] Tracked visit for:", vendorId);
             return true;
         } catch (dbError) {
             console.error("[VendorVisits] Client-side fallback failed:", dbError);

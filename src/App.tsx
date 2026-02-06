@@ -12,7 +12,7 @@ import { VendorLogin } from "./pages/vendor/VendorLogin";
 import { VendorDashboard } from "./pages/vendor/VendorDashboard";
 import { VendorStore } from "./pages/vendor/VendorStore";
 import { VerifyEmail } from "./pages/vendor/VerifyEmail";
-import { authStateListener } from "./services/auth";
+import { authStateListener, isAdmin } from "./services/auth";
 import { vendorAuthStateListener } from "./services/vendorAuth";
 import { trackVisit } from "./services/analytics";
 import { ChatbotButton } from "./components/ChatbotButton";
@@ -35,18 +35,8 @@ function AdminProtectedRoute({ children }: { children: JSX.Element }) {
   const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
-    const adminEmails = [
-      "lautechmarket.help@gmail.com",
-      "admin@lautech.edu.ng",
-      "admin@lautechmarket.com.ng"
-    ];
-
     const unsubscribe = authStateListener((user) => {
-      if (user && user.email && adminEmails.includes(user.email.toLowerCase())) {
-        setIsAuthorized(true);
-      } else {
-        setIsAuthorized(false);
-      }
+      setIsAuthorized(isAdmin(user?.email));
       setLoading(false);
     });
     return unsubscribe;

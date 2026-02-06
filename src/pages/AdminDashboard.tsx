@@ -41,7 +41,7 @@ import {
   getVendorProducts,
 } from "../services/products";
 import { ProductForm } from "../components/ProductForm";
-import { authStateListener, logoutUser } from "../services/auth";
+import { authStateListener, logoutUser, isAdmin } from "../services/auth";
 import { getAllVendors, deleteVendor, updateVendorProfile } from "../services/vendorAuth";
 import { AdminAnnouncements } from "../components/AdminAnnouncements";
 import { AdminCategories } from "../components/AdminCategories";
@@ -100,13 +100,7 @@ export function AdminDashboard() {
       }
 
       // Security: verify user is an authorized admin
-      const adminEmails = [
-        "lautechmarket.help@gmail.com",
-        "admin@lautech.edu.ng",
-        "admin@lautechmarket.com.ng"
-      ];
-
-      if (!user.email || !adminEmails.includes(user.email.toLowerCase())) {
+      if (!isAdmin(user.email)) {
         console.error("[AdminDashboard] Unauthorized access attempt:", user.email);
         alert("Unauthorized: This account does not have admin privileges.");
         logoutUser();
@@ -1154,7 +1148,7 @@ export function AdminDashboard() {
                             </td>
                             <td className="px-6 py-4">
                               <div className="flex items-center space-x-4">
-                                <img src={product.image} alt={product.name} className="w-12 h-12 object-cover rounded-lg shadow-sm" />
+                                <img src={getProxiedImageUrl(product.image) || product.image} alt={product.name} className="w-12 h-12 object-cover rounded-lg shadow-sm" />
                                 <div>
                                   <span className="font-semibold text-gray-900 block">{product.name}</span>
                                   <span className="text-xs text-gray-400">ID: {product.id.substring(0, 8)}</span>

@@ -25,7 +25,7 @@ export const uploadImage = async (file: File): Promise<UploadResult> => {
         // 2. Upload via Worker
         console.log(`[Storage] Attempting upload to: ${WORKER_URL}`);
 
-        const response = await fetch(`${WORKER_URL}?filename=${encodeURIComponent(compressedFile.name)}`, {
+        const response = await fetch(`${WORKER_URL}?file=${encodeURIComponent(compressedFile.name)}`, {
             method: 'POST',
             mode: 'cors',
             credentials: 'omit',

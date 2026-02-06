@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Lock, Mail, Eye, EyeOff } from "lucide-react";
-import { loginUser } from "../services/auth";
+import { loginUser, isAdmin } from "../services/auth";
 
 export function AdminLogin() {
   const navigate = useNavigate();
@@ -41,13 +41,7 @@ export function AdminLogin() {
       const user = await loginUser(email, password);
 
       // Secondary check: ensure the email is an authorized admin
-      const adminEmails = [
-        "lautechmarket.help@gmail.com",
-        "admin@lautech.edu.ng",
-        "admin@lautechmarket.com.ng"
-      ];
-
-      if (!user.email || !adminEmails.includes(user.email.toLowerCase())) {
+      if (!isAdmin(user.email)) {
         console.warn("Unauthorized admin login attempted:", user.email);
         setError("Unauthorized: This account does not have admin privileges.");
         return;

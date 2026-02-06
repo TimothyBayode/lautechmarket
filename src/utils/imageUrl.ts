@@ -22,6 +22,7 @@ export const getProxiedImageUrl = (url: string | null | undefined): string | nul
     if (url.includes('.r2.dev/')) {
         const filename = url.split('/').pop();
         if (!filename) return url;
+        // Use 'file' parameter to match worker expectation
         return `${WORKER_URL}?file=${filename}`;
     }
 

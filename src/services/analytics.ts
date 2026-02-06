@@ -169,23 +169,15 @@ export const trackVisit = async () => {
 
         for (const { id, storageKey } of periodKeys) {
             const statsRef = doc(db, "analytics", id);
-            const statsDoc = await getDoc(statsRef);
-
             const isUnique = !localStorage.getItem(storageKey);
 
-            if (!statsDoc.exists()) {
-                await setDoc(statsRef, {
-                    totalVisits: 1,
-                    uniqueVisitors: 1,
-                    lastUpdated: serverTimestamp()
-                });
-            } else {
-                await updateDoc(statsRef, {
-                    totalVisits: increment(1),
-                    uniqueVisitors: isUnique ? increment(1) : increment(0),
-                    lastUpdated: serverTimestamp()
-                });
-            }
+            // Use setDoc with merge: true to avoid needing read permissions
+            // This will create the document if it doesn't exist
+            await setDoc(statsRef, {
+                totalVisits: increment(1),
+                uniqueVisitors: isUnique ? increment(1) : increment(0),
+                lastUpdated: serverTimestamp()
+            }, { merge: true });
 
             if (isUnique) {
                 localStorage.setItem(storageKey, 'true');

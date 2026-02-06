@@ -1,6 +1,16 @@
 import { auth } from "../firebase";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged, User } from "firebase/auth";
 
+// Authorized Admin Emails
+export const ADMIN_EMAILS = [
+  "lautechmarket.help@gmail.com",
+];
+
+export const isAdmin = (email: string | null | undefined): boolean => {
+  if (!email) return false;
+  return ADMIN_EMAILS.includes(email.toLowerCase());
+};
+
 export const loginUser = async (
   email: string,
   password: string

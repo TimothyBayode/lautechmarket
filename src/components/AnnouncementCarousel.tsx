@@ -11,6 +11,7 @@ import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
 import { Announcement } from "../types";
 import { getActiveAnnouncements } from "../services/announcements";
+import { getProxiedImageUrl } from "../utils/imageUrl";
 
 // Default disclaimer slide
 const disclaimerSlide: Announcement = {
@@ -197,7 +198,7 @@ export function AnnouncementCarousel() {
                     >
                         {currentAnnouncement.type === 'image' && currentAnnouncement.imageUrl ? (
                             <img
-                                src={currentAnnouncement.imageUrl}
+                                src={getProxiedImageUrl(currentAnnouncement.imageUrl) || currentAnnouncement.imageUrl}
                                 alt={currentAnnouncement.title || "Announcement"}
                                 className="w-full h-full object-cover"
                             />

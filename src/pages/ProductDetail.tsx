@@ -24,6 +24,7 @@ import { db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { logEvent } from "../services/analytics";
 import { showToast } from "../components/ToastContainer";
+import { getProxiedImageUrl } from "../utils/imageUrl";
 
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -41,7 +42,7 @@ export function ProductDetail() {
     "@context": "https://schema.org",
     "@type": "Product",
     "name": product.name,
-    "image": product.image,
+    "image": getProxiedImageUrl(product.image) || product.image,
     "description": product.description,
     "sku": product.id,
     "offers": {
@@ -209,7 +210,7 @@ export function ProductDetail() {
       <SEO
         title={product.name}
         description={product.description}
-        image={product.image}
+        image={getProxiedImageUrl(product.image) || product.image}
         url={`/product/${id}`}
         type="product"
         schema={productSchema}
@@ -254,7 +255,7 @@ export function ProductDetail() {
               <div className="bg-white rounded-lg border border-gray-200 p-2 sm:p-4">
                 <div className="aspect-square overflow-hidden rounded-lg bg-gray-100">
                   <img
-                    src={product.image}
+                    src={getProxiedImageUrl(product.image) || product.image}
                     alt={product.name}
                     className="w-full h-full object-cover"
                   />
@@ -467,7 +468,7 @@ export function ProductDetail() {
                   >
                     <div className="aspect-square overflow-hidden bg-gray-100">
                       <img
-                        src={relatedProduct.image}
+                        src={getProxiedImageUrl(relatedProduct.image) || relatedProduct.image}
                         alt={relatedProduct.name}
                         className="w-full h-full object-cover hover:scale-105 transition-transform"
                       />
