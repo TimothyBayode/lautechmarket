@@ -53,6 +53,8 @@ export function AdminLogin() {
       console.error("Identity error:", err);
       if (err.code === "auth/unauthorized-domain") {
         setError("Domain Not Authorized: Please add 'www.lautechmarket.com.ng' to the Authorized Domains in your Firebase Console (Authentication -> Settings).");
+      } else if (err.code === "auth/operation-not-allowed") {
+        setError("Sign-in Method Disabled: Please enable 'Google' as a Sign-in provider in your Firebase Console (Authentication -> Sign-in method).");
       } else {
         setError("Verification Error: " + (err.message || "An unexpected error occurred."));
       }
