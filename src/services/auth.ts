@@ -23,7 +23,11 @@ export const verifyGoogleIdentity = async (): Promise<boolean> => {
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
 
-    if (user.email?.toLowerCase() === AUTHORIZED_GOOGLE_EMAIL.toLowerCase()) {
+    console.log("[Auth] Google sign-in successful. Email:", user.email);
+    console.log("[Auth] Authorized email:", AUTHORIZED_GOOGLE_EMAIL);
+
+    if (user.email?.toLowerCase().trim() === AUTHORIZED_GOOGLE_EMAIL.toLowerCase().trim()) {
+      console.log("[Auth] Identity match confirmed.");
       sessionStorage.setItem(IDENTITY_VERIFIED_KEY, "true");
       // Sign out immediately to clear the Google session from Firebase Auth
       // but keep our local verification flag
@@ -31,6 +35,7 @@ export const verifyGoogleIdentity = async (): Promise<boolean> => {
       return true;
     }
 
+    console.warn("[Auth] Identity mismatch. Expected:", AUTHORIZED_GOOGLE_EMAIL.toLowerCase(), "Got:", user.email?.toLowerCase());
     await signOut(auth);
     return false;
   } catch (error) {

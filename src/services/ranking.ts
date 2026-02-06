@@ -23,13 +23,18 @@ const getLevenshteinDistance = (a: string, b: string): number => {
  * Semantic relationships to boost relevance (English and Campus Slang)
  */
 const SEMANTIC_SYNONYMS: Record<string, string[]> = {
-    'hostel': ['accommodation', 'room', 'lodge', 'apartment', 'house'],
-    'phone': ['mobile', 'smartphone', 'iphone', 'android', 'gadget'],
-    'laptop': ['pc', 'computer', 'macbook'],
-    'food': ['meal', 'eat', 'restaurant', 'canteen'],
-    'cloth': ['fashion', 'wear', 'dress', 'shirt'],
+    'hostel': ['accommodation', 'room', 'lodge', 'apartment', 'house', 'space'],
+    'phone': ['mobile', 'smartphone', 'iphone', 'android', 'gadget', 'samsung', 'techno', 'infinix'],
+    'laptop': ['pc', 'computer', 'macbook', 'hp', 'dell', 'system'],
+    'food': ['meal', 'eat', 'restaurant', 'canteen', 'rice', 'pasta'],
+    'groceries': ['indomie', 'noodle', 'spaghetti', 'provisions', 'beverage', 'drink', 'water', 'snack', 'egg'],
+    'footwear': ['shoe', 'sneaker', 'slide', 'sandal', 'kicks', 'heels', 'boots', 'palms', 'crocs'],
+    'services': ['barber', 'hair', 'stylist', 'braid', 'makeup', 'repair', 'logistics', 'delivery', 'laundry', 'clean', 'tutor', 'assignment'],
+    'perfume': ['oil', 'scent', 'cologne', 'fragrance', 'spray', 'body spray'],
+    'fashion': ['cloth', 'wear', 'dress', 'shirt', 'trouser', 'jeans', 'gown', 'skirt', 'blouse', 'top', 'wears', 'clothing'],
+    'light': ['lamp', 'bulb', 'rechargeable', 'lantern'],
+    'power': ['bank', 'charger', 'cord', 'adapter', 'cable']
 };
-
 
 /**
  * Calculates a score for a product based on a search query.
@@ -112,11 +117,23 @@ export const calculateProductScore = (product: Product, query: string): number =
     else freshnessScore = 5;
 
     // 4. SEMANTIC BOOST (0 - 50 points)
+    // Improved Logic: Check if the search term belongs to a known concept, 
+    // and if so, check if the product matches that concept or any of its synonyms.
     keywords.forEach(word => {
-        for (const [key, synonyms] of Object.entries(SEMANTIC_SYNONYMS)) {
-            if (synonyms.includes(word) || key === word) {
-                if (nameMatch.includes(key) || categoryMatch.includes(key)) {
-                    relevanceScore += 50;
+        for (const [conceptKey, synonyms] of Object.entries(SEMANTIC_SYNONYMS)) {
+            // Check if user's word IS the concept or ONE OF the synonyms
+            if (conceptKey === word || synonyms.includes(word)) {
+
+                // If matched, give points if the PRODUCT contains the concept KEY or ANY synonym
+                // This creates a web: search "kicks" -> matches "Footwear" (key) OR "Sneakers" (synonym)
+
+                const allRelatedWords = [conceptKey, ...synonyms];
+                const productHasConcept = allRelatedWords.some(relWord =>
+                    nameMatch.includes(relWord) || categoryMatch.includes(relWord)
+                );
+
+                if (productHasConcept) {
+                    relevanceScore += 40; // Significant boost for understanding intent
                 }
             }
         }
