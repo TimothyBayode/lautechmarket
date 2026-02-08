@@ -453,24 +453,39 @@ export function Home() {
               {/* Top Tier: Buckets */}
               <div className="flex items-center justify-between mb-2">
                 <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide desktop-scrollbar-visible flex-1">
-                  {buckets.map(bucket => {
-                    const bucketProductCount = products.filter(p => p.bucketId === bucket.id).length;
-                    return (
-                      <button
-                        key={bucket.id}
-                        onClick={() => {
-                          setSelectedBuckets(prev =>
-                            prev.includes(bucket.id) ? [] : [bucket.id]
-                          );
-                          setSelectedCategories([]); // Reset subcategories when changing bucket
-                          setSearchQuery(""); // Clear search when filtering by bucket
-                        }}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border-2 ${selectedBuckets.includes(bucket.id) ? "bg-emerald-600 text-white border-emerald-600 shadow-md" : "bg-white text-gray-600 border-gray-100 hover:border-emerald-200"}`}
-                      >
-                        {bucket.name} <span className="opacity-50 ml-1">({bucketProductCount})</span>
-                      </button>
-                    );
-                  })}
+                  {buckets
+                    .sort((a, b) => {
+                      // 1. Manual Position (if set > 0)
+                      const posA = a.manualPosition || 0;
+                      const posB = b.manualPosition || 0;
+
+                      if (posA > 0 && posB > 0) return posA - posB;
+                      if (posA > 0) return -1;
+                      if (posB > 0) return 1;
+
+                      // 2. Product Count (Highest first)
+                      const countA = products.filter(p => p.bucketId === a.id).length;
+                      const countB = products.filter(p => p.bucketId === b.id).length;
+                      return countB - countA;
+                    })
+                    .map(bucket => {
+                      const bucketProductCount = products.filter(p => p.bucketId === bucket.id).length;
+                      return (
+                        <button
+                          key={bucket.id}
+                          onClick={() => {
+                            setSelectedBuckets(prev =>
+                              prev.includes(bucket.id) ? [] : [bucket.id]
+                            );
+                            setSelectedCategories([]); // Reset subcategories when changing bucket
+                            setSearchQuery(""); // Clear search when filtering by bucket
+                          }}
+                          className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border-2 ${selectedBuckets.includes(bucket.id) ? "bg-emerald-600 text-white border-emerald-600 shadow-md" : "bg-white text-gray-600 border-gray-100 hover:border-emerald-200"}`}
+                        >
+                          {bucket.name} <span className="opacity-50 ml-1">({bucketProductCount})</span>
+                        </button>
+                      );
+                    })}
                 </div>
 
                 <div className="relative group">
@@ -497,6 +512,20 @@ export function Home() {
                 <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide desktop-scrollbar-visible animate-in fade-in slide-in-from-left-2 duration-300">
                   {categoriesList
                     .filter(cat => selectedBuckets.includes(cat.bucketId))
+                    .sort((a, b) => {
+                      // 1. Manual Position (if set > 0)
+                      const posA = a.manualPosition || 0;
+                      const posB = b.manualPosition || 0;
+
+                      if (posA > 0 && posB > 0) return posA - posB;
+                      if (posA > 0) return -1;
+                      if (posB > 0) return 1;
+
+                      // 2. Product Count (Highest first)
+                      const countA = products.filter(p => p.category === a.name).length;
+                      const countB = products.filter(p => p.category === b.name).length;
+                      return countB - countA;
+                    })
                     .map(subCat => {
                       const catProductCount = products.filter(p => p.category === subCat.name).length;
                       return (

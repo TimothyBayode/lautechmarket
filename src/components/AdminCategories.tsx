@@ -3,9 +3,11 @@ import { Trash2, Tag, X, ChevronRight, FolderPlus, Database } from "lucide-react
 import {
     fetchBuckets,
     addBucket,
+    updateBucket,
     deleteBucket,
     fetchCategories,
     addCategory,
+    updateCategory,
     deleteCategory,
     categoryExists,
     Bucket,
@@ -130,6 +132,26 @@ export function AdminCategories({ onClose, allProducts = [] }: AdminCategoriesPr
         }
     };
 
+    const handleUpdateBucketPosition = async (id: string, pos: number) => {
+        try {
+            await updateBucket(id, { manualPosition: pos });
+            setBuckets(prev => prev.map(b => b.id === id ? { ...b, manualPosition: pos } : b));
+        } catch (err) {
+            console.error("Error updating bucket position:", err);
+            alert("Failed to update position");
+        }
+    };
+
+    const handleUpdateCategoryPosition = async (id: string, pos: number) => {
+        try {
+            await updateCategory(id, { manualPosition: pos });
+            setCategories(prev => prev.map(c => c.id === id ? { ...c, manualPosition: pos } : c));
+        } catch (err) {
+            console.error("Error updating category position:", err);
+            alert("Failed to update position");
+        }
+    };
+
     const handleDeleteCategory = async (cat: Category) => {
         if (!window.confirm(`Delete "${cat.name}"?`)) return;
         try {
@@ -221,7 +243,17 @@ export function AdminCategories({ onClose, allProducts = [] }: AdminCategoriesPr
                                             <span className={`text-[9px] font-black italic ${selectedBucket?.id === bucket.id ? "text-emerald-100" : "text-gray-400"}`}>
                                                 {allProducts.filter(p => p.bucketId === bucket.id).length} items
                                             </span>
-                                            <span className="font-bold text-sm tracking-tight">{bucket.name}</span>
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="number"
+                                                    value={bucket.manualPosition || 0}
+                                                    onChange={(e) => handleUpdateBucketPosition(bucket.id, parseInt(e.target.value) || 0)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className={`w-10 text-[10px] bg-transparent border-b border-white/20 text-center font-bold focus:outline-none ${selectedBucket?.id === bucket.id ? "text-white" : "text-emerald-600"}`}
+                                                    title="Position (0 = auto)"
+                                                />
+                                                <span className="font-bold text-sm tracking-tight">{bucket.name}</span>
+                                            </div>
                                         </div>
                                         <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <button
@@ -337,9 +369,18 @@ export function AdminCategories({ onClose, allProducts = [] }: AdminCategoriesPr
                                                 key={cat.id}
                                                 className="group flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl hover:border-emerald-300 hover:shadow-md transition-all shadow-sm"
                                             >
-                                                <div className="flex flex-col">
-                                                    <span className="font-bold text-gray-700">{cat.name}</span>
-                                                    <span className="text-[10px] font-black text-emerald-600 uppercase italic">{itemCount} items listed</span>
+                                                <div className="flex flex-col gap-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            type="number"
+                                                            value={cat.manualPosition || 0}
+                                                            onChange={(e) => handleUpdateCategoryPosition(cat.id, parseInt(e.target.value) || 0)}
+                                                            className="w-10 text-[10px] bg-transparent border-b border-gray-200 text-center font-bold text-emerald-600 focus:outline-none"
+                                                            title="Position (0 = auto)"
+                                                        />
+                                                        <span className="font-bold text-gray-700">{cat.name}</span>
+                                                    </div>
+                                                    <span className="text-[10px] font-black text-emerald-600 uppercase italic pl-12">{itemCount} items listed</span>
                                                 </div>
                                                 <button
                                                     onClick={() => handleDeleteCategory(cat)}

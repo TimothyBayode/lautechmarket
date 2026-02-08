@@ -77,7 +77,7 @@ service cloud.firestore {
     
     // ===== VENDOR VISITS =====
     match /vendorVisits/{vendorId} {
-      allow read: if isAdmin() || isVendor(vendorId);
+      allow read: if isAuthenticated(); // Allow all vendors to see rankings for leaderboard
       allow write: if true;
       
       match /ips/{ipHash} {

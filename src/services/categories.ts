@@ -5,6 +5,7 @@ export interface Bucket {
   id: string;
   name: string;
   createdAt: Date;
+  manualPosition?: number;
 }
 
 export interface Category {
@@ -13,6 +14,7 @@ export interface Category {
   bucketId: string;
   createdAt: Date;
   productCount: number;
+  manualPosition?: number;
 }
 
 // BUCKET OPERATIONS
@@ -27,6 +29,7 @@ export const fetchBuckets = async (): Promise<Bucket[]> => {
         id: docSnap.id,
         ...docSnap.data(),
         createdAt: docSnap.data().createdAt?.toDate() || new Date(),
+        manualPosition: docSnap.data().manualPosition || 0,
       } as Bucket)
     );
   } catch (error) {
@@ -41,12 +44,14 @@ export const addBucket = async (name: string): Promise<Bucket> => {
     const docRef = await addDoc(collection(db, "buckets"), {
       name: name.trim(),
       createdAt: new Date(),
+      manualPosition: 0,
     });
     console.log("Bucket added successfully with ID:", docRef.id);
     return {
       id: docRef.id,
       name: name.trim(),
       createdAt: new Date(),
+      manualPosition: 0,
     };
   } catch (error) {
     console.error("Error in addBucket service:", error);
@@ -54,9 +59,11 @@ export const addBucket = async (name: string): Promise<Bucket> => {
   }
 };
 
-export const updateBucket = async (id: string, name: string): Promise<void> => {
+export const updateBucket = async (id: string, updates: Partial<Bucket>): Promise<void> => {
   const docRef = doc(db, "buckets", id);
-  await updateDoc(docRef, { name: name.trim() });
+  const data: any = { ...updates };
+  if (updates.createdAt) delete data.createdAt; // Don't update creation date
+  await updateDoc(docRef, data);
 };
 
 export const deleteBucket = async (id: string): Promise<void> => {
@@ -88,6 +95,7 @@ export const fetchCategories = async (bucketId?: string): Promise<Category[]> =>
         bucketId: data.bucketId || "",
         createdAt: data.createdAt?.toDate() || new Date(),
         productCount: data.productCount || 0,
+        manualPosition: data.manualPosition || 0,
       } as Category;
     }
   );
@@ -99,6 +107,7 @@ export const addCategory = async (name: string, bucketId: string): Promise<Categ
     bucketId,
     createdAt: new Date(),
     productCount: 0,
+    manualPosition: 0,
   });
   return {
     id: docRef.id,
@@ -106,17 +115,17 @@ export const addCategory = async (name: string, bucketId: string): Promise<Categ
     bucketId,
     createdAt: new Date(),
     productCount: 0,
+    manualPosition: 0,
   };
 };
 
 export const updateCategory = async (
   id: string,
-  name: string,
-  bucketId?: string
+  updates: Partial<Category>
 ): Promise<void> => {
   const docRef = doc(db, "categories", id);
-  const data: any = { name: name.trim() };
-  if (bucketId) data.bucketId = bucketId;
+  const data: any = { ...updates };
+  if (updates.createdAt) delete data.createdAt;
   await updateDoc(docRef, data);
 };
 
