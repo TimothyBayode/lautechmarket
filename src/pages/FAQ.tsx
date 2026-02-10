@@ -56,9 +56,19 @@ export function FAQ() {
           answer: 'Select up to 3 products using the comparison icon (double arrows). On desktop, you get a side-by-side technical breakdown. On mobile, we switch to a beautiful sectioned view for easy vertical scrolling through your top picks.'
         },
         {
-          id: 'faq-g1',
-          question: 'Is my data safe here?',
-          answer: 'Absolutely. We use a custom-built "Safe-DOM" shield and Firebase industrial-grade encryption. Your browsing history is stored locally to provide personalized recommendations without compromising your privacy.'
+          id: 'faq-g2',
+          question: 'How does LAUTECH Market stay free for everyone?',
+          answer: (
+            <div className="space-y-3">
+              <p>Yes! It is 100% free to list your products and for students to search for what they need. We want to empower every campus entrepreneur. To keep the lights on and keep improving the platform, we have a clear sustainability plan:</p>
+              <ul className="list-disc pl-5 space-y-1">
+                <li><span className="font-semibold">Premium Visibility (Optional):</span> While listing is free, vendors who want to "jump the queue" can pay a small fee to be featured in our Hero Section or get a Verified Badge.</li>
+                <li><span className="font-semibold">Corporate Partnerships:</span> We work with big brands that want to reach students. Instead of annoying ads, we provide them with high-level market insights to help them serve students better.</li>
+                <li><span className="font-semibold">Future Professional Tools:</span> We are building advanced tools (like sales analytics and automated inventory) for power-users in the future.</li>
+              </ul>
+              <p className="font-medium text-emerald-700">Our goal isn't to charge you for being on the market; it's to help you sell more so we can grow together! 🚀</p>
+            </div>
+          )
         }
       ]
     },
@@ -134,7 +144,12 @@ export function FAQ() {
         {
           id: 'faq-18',
           question: 'Is it free to use?',
-          answer: 'Yes! LAUTECH Market is currently 100% free for student vendors to list and sell. We are dedicated to supporting the university\'s entrepreneurial spirit.'
+          answer: (
+            <div className="space-y-3">
+              <p>Yes! LAUTECH Market is 100% free for student vendors to list and sell. We are dedicated to supporting the university's entrepreneurial spirit.</p>
+              <p>We sustain the platform through optional premium features and corporate data insights, ensuring the core marketplace always stays free for students.</p>
+            </div>
+          )
         }
       ]
     },
@@ -159,15 +174,19 @@ export function FAQ() {
 
   const filteredCategories = categories.map(category => ({
     ...category,
-    faqs: category.faqs.filter(faq =>
-      faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      faq.answer.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    faqs: category.faqs.filter(faq => {
+      const searchStr = searchTerm.toLowerCase();
+      const questionMatch = faq.question.toLowerCase().includes(searchStr);
+      const answerMatch = typeof faq.answer === 'string'
+        ? faq.answer.toLowerCase().includes(searchStr)
+        : false; // For now, we only search in string answers
+      return questionMatch || answerMatch;
+    })
   })).filter(category => category.faqs.length > 0);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Header onSearch={() => { }} categories={[]} />
+      <Header onSearch={() => { /* No search needed on FAQ page */ }} categories={[]} />
 
       <main className="flex-1">
         {/* Hero Section */}
