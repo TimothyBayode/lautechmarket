@@ -21,6 +21,7 @@ import { auth } from "./firebase";
 import { FeedbackPrompter } from "./components/FeedbackPrompter";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ToastContainer } from "./components/ToastContainer";
+import { InstallPrompt } from "./components/InstallPrompt";
 
 
 
@@ -160,6 +161,7 @@ export default function App() {
       <ChatbotButton />
       <FeedbackPrompter />
       <ToastContainer />
+      <InstallPrompt />
     </BrowserRouter>
   );
 }

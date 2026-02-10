@@ -23,6 +23,7 @@ import {
     ExternalLink
 } from "lucide-react";
 import { Product, Vendor } from "../../types";
+import { auth } from "../../firebase";
 import {
     getVendorProducts,
     addProduct,
@@ -246,9 +247,26 @@ export function VendorDashboard() {
                 const newProduct = await addProduct(productWithVendor);
                 setProducts((prev) => [...prev, newProduct]);
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error("Error saving product:", err);
-            alert("Error saving product: " + (err as Error).message);
+
+            // Diagnostic logging for the specific vendor issue
+            const currentUser = auth.currentUser;
+            console.log("[Diagnostic] Save attempt details:", {
+                vendorId: vendor.id,
+                authUid: currentUser?.uid,
+                isAuthEmailVerified: currentUser?.emailVerified,
+                browserTime: new Date().toISOString(),
+                errorCode: err.code,
+                errorMessage: err.message
+            });
+
+            let userMessage = (err as Error).message;
+            if (err.code === 'permission-denied' || (err.message && err.message.includes('permissions'))) {
+                userMessage = "Missing or insufficient permissions. This often happens due to an unstable internet connection or an incorrect device clock. Please check your internet, verify your phone's time is correct, and try logging out and back in.";
+            }
+
+            alert("Error saving product: " + userMessage);
         } finally {
             setShowForm(false);
             setEditingProduct(null);

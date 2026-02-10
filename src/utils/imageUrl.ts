@@ -26,6 +26,6 @@ export const getProxiedImageUrl = (url: string | null | undefined): string | nul
         return `${WORKER_URL}?file=${filename}`;
     }
 
-    // For other URLs (Cloudinary, external, etc.), return as-is
+    // For other URLs (external, etc.), return as-is
     return url;
 };

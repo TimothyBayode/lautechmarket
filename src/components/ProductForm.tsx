@@ -111,7 +111,7 @@ export function ProductForm({ product, onSave, onCancel, vendorName, whatsappNum
         }
     };
 
-    // Handle file selection and upload to Cloudinary
+    // Handle file selection and upload to Cloudflare
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -126,7 +126,7 @@ export function ProductForm({ product, onSave, onCancel, vendorName, whatsappNum
         setError("");
 
         try {
-            // Upload to Cloudinary
+            // Upload to Cloudflare
             const result = await uploadImage(file);
 
             setFormData((prev) => ({ ...prev, image: result.url }));
