@@ -261,9 +261,9 @@ export function AdminDashboard() {
         .slice(0, 5);
       setComparisonLeaderboard(intelComparison);
 
-      const categories = [...new Set(allVendorProducts.map(p => p.category))];
+      const categories = [...new Set(allVendorProducts.map(p => p.category || "Uncategorized"))];
       const intelConversion = categories.map(cat => {
-        const catProds = allVendorProducts.filter(p => p.category === cat);
+        const catProds = allVendorProducts.filter(p => (p.category || "Uncategorized") === cat);
         const orders = catProds.reduce((sum, p) => sum + (p.orderCount || 0), 0);
         const views = catProds.reduce((sum, p) => sum + (p.viewCount || 0), 0);
         const rate = views > 0 ? (orders / views) * 100 : 0;
@@ -845,9 +845,9 @@ export function AdminDashboard() {
                   Categorical Price Index
                 </h3>
                 <div className="space-y-4">
-                  {Array.from(new Set(allProducts.map(p => p.category)))
+                  {Array.from(new Set(allProducts.map(p => p.category || "Uncategorized")))
                     .map(cat => {
-                      const catProducts = allProducts.filter(p => p.category === cat);
+                      const catProducts = allProducts.filter(p => (p.category || "Uncategorized") === cat);
                       const avg = catProducts.reduce((sum, p) => sum + p.price, 0) / (catProducts.length || 1);
                       return { name: cat, avg };
                     })
@@ -874,7 +874,7 @@ export function AdminDashboard() {
                       <div key={product.id} className="flex items-center justify-between p-3 bg-red-50/30 rounded-xl border border-red-50">
                         <div className="flex items-center space-x-3">
                           <div className="w-10 h-10 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
-                            {product.image && <img src={product.image} className="w-full h-full object-cover" />}
+                            {product.image && <img src={getProxiedImageUrl(product.image) || product.image} className="w-full h-full object-cover" />}
                           </div>
                           <div className="min-w-0">
                             <p className="text-[10px] font-bold text-gray-900 truncate">{product.name}</p>
@@ -1026,7 +1026,7 @@ export function AdminDashboard() {
                               <div className="flex items-center space-x-4">
                                 <div className="w-14 h-14 rounded-2xl bg-gray-200 overflow-hidden shadow-sm border border-gray-100 flex-shrink-0">
                                   {product.image ? (
-                                    <img src={product.image} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                    <img src={getProxiedImageUrl(product.image) || product.image} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                                   ) : (
                                     <Package className="w-full h-full p-4 text-gray-400" />
                                   )}

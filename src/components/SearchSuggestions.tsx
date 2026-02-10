@@ -2,6 +2,7 @@ import React from 'react';
 import { Product, Vendor } from '../types';
 import { Store, Package, Tag, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getProxiedImageUrl } from '../utils/imageUrl';
 
 interface SearchSuggestionsProps {
     suggestions: {
@@ -63,7 +64,7 @@ export const SearchSuggestions: React.FC<SearchSuggestionsProps> = ({
                             >
                                 <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center overflow-hidden">
                                     {vendor.profileImage ? (
-                                        <img src={vendor.profileImage} alt="" className="w-full h-full object-cover" />
+                                        <img src={getProxiedImageUrl(vendor.profileImage) || vendor.profileImage} alt="" className="w-full h-full object-cover" />
                                     ) : (
                                         <Store className="w-4 h-4 text-emerald-600" />
                                     )}
@@ -93,7 +94,7 @@ export const SearchSuggestions: React.FC<SearchSuggestionsProps> = ({
                                 className={`flex items-center space-x-3 px-3 py-2 rounded-xl transition-colors ${selectedIndex === itemIdx ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-300'}`}
                             >
                                 <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden border border-gray-100 dark:border-slate-700">
-                                    <img src={product.image} alt="" className="w-full h-full object-cover" />
+                                    <img src={getProxiedImageUrl(product.image) || product.image} alt="" className="w-full h-full object-cover" />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-semibold truncate dark:text-white">{product.name}</p>

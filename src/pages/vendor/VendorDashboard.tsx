@@ -978,7 +978,7 @@ export function VendorDashboard() {
                                             />
                                         </label>
                                         <img
-                                            src={product.image}
+                                            src={getProxiedImageUrl(product.image) || product.image}
                                             alt={product.name}
                                             className="w-full h-full object-cover"
                                         />
@@ -1073,7 +1073,7 @@ export function VendorDashboard() {
                                     {/* Product Image */}
                                     <div className="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
                                         <img
-                                            src={product.image}
+                                            src={getProxiedImageUrl(product.image) || product.image}
                                             alt={product.name}
                                             className="w-full h-full object-cover"
                                         />
