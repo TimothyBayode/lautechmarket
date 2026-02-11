@@ -55,6 +55,7 @@ import { AdminCuration } from "../components/AdminCuration";
 import { AdminStats } from "../components/AdminStats";
 import { AdminLeaderboard } from "../components/AdminLeaderboard";
 import { getProxiedImageUrl } from "../utils/imageUrl";
+import { getExpansionResponses, deleteExpansionResponse } from "../services/expansion";
 
 export function AdminDashboard() {
   const navigate = useNavigate();
@@ -555,7 +556,6 @@ export function AdminDashboard() {
     useEffect(() => {
       const loadResponses = async () => {
         try {
-          const { getExpansionResponses } = await import("../services/expansion");
           const data = await getExpansionResponses();
           setResponses(data);
         } catch (err) {
@@ -660,7 +660,6 @@ export function AdminDashboard() {
                         onClick={async () => {
                           if (window.confirm("Are you sure you want to delete this response?")) {
                             try {
-                              const { deleteExpansionResponse } = await import("../services/expansion");
                               await deleteExpansionResponse(resp.id);
                               setResponses(prev => prev.filter(r => r.id !== resp.id));
                             } catch (error) {

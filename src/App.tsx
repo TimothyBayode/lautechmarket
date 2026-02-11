@@ -22,7 +22,8 @@ import { auth } from "./firebase";
 import { FeedbackPrompter } from "./components/FeedbackPrompter";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ToastContainer } from "./components/ToastContainer";
-import { InstallPrompt } from "./components/InstallPrompt"; import { LoadingScreen } from "./components/LoadingScreen";
+import { InstallPrompt } from "./components/InstallPrompt";
+import { LoadingScreen } from "./components/LoadingScreen";
 
 
 
