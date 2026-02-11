@@ -66,7 +66,7 @@ export function FAQ() {
                 <li><span className="font-semibold">Corporate Partnerships:</span> We work with big brands that want to reach students. Instead of annoying ads, we provide them with high-level market insights to help them serve students better.</li>
                 <li><span className="font-semibold">Future Professional Tools:</span> We are building advanced tools (like sales analytics and automated inventory) for power-users in the future.</li>
               </ul>
-              <p className="font-medium text-emerald-700">Our goal isn't to charge you for being on the market; it's to help you sell more so we can grow together! 🚀</p>
+              <p className="font-medium text-emerald-700">Our goal isn't to charge you for being on the market; it's to help you sell more so we can grow together! </p>
             </div>
           )
         }

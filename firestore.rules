@@ -122,5 +122,12 @@ service cloud.firestore {
       allow read: if true;
       allow write: if true; // Required for student feedback triggers to update trust scores
     }
+
+    // ===== OJA EXPANSION RESPONSES =====
+    match /expansion_responses/{responseId} {
+      allow read: if isAdmin();
+      allow create: if true;
+      allow update, delete: if isAdmin();
+    }
   }
 }

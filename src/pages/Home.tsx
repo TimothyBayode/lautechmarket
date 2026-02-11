@@ -18,6 +18,7 @@ import { logSearch, logEvent } from "../services/analytics";
 import { getProxiedImageUrl } from "../utils/imageUrl";
 import { CompareModal } from "../components/CompareModal";
 import { CompareFloatingBar } from "../components/CompareFloatingBar";
+import { LoadingScreen } from "../components/LoadingScreen";
 
 export function Home() {
   const { category } = useParams<{ category?: string }>();
@@ -349,9 +350,7 @@ export function Home() {
           onSearch={setSearchQuery}
           categories={filterOptions.categories}
         />
-        <div className="flex items-center justify-center h-96">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
-        </div>
+        <LoadingScreen />
       </div>
     );
   }

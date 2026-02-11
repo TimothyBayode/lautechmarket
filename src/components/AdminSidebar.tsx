@@ -13,7 +13,8 @@ import {
     Activity,
     MoveDown,
     Star,
-    Mail
+    Mail,
+    Globe2
 } from "lucide-react";
 import { getCurrentUser } from "../services/auth";
 
@@ -36,6 +37,7 @@ export function AdminSidebar({ activeTab, onTabChange, onLogout, isOpen, onClose
         { id: "vendors", label: "Vendors", icon: Users },
         { id: "banners", label: "Homepage Banners", icon: Megaphone },
         { id: "categories", label: "Categories", icon: Tag },
+        { id: "expansion-circle", label: "Expansion Circle", icon: Globe2 },
         { id: "curation", label: "Curation & Top 3", icon: Star },
         { id: "verification", label: "Verification", icon: ShieldCheck },
         { id: "leaderboard", label: "Top Visits", icon: Trophy },

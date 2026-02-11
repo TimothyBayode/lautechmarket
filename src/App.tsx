@@ -12,6 +12,7 @@ import { VendorLogin } from "./pages/vendor/VendorLogin";
 import { VendorDashboard } from "./pages/vendor/VendorDashboard";
 import { VendorStore } from "./pages/vendor/VendorStore";
 import { VerifyEmail } from "./pages/vendor/VerifyEmail";
+import { OjaLanding } from "./pages/OjaLanding";
 import { authStateListener, isAdmin } from "./services/auth";
 import { vendorAuthStateListener } from "./services/vendorAuth";
 import { trackVisit } from "./services/analytics";
@@ -21,7 +22,7 @@ import { auth } from "./firebase";
 import { FeedbackPrompter } from "./components/FeedbackPrompter";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ToastContainer } from "./components/ToastContainer";
-import { InstallPrompt } from "./components/InstallPrompt";
+import { InstallPrompt } from "./components/InstallPrompt"; import { LoadingScreen } from "./components/LoadingScreen";
 
 
 
@@ -44,11 +45,7 @@ function AdminProtectedRoute({ children }: { children: JSX.Element }) {
   }, []);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (!isAuthorized) {
@@ -86,11 +83,7 @@ function VendorProtectedRoute({ children }: { children: JSX.Element }) {
   }, []);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (!isAuthenticated) {
@@ -126,6 +119,7 @@ export default function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/product/:id" element={<ProductDetail />} />
+          <Route path="/oja" element={<OjaLanding />} />
 
           {/* Admin Routes */}
           <Route path="/admin/login" element={<AdminLogin />} />

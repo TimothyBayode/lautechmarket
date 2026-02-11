@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { User, Mail, Lock, Store, MapPin, Eye, EyeOff } from "lucide-react";
+import { User, Mail, Lock, Store, MapPin, Eye, EyeOff, Globe2 } from "lucide-react";
 import { registerVendor } from "../../services/vendorAuth";
 
 /**
@@ -112,6 +112,11 @@ export function VendorRegister() {
                     <p className="text-gray-600">
                         Create an account to start selling on LAUTECH Market
                     </p>
+                    <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-full text-xs font-bold border border-emerald-100 animate-fade-in">
+                        <Globe2 className="w-3 h-3" />
+                        <span>Not in Ogbomoso?</span>
+                        <Link to="/oja" className="underline hover:text-emerald-900 decoration-emerald-200 underline-offset-2">Join Expansion Circle</Link>
+                    </div>
                 </div>
 
                 {/* Registration Form Card */}
@@ -142,7 +147,7 @@ export function VendorRegister() {
                                     onChange={handleChange}
                                     required
                                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                                    placeholder="John Doe"
+                                    placeholder="Samuel Adeniran"
                                 />
                             </div>
                         </div>

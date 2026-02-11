@@ -32,7 +32,7 @@ import {
   limit,
   onSnapshot,
 } from "firebase/firestore";
-import { Product, Vendor } from "../types";
+import { Product, Vendor, ExpansionResponse } from "../types";
 import {
   fetchProducts,
   addProduct,
@@ -548,8 +548,151 @@ export function AdminDashboard() {
     );
   }
 
+  const ExpansionCircleView = () => {
+    const [responses, setResponses] = useState<ExpansionResponse[]>([]);
+    const [viewLoading, setViewLoading] = useState(true);
+
+    useEffect(() => {
+      const loadResponses = async () => {
+        try {
+          const { getExpansionResponses } = await import("../services/expansion");
+          const data = await getExpansionResponses();
+          setResponses(data);
+        } catch (err) {
+          console.error("Error loading expansion responses:", err);
+        } finally {
+          setViewLoading(false);
+        }
+      };
+      loadResponses();
+    }, []);
+
+    if (viewLoading) {
+      return (
+        <div className="flex items-center justify-center p-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+        </div>
+      );
+    }
+
+    const stats = {
+      total: responses.length,
+      buyers: responses.filter(r => r.usagePlan.includes('buy')).length,
+      sellers: responses.filter(r => r.usagePlan.includes('sell')).length,
+      highIntent: responses.filter(r => ['definitely', 'very_likely'].includes(r.intentStrength)).length,
+    };
+
+    return (
+      <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
+          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Total Interests</p>
+            <p className="text-3xl font-black text-gray-900">{stats.total}</p>
+          </div>
+          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+            <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400 mb-1">Potential Buyers</p>
+            <p className="text-3xl font-black text-emerald-600">{stats.buyers}</p>
+          </div>
+          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+            <p className="text-[10px] font-black uppercase tracking-widest text-blue-400 mb-1">Potential Sellers</p>
+            <p className="text-3xl font-black text-blue-600">{stats.sellers}</p>
+          </div>
+          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+            <p className="text-[10px] font-black uppercase tracking-widest text-purple-400 mb-1">High Intent</p>
+            <p className="text-3xl font-black text-purple-600">{stats.highIntent}</p>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+            <h3 className="font-bold text-gray-900">Waitlist Data</h3>
+            <span className="text-xs text-gray-400 font-medium">{responses.length} responses collected</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-white text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
+                  <th className="px-6 py-4">Name & Contact</th>
+                  <th className="px-6 py-4">Location</th>
+                  <th className="px-6 py-4">Intent</th>
+                  <th className="px-6 py-4">Audience</th>
+                  <th className="px-6 py-4">Date</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {responses.map((resp) => (
+                  <tr key={resp.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4">
+                      <p className="text-sm font-bold text-gray-900">{resp.fullName}</p>
+                      <p className="text-xs text-emerald-600 font-mono">{resp.whatsappNumber}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="text-sm text-gray-600">{resp.city}</p>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase">{resp.state}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-wrap gap-1 mb-1">
+                        {resp.usagePlan.map((u: string) => (
+                          <span key={u} className="text-[8px] bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded font-black uppercase">{u}</span>
+                        ))}
+                      </div>
+                      <span className={`text-[10px] font-bold ${resp.intentStrength === 'definitely' ? 'text-purple-600' : 'text-gray-400'
+                        }`}>
+                        {resp.intentStrength.replace('_', ' ')}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      {resp.hasAudience ? (
+                        <div>
+                          <p className="text-xs font-bold text-orange-600">{resp.audiencePlatform}</p>
+                          <p className="text-[10px] text-gray-400 uppercase">{resp.audienceSize}</p>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-300">None</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-xs text-gray-400">
+                      {resp.createdAt.toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        onClick={async () => {
+                          if (window.confirm("Are you sure you want to delete this response?")) {
+                            try {
+                              const { deleteExpansionResponse } = await import("../services/expansion");
+                              await deleteExpansionResponse(resp.id);
+                              setResponses(prev => prev.filter(r => r.id !== resp.id));
+                            } catch (error) {
+                              console.error("Delete failed:", error);
+                            }
+                          }
+                        }}
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete Response"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {responses.length === 0 && (
+              <div className="p-20 text-center text-gray-400 italic">
+                No expansion data collected yet.
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderContent = () => {
     switch (activeTab) {
+      case "expansion-circle":
+        return <ExpansionCircleView />;
       case "overview":
         return (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">

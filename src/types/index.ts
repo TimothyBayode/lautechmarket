@@ -193,3 +193,44 @@ export interface CuratedList {
     createdAt: Date;
     updatedAt: Date;
 }
+
+/**
+ * Expansion Response - Data collected from OJA Expansion Circle
+ */
+export interface ExpansionResponse {
+    id: string;
+    // Identity
+    fullName: string;
+    whatsappNumber: string;
+    email?: string;
+
+    // Location
+    city: string;
+    state: string;
+    country: string;
+
+    // Usage Plan
+    usagePlan: ('buy' | 'sell' | 'audience' | 'partner' | 'interested')[];
+
+    // Business Details (Conditional)
+    businessName?: string;
+    businessType?: string;
+    whatsappBusinessNumber?: string;
+    currentOperatingCity?: string;
+
+    // Audience Power (Conditional)
+    hasAudience: boolean;
+    audiencePlatform?: string;
+    audienceSize?: 'small' | 'medium' | 'large' | 'massive'; // e.g., <1k, 1k-10k, 10k-50k, 50k+
+
+    // Intent Strength
+    intentStrength: 'definitely' | 'very_likely' | 'maybe' | 'curious';
+
+    // Permissions
+    wantsEarlyAccess: boolean;
+    openToHelping: boolean;
+
+    // Metadata
+    createdAt: Date;
+    source: 'oja_form';
+}
