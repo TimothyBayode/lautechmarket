@@ -4,7 +4,7 @@ export const LoadingScreen = () => {
     return (
         <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#f9fafb] overflow-hidden">
             {/* Background Decorative Elements */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/5 blur-[100px] rounded-full animate-pulse" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-emerald-500/10 rounded-full animate-pulse" />
 
             <div className="relative flex flex-col items-center gap-8 animate-in fade-in zoom-in duration-700">
                 {/* Animated Logo Placeholder (Lighter than the 600KB SVG) */}

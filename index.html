@@ -34,8 +34,8 @@
 
 
 
-  <!-- Safe-DOM Patch: Prevents fatal removeChild/insertBefore crashes from extensions -->
-  <script>
+  <!-- Safe-DOM Patch Disabled for debugging -->
+  <!-- <script>
     (function () {
       const nativeRemoveChild = Node.prototype.removeChild;
       Node.prototype.removeChild = function (child) {
@@ -66,7 +66,7 @@
         }
       };
     })();
-  </script>
+  </script> -->
 </head>
 
 <body>
