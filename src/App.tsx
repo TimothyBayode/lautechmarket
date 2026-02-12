@@ -157,7 +157,7 @@ export default function App() {
           </Routes>
         </Suspense>
       </ErrorBoundary>
-      {/* <ChatbotButton /> */}
+      <ChatbotButton />
       <FeedbackPrompter />
       <ToastContainer />
       <InstallPrompt />
