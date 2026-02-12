@@ -107,7 +107,7 @@ function VendorProtectedRoute({ children }: { children: JSX.Element }) {
  */
 export default function App() {
   useEffect(() => {
-    trackVisit();
+    // trackVisit(); // Disabled for debugging crash
   }, []);
 
   return (
@@ -157,7 +157,7 @@ export default function App() {
           </Routes>
         </Suspense>
       </ErrorBoundary>
-      <ChatbotButton />
+      {/* <ChatbotButton /> */}
       <FeedbackPrompter />
       <ToastContainer />
       <InstallPrompt />

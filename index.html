@@ -34,39 +34,6 @@
 
 
 
-  <!-- Safe-DOM Patch Disabled for debugging -->
-  <!-- <script>
-    (function () {
-      const nativeRemoveChild = Node.prototype.removeChild;
-      Node.prototype.removeChild = function (child) {
-        if (!child) return null;
-        if (child.parentNode !== this) {
-          console.warn('Safe-DOM: Prevented removeChild crash. Parent mismatch or child already removed.', { parent: this, child });
-          return child;
-        }
-        try {
-          return nativeRemoveChild.apply(this, arguments);
-        } catch (e) {
-          console.error('Safe-DOM: Caught removeChild error even after checks', e);
-          return child;
-        }
-      };
-
-      const nativeInsertBefore = Node.prototype.insertBefore;
-      Node.prototype.insertBefore = function (newNode, referenceNode) {
-        if (referenceNode && referenceNode.parentNode !== this) {
-          console.warn('Safe-DOM: Prevented insertBefore crash. Reference node parent mismatch.', { parent: this, referenceNode });
-          return newNode;
-        }
-        try {
-          return nativeInsertBefore.apply(this, arguments);
-        } catch (e) {
-          console.error('Safe-DOM: Caught insertBefore error even after checks', e);
-          return newNode;
-        }
-      };
-    })();
-  </script> -->
 </head>
 
 <body>
