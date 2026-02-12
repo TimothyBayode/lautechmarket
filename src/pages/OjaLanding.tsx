@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { submitExpansionResponse } from "../services/expansion";
-import { toast } from "react-hot-toast";
+import { showToast } from "../components/ToastContainer";
 
 type UsageOption = 'buy' | 'sell' | 'audience' | 'partner' | 'interested';
 type IntentStrength = 'definitely' | 'very_likely' | 'maybe' | 'curious';
@@ -57,7 +57,7 @@ export function OjaLanding() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (formData.usagePlan.length === 0) {
-            toast.error("Please select how you plan to use Lautech Market");
+            showToast("Please select how you plan to use Lautech Market", "error");
             return;
         }
 
@@ -76,7 +76,7 @@ export function OjaLanding() {
             setIsSuccess(true);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         } catch (error) {
-            toast.error("Failed to submit. Please try again.");
+            showToast("Failed to submit. Please try again.", "error");
         } finally {
             setIsSubmitting(false);
         }
@@ -89,10 +89,36 @@ export function OjaLanding() {
                     <div className="w-24 h-24 bg-[#14532D]/10 rounded-full flex items-center justify-center mx-auto mb-8">
                         <CheckCircle2 className="w-12 h-12 text-[#14532D]" />
                     </div>
-                    <h2 className="text-3xl font-black text-[#1a1a1a] mb-4 tracking-tight">You're in the Circle!</h2>
-                    <p className="text-[#4a4a4a] mb-10 leading-relaxed text-lg">
-                        Thank you for helping us grow. We'll reach out on WhatsApp as soon as we're ready to launch in <span className="font-bold text-[#B45309]">{formData.city}</span>.
-                    </p>
+                    <h2 className="text-3xl font-black text-[#1a1a1a] mb-6 tracking-tight">You’re officially in the Circle.</h2>
+                    <div className="space-y-4 text-[#4a4a4a] mb-10 leading-relaxed text-lg">
+                        <p>
+                            You’ve helped move <span className="font-bold text-[#B45309]">{formData.city}</span> one step closer to launch.
+                        </p>
+                        <p>
+                            We’ll reach out on WhatsApp as soon as OJA is ready near you.
+                        </p>
+                        <p className="text-sm opacity-60">
+                            Until then, you’re part of the early network shaping where we expand next.
+                        </p>
+                    </div>
+
+                    <div className="mb-10 p-6 bg-[#FAF7F2] rounded-3xl border border-[#B45309]/5">
+                        <p className="text-sm font-bold text-[#B45309] mb-2">Want your city to move up faster?</p>
+                        <p className="text-xs text-[#4a4a4a] mb-4">Share the link with others</p>
+                        <button
+                            onClick={() => {
+                                navigator.clipboard.writeText(window.location.origin + "/oja");
+                                showToast("Link copied. Bring your city closer.");
+                            }}
+                            className="w-full py-3 bg-white border border-[#B45309]/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#B45309] hover:bg-[#B45309] hover:text-white transition-all shadow-sm flex items-center justify-center gap-2"
+                        >
+                            <span>
+                                Copy my Referral Link
+                            </span>
+                            <Sparkles className="w-3 h-3" />
+                        </button>
+                    </div>
+
                     <button
                         onClick={() => navigate("/")}
                         className="w-full py-5 bg-[#B45309] text-white rounded-2xl font-bold hover:bg-[#92400e] transition-all shadow-xl shadow-[#B45309]/20 active:scale-[0.98]"
@@ -132,16 +158,15 @@ export function OjaLanding() {
                     </h1>
 
                     <p className="text-xl md:text-2xl text-[#4a4a4a] mb-12 max-w-2xl mx-auto leading-relaxed font-medium">
-                        Join the waitlist and help us decide where to expand next. Direct access to student-led commerce, simplified.
+                        We’re launching OJA across new locations, and expansion is driven by real interest — not guesses.
+                        Join early and help move your city up the launch list
                     </p>
 
                     <div className="flex flex-wrap justify-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-[#1a1a1a]/40">
                         <div className="flex items-center gap-2">
                             <Shield className="w-4 h-4" />
-                            <span>Powered by OJA</span>
+                            <span>Powered by Lautech market</span>
                         </div>
-                        <div className="w-1.5 h-1.5 bg-[#B45309]/20 rounded-full self-center" />
-                        <span>Built for Expansion</span>
                     </div>
                 </div>
             </div>
@@ -489,8 +514,8 @@ export function OjaLanding() {
                     <div className="w-16 h-[1px] bg-[#B45309]/20" />
                 </div>
                 <p className="text-lg font-bold leading-relaxed max-w-lg mx-auto">
-                    Lautech Market is expanding. We're bridging the gap between student demand and premium supply.
-                    Be the first to know when we arrive.
+                    Lautech Market is evolving into OJA.
+                    We’re expanding city by city — join early and help shape what comes next.
                 </p>
             </div>
         </div>

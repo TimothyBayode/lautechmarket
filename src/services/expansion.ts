@@ -16,8 +16,13 @@ const COLLECTION_NAME = "expansion_responses";
  */
 export async function submitExpansionResponse(data: Omit<ExpansionResponse, 'id' | 'createdAt'>) {
     try {
+        // Strip undefined values to prevent FirebaseError: Unsupported field value: undefined
+        const cleanData = Object.fromEntries(
+            Object.entries(data).filter(([_, v]) => v !== undefined)
+        );
+
         const docRef = await addDoc(collection(db, COLLECTION_NAME), {
-            ...data,
+            ...cleanData,
             createdAt: serverTimestamp(),
             source: 'oja_form'
         });

@@ -158,7 +158,7 @@ export function ProductDetail() {
       category: product.category
     });
 
-    window.open(whatsappUrl, "_blank");
+    window.location.assign(whatsappUrl);
   };
 
   const handleQuantityChange = (change: number) => {

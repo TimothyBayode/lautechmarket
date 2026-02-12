@@ -7,16 +7,12 @@ export const LoadingScreen = () => {
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/5 blur-[100px] rounded-full animate-pulse" />
 
             <div className="relative flex flex-col items-center gap-8 animate-in fade-in zoom-in duration-700">
-                {/* Animated Logo/Symbol */}
+                {/* Animated Logo Placeholder (Lighter than the 600KB SVG) */}
                 <div className="relative">
-                    <div className="w-24 h-24 rounded-3xl bg-white border border-emerald-100 flex items-center justify-center animate-bounce-gentle shadow-xl shadow-emerald-500/5">
-                        <img
-                            src="/logo.svg"
-                            alt="Lautech Market"
-                            className="w-16 h-16 object-contain"
-                        />
+                    <div className="w-24 h-24 flex items-center justify-center animate-bounce-gentle overflow-hidden">
+                        <img src="/logo_icon.png" alt="Logo" className="w-full h-full object-contain" />
                     </div>
-                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg">
+                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center shadow-lg">
                         <Sparkles className="w-3.5 h-3.5 text-white animate-pulse" />
                     </div>
                 </div>

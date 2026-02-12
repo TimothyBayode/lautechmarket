@@ -72,22 +72,8 @@ export const ProductCard = React.memo(({
     showToast("Added to cart!");
   };
 
-  const handleWhatsAppClick = async (e: React.MouseEvent) => {
+  const handleWhatsAppClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-
-    // Log vendor contact for responsiveness tracking
-    try {
-      const studentId = getStudentId();
-      await logVendorContact(
-        product.vendorId || '',
-        studentId,
-        'whatsapp',
-        product.id
-      );
-    } catch (error) {
-      console.error('Error logging contact:', error);
-    }
-
 
     const message = `Hello 👋\nI found this product on LAUTECH Market.\n\nI’m interested in the *${product.name}* (₦${formatPrice(product.price)}).\n\nBefore I decide, please confirm:\n– Is it currently available?\n– can you deliver around lautech?\n– How fast can I get it?\n\nThank you 😊`;
     const whatsappUrl = `https://wa.me/${product.whatsappNumber.replace(
@@ -95,13 +81,24 @@ export const ProductCard = React.memo(({
       ""
     )}?text=${encodeURIComponent(message)}`;
 
+    // Log event immediately (no await to prevent popup block)
     logEvent("whatsapp_order", {
       productId: product.id,
       vendorId: product.vendorId,
       category: product.category
     });
 
-    window.open(whatsappUrl, "_blank");
+    // Background tasks (logging contact)
+    const studentId = getStudentId();
+    logVendorContact(
+      product.vendorId || '',
+      studentId,
+      'whatsapp',
+      product.id
+    ).catch(error => console.error('Error logging contact:', error));
+
+    // Direct redirection is more resilient against mobile popup blockers
+    window.location.assign(whatsappUrl);
   };
 
   const handleCopyLink = (e: React.MouseEvent) => {

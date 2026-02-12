@@ -92,8 +92,9 @@ export function AdminLogin() {
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 flex items-center justify-center px-4">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center">
-            <img src="/both.svg" alt="Logo" className="w-32" />
+          <div className="inline-flex items-center gap-2 group">
+            <img src="/logo_icon.png" alt="LAUTECH Market Icon" className="w-10 h-10 object-contain" />
+            <img src="/logo_text.png" alt="LAUTECH Market" className="h-8 object-contain dark:invert" />
           </div>
           <h2 className="text-2xl font-black text-gray-900 mt-4">Admin Security</h2>
           <p className="text-gray-600">Access the LAUTECH Market admin dashboard</p>

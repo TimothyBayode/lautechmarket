@@ -363,7 +363,7 @@ export function Home() {
         "@id": "https://lautechmarket.com.ng/#organization",
         "name": "LAUTECH Market",
         "url": "https://lautechmarket.com.ng",
-        "logo": "https://lautechmarket.com.ng/logo.svg",
+        "logo": "https://lautechmarket.com.ng/logo_icon.png",
         "description": "The official student marketplace for LAUTECH Ogbomoso. Buy and sell electronics, fashion, and services."
       },
       {

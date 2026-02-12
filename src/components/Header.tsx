@@ -115,8 +115,9 @@ export function Header({ onSearch, categories = [] }: HeaderProps) {
     <header className="glass-header">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center space-x-2">
-            <img src="/both.svg" alt="LAUTECH Market" className="w-40 dark:invert" />
+          <Link to="/" className="flex items-center gap-2 group">
+            <img src="/logo_icon.png" alt="LAUTECH Market Icon" className="w-8 h-8 object-contain transition-transform group-hover:scale-110" />
+            <img src="/logo_text.png" alt="LAUTECH Market" className="h-6 object-contain dark:invert transition-opacity group-hover:opacity-80" />
           </Link>
 
           <div className="hidden md:flex flex-1 max-w-2xl mx-8 relative">

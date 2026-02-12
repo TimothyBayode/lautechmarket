@@ -24,7 +24,7 @@ export function SEO({
     const defaultDescription = "Discover verified vendors for electronics, fashion & services at LAUTECH. Buy & sell easily, anytime - 100% student-focused & free.";
     const defaultKeywords = "lautech market, lautech marketplace, lautech ogbomoso, lautech vendors, lautech student market, lautech campus shopping";
     const siteUrl = "https://lautechmarket.com.ng";
-    const defaultImage = "/logo.svg";
+    const defaultImage = "/logo_icon.png";
 
     return (
         <Helmet>

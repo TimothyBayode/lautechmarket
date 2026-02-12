@@ -2,7 +2,8 @@
 // Version 2 - Forced Update
 const CACHE_NAME = 'lautech-market-v2';
 const ASSETS_TO_CACHE = [
-    '/logo.svg',
+    '/logo_icon.png',
+    '/logo_text.png',
     '/site.webmanifest'
 ];
 
