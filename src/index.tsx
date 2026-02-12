@@ -39,10 +39,10 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   });
 
   // Reload the page when a new service worker takes over
-  // let refreshing = false;
-  // navigator.serviceWorker.addEventListener('controllerchange', () => {
-  //   if (refreshing) return;
-  //   refreshing = true;
-  //   window.location.reload();
-  // });
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) return;
+    refreshing = true;
+    window.location.reload();
+  });
 }
