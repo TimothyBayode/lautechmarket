@@ -8,6 +8,7 @@ import {
     Category
 } from "../services/categories";
 import { uploadImage } from "../services/storage";
+import { getProxiedImageUrl } from "../utils/imageUrl";
 
 interface ProductFormProps {
     product: Product | null;
@@ -380,12 +381,12 @@ export function ProductForm({ product, onSave, onCancel, vendorName, whatsappNum
                                 <p className="text-sm text-gray-600 mb-2">Preview:</p>
                                 <div className="relative w-40 h-40 border border-gray-200 rounded-lg overflow-hidden bg-gray-100">
                                     <img
-                                        src={imagePreview}
+                                        src={getProxiedImageUrl(imagePreview) || imagePreview}
                                         alt="Preview"
                                         className="w-full h-full object-cover"
                                         onError={() => {
-                                            setImagePreview("");
-                                            setError("Failed to load image preview");
+                                            // Fallback or retry logic could go here
+                                            console.warn("Image preview failed loading:", imagePreview);
                                         }}
                                     />
                                 </div>
