@@ -47,8 +47,8 @@ export function FAQ() {
         },
         {
           id: 'faq-21',
-          question: 'What is the "Instant Buy" ⚡ icon?',
-          answer: 'The ⚡ icon indicates an "Instant Buy" vendor. These are high-reliability vendors who typically respond to students in under 30 minutes. The 🟢 icon means the vendor is currently active on their dashboard and ready to chat.'
+          question: 'What is the "Online" 🟢 icon?',
+          answer: 'The 🟢 icon indicates a vendor is currently active. For maximum accuracy, this status is updated in real-time and remains active only if the vendor has engaged with the platform within the last 5 minutes. The ⚡ icon indicates an "Instant Buy" vendor with historically fast response times.'
         },
         {
           id: 'faq-22',
@@ -129,7 +129,7 @@ export function FAQ() {
         {
           id: 'faq-v1',
           question: 'How can I rank #1 in search results?',
-          answer: 'Rankings are dynamic! To stay at the top: 1) Maintain a high Trust Score by responding quickly. 2) Keep your dashboard open to show the 🟢 Active status. 3) Use high-quality product images.'
+          answer: 'Rankings are dynamic! To stay at the top: 1) Maintain a high Trust Score by responding quickly. 2) Keep your dashboard open to show the 🟢 Active status (this updates every 5 minutes). 3) Use high-quality product images.'
         },
         {
           id: 'faq-v2',
