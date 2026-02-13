@@ -41,6 +41,7 @@ export function AdminSidebar({ activeTab, onTabChange, onLogout, isOpen, onClose
         { id: "curation", label: "Curation & Top 3", icon: Star },
         { id: "verification", label: "Verification", icon: ShieldCheck },
         { id: "leaderboard", label: "Top Visits", icon: Trophy },
+        { id: "audit-logs", label: "Audit Logs", icon: ShieldCheck },
     ];
 
     return (

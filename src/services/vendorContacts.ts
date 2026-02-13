@@ -14,7 +14,9 @@ import {
     getDocs,
     getDoc,
     serverTimestamp,
-    Timestamp
+    Timestamp,
+    orderBy,
+    limit
 } from 'firebase/firestore';
 import { ContactFeedback, VendorContact } from '../types';
 import { updateVendorMetrics } from './vendorMetrics';
@@ -148,5 +150,27 @@ export const getVendorContactStats = async (vendorId: string) => {
     } catch (error) {
         console.error('[Contact] Error getting contact stats:', error);
         return { totalContacts: 0, feedbackCount: 0, feedbackRate: 0 };
+    }
+};
+/**
+ * Get recent feedback notes from students
+ */
+export const getRecentFeedbackNotes = async (max: number = 20) => {
+    try {
+        const q = query(
+            collection(db, 'vendorContacts'),
+            where('feedbackSubmitted', '==', true),
+            orderBy('feedbackAt', 'desc'),
+            limit(max)
+        );
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(docSnap => ({
+            id: docSnap.id,
+            ...docSnap.data(),
+            feedbackAt: docSnap.data().feedbackAt?.toDate() || new Date()
+        }));
+    } catch (error) {
+        console.error('[Contact] Error fetching feedback notes:', error);
+        return [];
     }
 };

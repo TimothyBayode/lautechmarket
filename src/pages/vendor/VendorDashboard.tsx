@@ -169,6 +169,7 @@ export function VendorDashboard() {
         tagline: "",
         description: "",
         whatsappNumber: "",
+        isStudent: false,
     });
 
     // State for image uploads
@@ -410,6 +411,7 @@ export function VendorDashboard() {
                 tagline: profileForm.tagline,
                 description: profileForm.description,
                 whatsappNumber: profileForm.whatsappNumber ? `+234${profileForm.whatsappNumber}` : vendor.whatsappNumber,
+                isStudent: profileForm.isStudent,
             });
             setShowProfileForm(false);
         } catch (err) {
@@ -431,6 +433,7 @@ export function VendorDashboard() {
                 tagline: vendor.tagline || "",
                 description: vendor.description || "",
                 whatsappNumber: phoneDigits,
+                isStudent: vendor.isStudent || false,
             });
             setShowProfileForm(true);
         }
@@ -1223,6 +1226,29 @@ export function VendorDashboard() {
                                                 placeholder="8012345678"
                                                 className="w-full min-w-0 px-3 py-2 border border-gray-300 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                             />
+                                        </div>
+                                    </div>
+
+                                    {/* Student Identity Toggle */}
+                                    <div className="flex items-start bg-blue-50/50 p-3 rounded-lg border border-blue-100/50">
+                                        <div className="flex items-center h-5">
+                                            <input
+                                                id="profile-isStudent"
+                                                type="checkbox"
+                                                checked={profileForm.isStudent}
+                                                onChange={(e) =>
+                                                    setProfileForm({ ...profileForm, isStudent: e.target.checked })
+                                                }
+                                                className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded"
+                                            />
+                                        </div>
+                                        <div className="ml-3 text-sm">
+                                            <label htmlFor="profile-isStudent" className="font-semibold text-blue-900 leading-none">
+                                                I am a LAUTECH Student
+                                            </label>
+                                            <p className="text-blue-700 mt-1 text-[11px] leading-tight">
+                                                Show a "Student Seller" badge. Builds peer trust!
+                                            </p>
                                         </div>
                                     </div>
 

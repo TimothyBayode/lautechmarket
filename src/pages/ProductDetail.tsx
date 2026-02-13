@@ -12,8 +12,10 @@ import {
 } from "lucide-react";
 import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
+import { ProductCard } from "../components/ProductCard";
 import { Product, Vendor } from "../types";
 import { getProductById, fetchProducts } from "../services/products";
+import { getAllVendors } from "../services/vendorAuth";
 import { getVendorMetrics } from "../services/vendorMetrics";
 import { trackProductView, getSimilarProducts } from "../services/recommendations";
 import { addToCart } from "../utils/cart";
@@ -23,6 +25,7 @@ import { VerifiedBadge } from "../components/VerifiedBadge";
 import { db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { logEvent } from "../services/analytics";
+import { TrustSummary } from "../components/TrustSummary";
 import { showToast } from "../components/ToastContainer";
 import { getProxiedImageUrl } from "../utils/imageUrl";
 
@@ -37,6 +40,7 @@ export function ProductDetail() {
   const [categories, setCategories] = useState<string[]>([]);
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [vendorMetrics, setVendorMetrics] = useState<any>(null);
+  const [allVendors, setAllVendors] = useState<Vendor[]>([]);
 
   const productSchema = product ? {
     "@context": "https://schema.org",
@@ -80,22 +84,21 @@ export function ProductDetail() {
         );
         setCategories(allCategories);
 
-        // Fetch vendor to get verification status
+        // Fetch all vendors to support Related Products trust signals
+        const vendors = await getAllVendors();
+        setAllVendors(vendors);
+
+        // Fetch current product vendor
         if (data.vendorId) {
           const vendorDoc = await getDoc(doc(db, "vendors", data.vendorId));
           if (vendorDoc.exists()) {
             const vendorData = vendorDoc.data();
             setVendor({
               id: vendorDoc.id,
-              name: vendorData.name,
-              email: vendorData.email,
-              password: "",
-              whatsappNumber: vendorData.whatsappNumber,
-              businessName: vendorData.businessName,
-              description: vendorData.description || "",
-              isVerified: vendorData.isVerified || false,
+              ...vendorData,
               createdAt: vendorData.createdAt?.toDate() || new Date(),
-            });
+              verifiedAt: vendorData.verifiedAt?.toDate() || null,
+            } as Vendor);
 
             // Fetch vendor metrics for badges
             const metrics = await getVendorMetrics(data.vendorId);
@@ -364,26 +367,14 @@ export function ProductDetail() {
                 </div>
               </div>
 
-              {/* Trust Badges */}
-              <div className="flex flex-wrap gap-2 mb-6">
-                {vendorMetrics?.isActiveNow && (
-                  <div className="bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider flex items-center border border-emerald-100 shadow-sm">
-                    <span className="w-2 h-2 bg-emerald-500 rounded-full mr-2 animate-pulse"></span>
-                    Vendor Online
-                  </div>
-                )}
-                {vendorMetrics?.badges?.some((b: any) => b.type === 'quick_response') && (
-                  <div className="bg-amber-50 text-amber-700 px-3 py-1.5 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider flex items-center border border-amber-100 shadow-sm">
-                    <span className="mr-1.5">⚡</span>
-                    Fast Response
-                  </div>
-                )}
-                {vendor?.isVerified && (
-                  <div className="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider flex items-center border border-blue-100 shadow-sm">
-                    <Check className="w-3.5 h-3.5 mr-1.5" />
-                    Verified Vendor
-                  </div>
-                )}
+              {/* Trust & Reputation Summary */}
+              <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-4 shadow-sm">
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Vendor Trust Score</h4>
+                <TrustSummary
+                  vendor={vendor}
+                  metrics={vendorMetrics}
+                  showFull={true}
+                />
               </div>
 
               <div className="space-y-3 sm:space-y-4">
@@ -460,37 +451,20 @@ export function ProductDetail() {
                 More from {product.category}
               </h2>
               <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
-                {relatedProducts.map((relatedProduct) => (
-                  <div
-                    key={relatedProduct.id}
-                    className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-                    onClick={() => navigate(`/product/${relatedProduct.id}`)}
-                  >
-                    <div className="aspect-square overflow-hidden bg-gray-100">
-                      <img
-                        src={getProxiedImageUrl(relatedProduct.image) || relatedProduct.image}
-                        alt={relatedProduct.name}
-                        className="w-full h-full object-cover hover:scale-105 transition-transform"
-                      />
-                    </div>
-                    <div className="p-2 sm:p-3 lg:p-4">
-                      <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-1 truncate">
-                        {relatedProduct.name}
-                      </h3>
-                      <p className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-3 line-clamp-2">
-                        {relatedProduct.description}
-                      </p>
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-1 sm:space-y-0">
-                        <span className="text-base sm:text-lg font-bold text-emerald-600">
-                          ₦{formatPrice(relatedProduct.price)}
-                        </span>
-                        <span className="text-xs sm:text-sm text-gray-500 text-right">
-                          by {relatedProduct.vendorName}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                {relatedProducts.map((relatedProduct) => {
+                  const relatedVendor = allVendors.find(v => v.id === relatedProduct.vendorId);
+                  return (
+                    <ProductCard
+                      key={relatedProduct.id}
+                      product={relatedProduct}
+                      isVendorVerified={relatedVendor?.isVerified}
+                      isVendorActive={relatedVendor?.isActiveNow}
+                      vendorBadges={relatedVendor?.badges}
+                      verificationLevel={relatedVendor?.verificationLevel}
+                      isStudent={relatedVendor?.isStudent}
+                    />
+                  );
+                })}
               </div>
             </div>
           )}

@@ -161,7 +161,7 @@ export function FAQ() {
         {
           id: 'faq-4',
           question: 'How do I contact the Admin?',
-          answer: 'For critical issues, email lautechmarket.help@gmail.com. For quick support, use the WhatsApp button on the Contact page. Our team is usually active between 8:00 AM and 10:00 PM.'
+          answer: 'For critical issues, email support@lautechmarket.com.ng. For quick support, use the WhatsApp button on the Contact page. Our team is usually active between 8:00 AM and 10:00 PM.'
         },
         {
           id: 'faq-sup1',

@@ -16,6 +16,7 @@ export type EventType =
     | "add_to_cart"
     | "product_view"
     | "compare_click"
+    | "category_view"
     | "search";
 
 /**
@@ -28,6 +29,7 @@ export const logEvent = async (
         vendorId?: string;
         query?: string;
         category?: string;
+        bucketId?: string;
     }
 ) => {
     try {

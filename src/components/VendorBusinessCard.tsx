@@ -161,6 +161,12 @@ export const VendorBusinessCard: React.FC<VendorBusinessCardProps> = ({ vendor, 
                                     <span className="text-[10px] font-bold uppercase tracking-widest">Verified</span>
                                 </div>
                             )}
+                            {vendor.isStudent && (
+                                <div className="flex items-center gap-1 bg-blue-400/30 backdrop-blur-md px-3 py-1 rounded-full border border-blue-200/30">
+                                    <ShieldCheck className="w-4 h-4 text-blue-200" />
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-blue-100">Student</span>
+                                </div>
+                            )}
                         </div>
 
                         {/* Profile Info */}

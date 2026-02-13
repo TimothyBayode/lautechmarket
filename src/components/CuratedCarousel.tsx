@@ -5,6 +5,7 @@ import { CuratedList, Vendor } from '../types';
 import { getActiveCuratedLists, getCuratedListWithVendors } from '../services/curation';
 import { getProxiedImageUrl } from '../utils/imageUrl';
 import { formatResponseTime } from '../services/vendorMetrics';
+import { VerifiedBadge } from './VerifiedBadge';
 
 export const CuratedCarousel: React.FC = () => {
     const [lists, setLists] = useState<CuratedList[]>([]);
@@ -150,18 +151,18 @@ const CuratedSection: React.FC<{ list: CuratedList; vendors: Vendor[] }> = ({ li
                                 </div>
                             )}
 
-                            {/* Trust Badge Overlay */}
-                            {vendor.badges?.some((b: any) => b.type === 'active_now') && (
-                                <div className="absolute bottom-4 left-4 z-10 inline-flex items-center space-x-1.5 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-bold text-emerald-700 shadow-sm border border-emerald-100">
-                                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                    <span>Active Now</span>
-                                </div>
-                            )}
                         </div>
 
                         <div className="mt-4 px-1">
-                            <h3 className="text-lg font-bold text-gray-900 group-hover:text-emerald-700 transition-colors line-clamp-1">
+                            <h3 className="text-lg font-bold text-gray-900 group-hover:text-emerald-700 transition-colors line-clamp-1 flex items-center gap-2">
                                 {vendor.businessName}
+                                <VerifiedBadge level={vendor.verificationLevel || (vendor.isVerified ? 'verified' : 'basic')} size="sm" />
+                                {vendor.isActiveNow && (
+                                    <div className="flex items-center gap-1 px-1.5 py-0.5 bg-emerald-50 rounded-full border border-emerald-100/50">
+                                        <span className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" />
+                                        <span className="text-[9px] text-emerald-600 font-black uppercase tracking-tighter">Online</span>
+                                    </div>
+                                )}
                             </h3>
                             <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
                                 {vendor.metrics?.averageResponseMinutes && (

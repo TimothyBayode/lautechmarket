@@ -4,6 +4,7 @@ import { ShoppingCart, LinkIcon, Store, Flame, ArrowRightLeft } from "lucide-rea
 import { Product, VendorBadge } from "../types";
 import { addToCart } from "../utils/cart";
 import { VerifiedBadge } from "./VerifiedBadge";
+import { TrustSummary } from "./TrustSummary";
 import { logEvent } from "../services/analytics";
 import { logVendorContact } from "../services/vendorContacts";
 import { getStudentId } from "../utils/studentId";
@@ -17,6 +18,8 @@ interface ProductCardProps {
   isSelectedForCompare?: boolean;
   isVendorActive?: boolean;
   vendorBadges?: VendorBadge[];
+  verificationLevel?: 'basic' | 'verified' | 'pro';
+  isStudent?: boolean;
   searchQuery?: string;
 }
 
@@ -55,6 +58,8 @@ export const ProductCard = React.memo(({
   isSelectedForCompare,
   isVendorActive,
   vendorBadges,
+  verificationLevel,
+  isStudent,
   searchQuery
 }: ProductCardProps) => {
   const navigate = useNavigate();
@@ -163,20 +168,17 @@ export const ProductCard = React.memo(({
             </button>
           )}
 
-          {/* Trust Badges on Image */}
-          <div className="absolute bottom-2 left-2 flex flex-col gap-1">
-            {isVendorActive && (
-              <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm text-emerald-600 dark:text-emerald-400 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center shadow-sm border border-emerald-100 dark:border-emerald-900/50">
-                <span className="w-2 h-2 bg-emerald-500 rounded-full mr-1.5 animate-pulse"></span>
-                Active Now
-              </div>
-            )}
-            {vendorBadges?.some(b => b.type === 'quick_response') && (
-              <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm text-amber-600 dark:text-amber-400 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center shadow-sm border border-amber-100 dark:border-amber-900/50">
-                <span className="mr-1">⚡</span>
-                Fast Response
-              </div>
-            )}
+          {/* Trust Indicators on Image */}
+          <div className="absolute bottom-2 left-2 right-2">
+            <TrustSummary
+              vendor={{
+                isVerified: isVendorVerified,
+                isStudent: isStudent || vendorBadges?.some(b => b.type === 'reliable'),
+                verificationLevel: verificationLevel || (isVendorVerified ? 'verified' : 'basic')
+              }}
+              metrics={null}
+              className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md p-1.5 rounded-lg shadow-sm border border-white/20"
+            />
           </div>
         </div>
 
@@ -203,7 +205,18 @@ export const ProductCard = React.memo(({
                 >
                   <Store className="w-3 h-3 flex-shrink-0" />
                   <span className="truncate">{product.vendorName}</span>
-                  {isVendorVerified && <VerifiedBadge size="sm" />}
+                  {verificationLevel && verificationLevel !== 'basic' && (
+                    <VerifiedBadge level={verificationLevel} size="sm" />
+                  )}
+                  {isVendorActive && (
+                    <div className="flex items-center gap-1.5 ml-1.5 px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/30 rounded-full border border-emerald-100 dark:border-emerald-800/50 shadow-sm animate-in fade-in zoom-in duration-300">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                      </span>
+                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-black uppercase tracking-tight">Online</span>
+                    </div>
+                  )}
                 </Link>
               ) : (
                 <span className="text-xs text-gray-500 dark:text-slate-500 truncate block">

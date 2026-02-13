@@ -88,7 +88,7 @@ export const fetchCategories = async (bucketId?: string): Promise<Category[]> =>
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(
     (docSnap) => {
-      const data = docSnap.data();
+      const data = docSnap.data() as any;
       return {
         id: docSnap.id,
         name: data.name || "",

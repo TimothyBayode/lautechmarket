@@ -74,10 +74,10 @@ export function Footer() {
               </li>
               <li className="flex items-center space-x-3 py-0.5">
                 <a
-                  href="mailto:lautechmarket.help@gmail.com"
+                  href="mailto:support@lautechmarket.com.ng"
                   className="text-sm hover:text-emerald-400 transition-colors"
                 >
-                  lautechmarket.help@gmail.com
+                  support@lautechmarket.com.ng
                 </a>
               </li>
             </ul>

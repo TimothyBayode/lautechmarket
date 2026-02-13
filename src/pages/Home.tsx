@@ -137,10 +137,13 @@ export function Home() {
       setSelectedCategories([
         category.charAt(0).toUpperCase() + category.slice(1).toLowerCase(),
       ]);
-    } else {
-      // Reset filters when navigating to root Home
-      setSelectedCategories([]);
-      setSelectedBuckets([]);
+    }
+
+    // Log category view for analytics
+    if (category) {
+      logEvent("category_view", {
+        category: category.charAt(0).toUpperCase() + category.slice(1).toLowerCase()
+      });
     }
   }, [category]);
 
@@ -421,6 +424,10 @@ export function Home() {
                       <ProductCard
                         product={product}
                         isVendorVerified={vendors.find(v => v.id === product.vendorId)?.isVerified}
+                        isVendorActive={vendors.find(v => v.id === product.vendorId)?.isActiveNow}
+                        vendorBadges={vendors.find(v => v.id === product.vendorId)?.badges}
+                        verificationLevel={vendors.find(v => v.id === product.vendorId)?.verificationLevel}
+                        isStudent={vendors.find(v => v.id === product.vendorId)?.isStudent}
                       />
                     </div>
                   ))}
@@ -577,8 +584,17 @@ export function Home() {
                         </div>
                         <p className="font-medium text-gray-900 dark:text-white text-sm truncate w-full flex items-center justify-center gap-1">
                           {vendor.businessName}
-                          {vendor.isVerified && <VerifiedBadge size="sm" />}
+                          {vendor.verificationLevel && vendor.verificationLevel !== 'basic' && <VerifiedBadge level={vendor.verificationLevel} size="sm" />}
                         </p>
+                        {vendor.isActiveNow && (
+                          <div className="flex items-center gap-1 px-1.5 py-0.5 bg-emerald-50 rounded-full border border-emerald-100/50 mt-1">
+                            <span className="relative flex h-1.5 w-1.5">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                            </span>
+                            <span className="text-[8px] text-emerald-600 font-black uppercase tracking-tighter">Online</span>
+                          </div>
+                        )}
                         <p className="text-xs text-emerald-600">View Store →</p>
                       </div>
                     </Link>
@@ -631,6 +647,8 @@ export function Home() {
                         isSelectedForCompare={compareList.some(p => p.id === product.id)}
                         isVendorActive={productVendor?.isActiveNow || false}
                         vendorBadges={productVendor?.badges || []}
+                        verificationLevel={productVendor?.verificationLevel}
+                        isStudent={productVendor?.isStudent}
                         searchQuery={searchQuery}
                       />
                     );

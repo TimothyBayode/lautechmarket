@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 /**
  * Image URL Utilities
  * Handles conversion between R2 public URLs and worker-proxied URLs

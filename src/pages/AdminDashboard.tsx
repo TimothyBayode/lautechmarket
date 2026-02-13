@@ -22,7 +22,8 @@ import {
   Trophy,
   Activity,
   TrendingUp,
-  Clock
+  Clock,
+  Star
 } from "lucide-react";
 import {
   getDocs,
@@ -31,6 +32,7 @@ import {
   orderBy,
   limit,
   onSnapshot,
+  where,
 } from "firebase/firestore";
 import { Product, Vendor, ExpansionResponse } from "../types";
 import {
@@ -56,6 +58,9 @@ import { AdminStats } from "../components/AdminStats";
 import { AdminLeaderboard } from "../components/AdminLeaderboard";
 import { getProxiedImageUrl } from "../utils/imageUrl";
 import { getExpansionResponses, deleteExpansionResponse } from "../services/expansion";
+import { auth } from "../firebase";
+import { logAdminAction, getRecentAuditLogs } from "../services/audit";
+import { getRecentFeedbackNotes } from "../services/vendorContacts";
 
 export function AdminDashboard() {
   const navigate = useNavigate();
@@ -74,6 +79,8 @@ export function AdminDashboard() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [authChecked, setAuthChecked] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>("vendors");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const [analytics, setAnalytics] = useState<any>(null);
 
@@ -91,6 +98,8 @@ export function AdminDashboard() {
   const [reliabilityRanking, setReliabilityRanking] = useState<{ vendorName: string; businessName: string; responseTime: number; trustScore: number }[]>([]);
   const [comparisonLeaderboard, setComparisonLeaderboard] = useState<{ productId: string; name: string; vendorName: string; compareCount: number; image?: string }[]>([]);
   const [categoryConversion, setCategoryConversion] = useState<{ category: string; rate: number; orders: number; views: number }[]>([]);
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [feedbackNotes, setFeedbackNotes] = useState<any[]>([]);
   const [searchError, setSearchError] = useState<string | null>(null);
   // Dashboard data loading - initial load
   useEffect(() => {
@@ -157,17 +166,16 @@ export function AdminDashboard() {
     }
 
     try {
-      const siteAnalytics = await getAnalytics();
-      if (siteAnalytics) {
-        setAnalytics(siteAnalytics);
+      const analyticsResults = await getAnalytics();
+      if (analyticsResults) {
+        setAnalytics(analyticsResults);
       }
     } catch (err) {
       console.error("[AdminDashboard] Error loading site analytics:", err);
     }
 
     try {
-      // Enhanced logging
-      console.log("[AdminDashboard] Fetching searches initially...");
+      // Fetch searches for intelligence and auditing
       let searchesQuery = query(collection(db, "searches"), orderBy("timestamp", "desc"), limit(200));
       let searchesSnap;
 
@@ -179,7 +187,6 @@ export function AdminDashboard() {
         searchesSnap = await getDocs(searchesQuery);
       }
 
-      console.log(`[AdminDashboard] Found ${searchesSnap.size} search records.`);
 
       const searchCounts: { [key: string]: number } = {};
       const gapCounts: { [key: string]: number } = {};
@@ -263,15 +270,32 @@ export function AdminDashboard() {
       setComparisonLeaderboard(intelComparison);
 
       const categories = [...new Set(allVendorProducts.map(p => p.category || "Uncategorized"))];
+
+      // Fetch category views for more accurate funnel 
+      const analyticsEventsSnap = await getDocs(query(collection(db, "analytics_events"), where("type", "==", "category_view")));
+      const catViewCounts: { [key: string]: number } = {};
+      analyticsEventsSnap.docs.forEach(doc => {
+        const cat = doc.data().category;
+        if (cat) catViewCounts[cat] = (catViewCounts[cat] || 0) + 1;
+      });
+
       const intelConversion = categories.map(cat => {
         const catProds = allVendorProducts.filter(p => (p.category || "Uncategorized") === cat);
         const orders = catProds.reduce((sum, p) => sum + (p.orderCount || 0), 0);
-        const views = catProds.reduce((sum, p) => sum + (p.viewCount || 0), 0);
+        // Use browsing views instead of just product clicks if available
+        const views = catViewCounts[cat] || catProds.reduce((sum, p) => sum + (p.viewCount || 0), 0);
         const rate = views > 0 ? (orders / views) * 100 : 0;
         return { category: cat, rate, orders, views };
       }).sort((a, b) => b.rate - a.rate);
       setCategoryConversion(intelConversion);
 
+      // Fetch Audit Logs
+      const logs = await getRecentAuditLogs(30);
+      setAuditLogs(logs);
+
+      // Fetch Recent Feedback Notes
+      const feedback = await getRecentFeedbackNotes(50);
+      setFeedbackNotes(feedback);
 
     } catch (err) {
       console.error("[AdminDashboard] Error loading searches or intelligence:", err);
@@ -284,9 +308,9 @@ export function AdminDashboard() {
   useEffect(() => {
     if (!authChecked) return;
 
-    console.log("[AdminDashboard] Setting up real-time search listener...");
-    const searchesColl = collection(db, "searches");
-    const orderedQuery = query(searchesColl, orderBy("timestamp", "desc"), limit(100));
+    // Real-time listener for operational search monitoring
+    const searchesRef = collection(db, "searches");
+    const orderedQuery = query(searchesRef, orderBy("timestamp", "desc"), limit(100));
 
     const processSnapshot = (snapshot: any, label: string) => {
       console.log(`[AdminDashboard] ${label} update: Processing ${snapshot.size} records...`);
@@ -342,7 +366,7 @@ export function AdminDashboard() {
 
         if (err.message?.includes("index")) {
           console.warn("[AdminDashboard] Missing search index. Falling back to unordered listener.");
-          const unorderedQuery = query(searchesColl, limit(100));
+          const unorderedQuery = query(searchesRef, limit(100));
           unsubscribe = onSnapshot(unorderedQuery, (snap) => processSnapshot(snap, "Unordered Search"), (err2) => {
             console.error("[AdminDashboard] Fallback search listener failed:", err2);
             if (err2.message?.includes("permission-denied")) {
@@ -436,9 +460,19 @@ export function AdminDashboard() {
   const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this product?")) return;
     try {
+      const product = products.find(p => p.id === id);
       await deleteProduct(id);
       setProducts((prev) => prev.filter((p) => p.id !== id));
       setAllProducts((prev) => prev.filter((p) => p.id !== id));
+
+      if (auth.currentUser?.email) {
+        logAdminAction(auth.currentUser.email, "product_delete", {
+          targetId: id,
+          targetName: product?.name,
+          details: `Deleted product from vendor ${product?.vendorName}`
+        });
+      }
+
       setSelectedProducts((prev) => {
         const newSet = new Set(prev);
         newSet.delete(id);
@@ -500,6 +534,15 @@ export function AdminDashboard() {
       await deleteVendor(vendor.id);
       setVendors((prev) => prev.filter((v) => v.id !== vendor.id));
       setAllProducts((prev) => prev.filter((p) => p.vendorId !== vendor.id));
+
+      if (auth.currentUser?.email) {
+        logAdminAction(auth.currentUser.email, "vendor_delete", {
+          targetId: vendor.id,
+          targetName: vendor.businessName,
+          details: `Deleted vendor with ${productCount} products`
+        });
+      }
+
       alert(`Vendor "${vendor.businessName}" has been deleted.`);
     } catch (err) {
       console.error("Error deleting vendor:", err);
@@ -527,19 +570,26 @@ export function AdminDashboard() {
       await updateVendorProfile(vendor.id, {
         isVerified: newStatus,
         verifiedAt: verifiedAt,
+        verificationLevel: newStatus ? "verified" : "basic",
       });
       setVendors((prev) =>
-        prev.map((v) => (v.id === vendor.id ? { ...v, isVerified: newStatus, verifiedAt: verifiedAt } : v))
+        prev.map((v) => (v.id === vendor.id ? { ...v, isVerified: newStatus, verifiedAt: verifiedAt, verificationLevel: newStatus ? "verified" : "basic" } : v))
       );
+
+      if (auth.currentUser?.email) {
+        logAdminAction(auth.currentUser.email, newStatus ? "vendor_verify" : "vendor_unverify", {
+          targetId: vendor.id,
+          targetName: vendor.businessName
+        });
+      }
+
+      alert(`Vendor "${vendor.businessName}" is now ${newStatus ? "verified" : "unverified"}.`);
     } catch (err) {
       console.error("Error updating vendor verification:", err);
       alert("Error updating vendor: " + (err as Error).message);
     }
   };
 
-  // Active tab state
-  const [activeTab, setActiveTab] = useState("overview");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   if (!authChecked || loading) {
     return (
@@ -810,6 +860,84 @@ export function AdminDashboard() {
 
         return (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            {/* Global Health Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                <div className="flex items-center space-x-3 mb-4">
+                  <Activity className="w-5 h-5 text-emerald-600" />
+                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-tight">Global Conv.</h3>
+                </div>
+                <p className="text-3xl font-black text-emerald-600">{conversionRate}%</p>
+                <p className="text-[10px] text-gray-400 mt-2 font-medium">Platform-wide average</p>
+              </div>
+
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                <div className="flex items-center space-x-3 mb-4">
+                  <Tag className="w-5 h-5 text-blue-600" />
+                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-tight">Market Price</h3>
+                </div>
+                <p className="text-3xl font-black text-blue-600">₦{Math.round(avgPriceIndex).toLocaleString()}</p>
+                <p className="text-[10px] text-gray-400 mt-2 font-medium">Avg listing price</p>
+              </div>
+
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                <div className="flex items-center space-x-3 mb-4">
+                  <Clock className="w-5 h-5 text-orange-600" />
+                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-tight">Peak Activity</h3>
+                </div>
+                <div className="h-10 flex items-end gap-1">
+                  {peakTraffic.slice(10, 22).map((pt, i) => (
+                    <div
+                      key={i}
+                      className="flex-1 bg-orange-100 rounded-sm hover:bg-orange-500 transition-colors cursor-help group relative"
+                      style={{ height: `${Math.min(100, (pt.count / (Math.max(...peakTraffic.map(p => p.count)) || 1)) * 100)}%` }}
+                    >
+                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 bg-gray-900 text-white text-[8px] px-1 py-0.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap">
+                        {pt.hour}:00 - {pt.count}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[10px] text-gray-400 mt-2 font-medium">Daily traffic distribution</p>
+              </div>
+            </div>
+
+            {/* Customer Sentiment Review */}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mb-8">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-sm font-bold text-gray-900 flex items-center uppercase tracking-tight">
+                  <Star className="w-4 h-4 mr-2 text-amber-500" />
+                  Recent Customer Sentiment (Feedback Notes)
+                </h3>
+                <span className="text-[10px] bg-amber-50 text-amber-700 px-2 py-1 rounded font-black">Student Feedback</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {feedbackNotes.length > 0 ? feedbackNotes.slice(0, 6).map((note, i) => (
+                  <div key={i} className="p-4 bg-amber-50/20 rounded-xl border border-amber-100 flex flex-col h-full hover:bg-amber-50/40 transition-colors">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase ${note.wasHelpful ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                        {note.wasHelpful ? 'Helpful' : 'Negative'}
+                      </span>
+                      <span className="text-[9px] text-gray-400 font-mono italic">
+                        {note.feedbackAt.toLocaleDateString()}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-700 font-medium italic mb-3 flex-grow leading-relaxed">"{note.feedbackNote}"</p>
+                    <div className="flex items-center justify-between border-t border-amber-100/50 pt-2">
+                      <span className="text-[9px] font-bold text-amber-900/40 uppercase tracking-tighter truncate">Vendor: {note.vendorId.substring(0, 8)}</span>
+                      <span className="text-[9px] font-black text-amber-600 bg-white px-1.5 py-0.5 rounded shadow-sm">
+                        {note.purchaseMade ? 'PURCHASE' : 'NO SALE'}
+                      </span>
+                    </div>
+                  </div>
+                )) : (
+                  <div className="col-span-full py-12 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100 text-gray-400 text-xs italic font-medium">
+                    No recent student feedback notes recorded.
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Market Intelligence Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Reliability Leaders */}
@@ -938,47 +1066,7 @@ export function AdminDashboard() {
               </div>
             </div>
 
-            {/* Global Health Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                <div className="flex items-center space-x-3 mb-4">
-                  <Activity className="w-5 h-5 text-emerald-600" />
-                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-tight">Global Conv.</h3>
-                </div>
-                <p className="text-3xl font-black text-emerald-600">{conversionRate}%</p>
-                <p className="text-[10px] text-gray-400 mt-2 font-medium">Platform-wide average</p>
-              </div>
 
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                <div className="flex items-center space-x-3 mb-4">
-                  <Tag className="w-5 h-5 text-blue-600" />
-                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-tight">Market Price</h3>
-                </div>
-                <p className="text-3xl font-black text-blue-600">₦{Math.round(avgPriceIndex).toLocaleString()}</p>
-                <p className="text-[10px] text-gray-400 mt-2 font-medium">Avg listing price</p>
-              </div>
-
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                <div className="flex items-center space-x-3 mb-4">
-                  <Clock className="w-5 h-5 text-orange-600" />
-                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-tight">Peak Activity</h3>
-                </div>
-                <div className="h-10 flex items-end gap-1">
-                  {peakTraffic.slice(10, 22).map((pt, i) => (
-                    <div
-                      key={i}
-                      className="flex-1 bg-orange-100 rounded-sm hover:bg-orange-500 transition-colors cursor-help group relative"
-                      style={{ height: `${Math.min(100, (pt.count / (Math.max(...peakTraffic.map(p => p.count)) || 1)) * 100)}% ` }}
-                    >
-                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 bg-gray-900 text-white text-[8px] px-1 py-0.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap">
-                        {pt.hour}:00 - {pt.count}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-[10px] text-gray-400 mt-2 font-medium">Daily traffic distribution</p>
-              </div>
-            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
@@ -1356,7 +1444,7 @@ export function AdminDashboard() {
                           <div className="text-center mt-4">
                             <h3 className="font-bold text-gray-900 group-hover:text-emerald-700 transition-colors flex items-center justify-center gap-1.5">
                               {vendor.businessName}
-                              {vendor.isVerified && <VerifiedBadge size="sm" />}
+                              {vendor.isVerified && <VerifiedBadge level={vendor.verificationLevel || "verified"} size="sm" />}
                             </h3>
                             <p className="text-sm text-gray-500 mt-1 mb-4">{vendor.email}</p>
                             <div className="flex items-center justify-center gap-2 mb-6">
@@ -1394,6 +1482,44 @@ export function AdminDashboard() {
         return <div className="animate-in fade-in slide-in-from-bottom-2 duration-500"><AdminLeaderboard initialLeaderboard={leaderboard} /></div>;
       case "curation":
         return <div className="animate-in fade-in slide-in-from-bottom-2 duration-500"><AdminCuration vendors={vendors} /></div>;
+      case "audit-logs":
+        return (
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight font-display flex items-center gap-2">
+                <ShieldCheck className="w-6 h-6 text-emerald-600" />
+                Administrative Audit Trail
+              </h3>
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1 rounded-full border border-gray-100">Last 30 Actions</span>
+            </div>
+            <div className="space-y-4">
+              {auditLogs.length > 0 ? auditLogs.map((log) => (
+                <div key={log.id} className="p-4 bg-gray-50 rounded-xl border border-gray-100 flex items-start justify-between group hover:border-emerald-200 transition-all">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${log.action.includes('delete') ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'
+                        }`}>
+                        {(log.action || '').replace('_', ' ')}
+                      </span>
+                      <span className="text-xs font-bold text-gray-900">{log.targetName}</span>
+                    </div>
+                    <p className="text-[11px] text-gray-500">{log.details || `Admin action performed on ${log.targetId}`}</p>
+                    <div className="flex items-center gap-2 pt-1">
+                      <span className="text-[9px] font-bold text-emerald-600">{log.adminEmail}</span>
+                      <span className="text-[9px] text-gray-400">•</span>
+                      <span className="text-[9px] text-gray-400">{log.timestamp ? log.timestamp.toLocaleString() : 'Recent'}</span>
+                    </div>
+                  </div>
+                </div>
+              )) : (
+                <div className="text-center py-20 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                  <ShieldCheck className="w-12 h-12 text-gray-200 mx-auto mb-4" />
+                  <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No audit logs found</p>
+                </div>
+              )}
+            </div>
+          </div>
+        );
       default:
         return null;
     }

@@ -129,7 +129,10 @@ export const updateVendorMetrics = async (vendorId: string): Promise<void> => {
             productUpdateFrequency: 0 // TODO: Calculate from product updates
         });
 
-        // Also update vendor document for quick access
+        // Update vendor document for quick access
+        const verificationLevel = (trustScore >= 90 && feedbackCount >= 10) ? 'pro' :
+            (vendorData?.verificationLevel || (vendorData?.isVerified ? "verified" : "basic"));
+
         await updateDoc(doc(db, 'vendors', vendorId), {
             metrics: {
                 responsivenessScore,
@@ -137,6 +140,7 @@ export const updateVendorMetrics = async (vendorId: string): Promise<void> => {
                 averageResponseMinutes,
                 responseRate
             },
+            verificationLevel,
             badges
         });
 
@@ -170,12 +174,12 @@ const calculateActivityScore = async (vendorId: string, vendorData?: any): Promi
         let activityScore = 0;
 
         if (lastActive) {
-            const hoursSinceActive = (now.getTime() - lastActive.getTime()) / (1000 * 60 * 60);
+            const minsSinceActive = (now.getTime() - lastActive.getTime()) / (1000 * 60);
 
-            if (hoursSinceActive < 1) activityScore = 100;        // Active in last hour
-            else if (hoursSinceActive < 24) activityScore = 80;   // Active today
-            else if (hoursSinceActive < 72) activityScore = 60;   // Active in last 3 days
-            else if (hoursSinceActive < 168) activityScore = 40;  // Active in last week
+            if (minsSinceActive < 30) activityScore = 100;        // Active in last 30 mins (Online)
+            else if (minsSinceActive < 120) activityScore = 80;   // Active last 2 hours
+            else if (minsSinceActive < 1440) activityScore = 60;  // Active in last 24 hours
+            else if (minsSinceActive < 4320) activityScore = 40;  // Active in last 3 days
             else activityScore = 20;                               // Inactive
         }
 

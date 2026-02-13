@@ -40,6 +40,8 @@ export interface Vendor {
     slug?: string;
     tagline?: string;
     isVerified?: boolean;
+    verificationLevel?: 'basic' | 'verified' | 'pro';
+    isStudent?: boolean;
     verifiedAt?: Date | null;
     totalOrders?: number;
     createdAt: Date;

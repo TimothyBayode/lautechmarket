@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
-import { Mail, Phone, Send, Clock } from 'lucide-react';
+import { Mail, Phone, Send } from 'lucide-react';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 export function Contact() {
@@ -26,7 +26,7 @@ export function Contact() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
       const response = await fetch('https://formspree.io/f/mpweggnl', {
         method: 'POST',
@@ -53,8 +53,8 @@ export function Contact() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Header onSearch={() => {}} categories={[]} />
-      
+      <Header onSearch={() => { }} categories={[]} />
+
       <main className="flex-1">
         <div className="bg-emerald-600 text-white py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -69,7 +69,7 @@ export function Contact() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
             <div className="lg:col-span-1">
               <h2 className="text-2xl font-bold text-gray-900 mb-8">Contact Information</h2>
-              
+
               <div className="space-y-6">
                 <div className="flex items-start space-x-4">
                   <div className="bg-emerald-100 p-3 rounded-lg">
@@ -77,7 +77,9 @@ export function Contact() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-1">Email Us</h3>
-                    <p className="text-gray-600">lautechmarket.help@gmail.com</p>
+                    <p className="text-gray-600">
+                      support@lautechmarket.com.ng
+                    </p>
                   </div>
                 </div>
 
@@ -87,29 +89,18 @@ export function Contact() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-1">WhatsApp</h3>
-                    <p className="text-gray-600">+234 815 199 3706</p>
+                    <p className="text-gray-600">+234 9134220869</p>
                     <p className="text-gray-600">+234 902 952 2648</p>
                   </div>
                 </div>
 
-                <div className="flex items-start space-x-4">
-                  <div className="bg-emerald-100 p-3 rounded-lg">
-                    <Clock className="w-6 h-6 text-emerald-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">Business Hours</h3>
-                    <p className="text-gray-600">Monday - Friday: 9AM - 6PM</p>
-                    <p className="text-gray-600">Saturday: 9AM - 4PM</p>
-                    <p className="text-gray-600">Sunday: Closed</p>
-                  </div>
-                </div>
               </div>
-              </div>
+            </div>
 
             <div className="lg:col-span-2">
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">Send us a Message</h2>
-                
+
                 {submitStatus === 'success' && (
                   <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6">
                     Thank you for your message! We'll get back to you as soon as possible.

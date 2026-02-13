@@ -30,18 +30,32 @@ const notifyVendorAuthListeners = () => {
     vendorAuthListeners.forEach((callback) => callback(currentVendor));
 };
 
+// Normalize vendor data with lazy migration and dynamic status
+export const normalizeVendorData = (vendorDoc: any): Vendor => {
+    const data = vendorDoc.data();
+    const verificationLevel = data.verificationLevel || (data.isVerified ? "verified" : "basic");
+    const isStudent = data.isStudent || false;
+    const lastActive = data.lastActive?.toDate ? data.lastActive.toDate() : null;
+    const isActiveNow = lastActive ? (new Date().getTime() - lastActive.getTime()) < 30 * 60 * 1000 : false;
+
+    return {
+        id: vendorDoc.id,
+        ...data,
+        verificationLevel,
+        isStudent,
+        isActiveNow,
+        createdAt: data.createdAt?.toDate() || new Date(),
+        verifiedAt: data.verifiedAt?.toDate() || null,
+        lastActive,
+    } as Vendor;
+};
+
 // Fetch vendor data from Firestore
 const fetchVendorData = async (userId: string): Promise<Vendor | null> => {
     try {
         const vendorDoc = await getDoc(doc(db, "vendors", userId));
         if (vendorDoc.exists()) {
-            const data = vendorDoc.data();
-            return {
-                id: vendorDoc.id,
-                ...data,
-                createdAt: data.createdAt?.toDate() || new Date(),
-                verifiedAt: data.verifiedAt?.toDate() || null,
-            } as Vendor;
+            return normalizeVendorData(vendorDoc);
         }
     } catch (error) {
         console.error("Error fetching vendor data:", error);
@@ -57,7 +71,8 @@ export const registerVendor = async (
     whatsappNumber: string,
     businessName: string,
     description?: string,
-    storeAddress?: string
+    storeAddress?: string,
+    isStudent?: boolean
 ): Promise<Vendor> => {
     try {
         // Create user in Firebase Auth
@@ -83,6 +98,8 @@ export const registerVendor = async (
             tagline: "",
             description: description?.trim() || "",
             storeAddress: storeAddress?.trim() || "",
+            isStudent: isStudent || false,
+            verificationLevel: "basic",
             createdAt: new Date(),
         };
 
@@ -230,14 +247,7 @@ export const getVendorBySlug = async (slug: string): Promise<Vendor | null> => {
         const querySnapshot = await getDocs(q);
 
         if (!querySnapshot.empty) {
-            const doc = querySnapshot.docs[0];
-            const data = doc.data();
-            return {
-                id: doc.id,
-                ...data,
-                createdAt: data.createdAt?.toDate() || new Date(),
-                verifiedAt: data.verifiedAt?.toDate() || null,
-            } as Vendor;
+            return normalizeVendorData(querySnapshot.docs[0]);
         }
     } catch (error) {
         console.error("Error fetching vendor by slug:", error);
@@ -252,23 +262,8 @@ export const getAllVendors = async (): Promise<Vendor[]> => {
         const vendorsSnapshot = await getDocs(collection(db, "vendors"));
         const vendors: Vendor[] = [];
 
-        vendorsSnapshot.forEach((doc) => {
-            const data = doc.data();
-            vendors.push({
-                id: doc.id,
-                name: data.name,
-                email: data.email,
-                password: "",
-                whatsappNumber: data.whatsappNumber,
-                businessName: data.businessName,
-                description: data.description || "",
-                storeAddress: data.storeAddress || "",
-                bannerImage: data.bannerImage,
-                profileImage: data.profileImage,
-                isVerified: data.isVerified || false,
-                verifiedAt: data.verifiedAt?.toDate() || undefined,
-                createdAt: data.createdAt?.toDate() || new Date(),
-            } as Vendor);
+        vendorsSnapshot.forEach((docSnapshot) => {
+            vendors.push(normalizeVendorData(docSnapshot));
         });
 
         return vendors;

@@ -22,6 +22,7 @@ export function VendorRegister() {
         businessName: "",
         description: "",
         storeAddress: "",
+        isStudent: false,
     });
 
     // UI state
@@ -87,7 +88,8 @@ export function VendorRegister() {
                 `+234${formData.whatsappNumber}`,
                 formData.businessName,
                 formData.description,
-                formData.storeAddress
+                formData.storeAddress,
+                formData.isStudent
             );
             navigate("/vendor/dashboard");
         } catch (err: any) {
@@ -339,6 +341,28 @@ export function VendorRegister() {
                                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                                     placeholder="e.g. B.O.T Hostel, LAUTECH Campus"
                                 />
+                            </div>
+                        </div>
+
+                        {/* Student Badge Toggle */}
+                        <div className="flex items-start bg-emerald-50 rounded-lg p-4 border border-emerald-100">
+                            <div className="flex items-center h-5">
+                                <input
+                                    id="isStudent"
+                                    name="isStudent"
+                                    type="checkbox"
+                                    checked={formData.isStudent}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, isStudent: e.target.checked }))}
+                                    className="focus:ring-emerald-500 h-4 w-4 text-emerald-600 border-gray-300 rounded"
+                                />
+                            </div>
+                            <div className="ml-3 text-sm">
+                                <label htmlFor="isStudent" className="font-medium text-emerald-900">
+                                    I am a LAUTECH Student
+                                </label>
+                                <p className="text-emerald-700">
+                                    Adds a "Student Seller" badge to your products. Students trust other students! (Requires student ID for gold-tier later)
+                                </p>
                             </div>
                         </div>
 

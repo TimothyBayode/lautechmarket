@@ -41,7 +41,7 @@ export const VendorMetricsDisplay: React.FC<VendorMetricsDisplayProps> = ({
                 {isActiveNow && (
                     <span className="inline-flex items-center gap-1 text-xs text-green-600 font-medium">
                         <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                        Active Now
+                        Online
                     </span>
                 )}
 
@@ -124,7 +124,7 @@ export const VendorMetricsDisplay: React.FC<VendorMetricsDisplayProps> = ({
                     {isActiveNow ? (
                         <span className="flex items-center gap-2 text-green-600 font-medium">
                             <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                            Active Now
+                            Online
                         </span>
                     ) : (
                         <span>Last active: {formatLastActive(lastActive)}</span>

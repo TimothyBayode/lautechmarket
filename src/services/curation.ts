@@ -18,6 +18,7 @@ import {
     orderBy
 } from 'firebase/firestore';
 import { CuratedList, Vendor } from '../types';
+import { normalizeVendorData } from './vendorAuth';
 
 /**
  * Get all active curated lists
@@ -80,7 +81,7 @@ export const getCuratedListWithVendors = async (listId: string): Promise<{ list:
         for (const vendorId of list.vendorIds) {
             const vendorDoc = await getDoc(doc(db, 'vendors', vendorId));
             if (vendorDoc.exists()) {
-                vendors.push({ id: vendorDoc.id, ...vendorDoc.data() } as Vendor);
+                vendors.push(normalizeVendorData(vendorDoc));
             }
         }
 

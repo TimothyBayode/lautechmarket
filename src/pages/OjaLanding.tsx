@@ -499,7 +499,9 @@ export function OjaLanding() {
                             <span>Powered by</span>
                             <span className="text-[#B45309]">OJA Expansion</span>
                             <span className="opacity-40">•</span>
-                            <span>Created by the Lautech market developer</span>
+                            <span>
+                                Created by the Lautech market developers
+                            </span>
                         </p>
                     </div>
 

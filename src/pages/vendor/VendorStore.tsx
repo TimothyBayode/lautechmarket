@@ -268,7 +268,16 @@ export function VendorStore() {
                             <div className="flex flex-col items-center">
                                 <h1 className="text-3xl md:text-4xl font-bold text-gray-900 flex items-center justify-center gap-2">
                                     {vendor.businessName}
-                                    {vendor.isVerified && <VerifiedBadge size="lg" />}
+                                    <VerifiedBadge level={vendor.verificationLevel || (vendor.isVerified ? 'verified' : 'basic')} size="lg" />
+                                    {vendor.isActiveNow && (
+                                        <div className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 rounded-full border border-emerald-100/50 shadow-sm">
+                                            <span className="relative flex h-2 w-2">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                            </span>
+                                            <span className="text-[10px] text-emerald-600 font-black uppercase tracking-tighter">Online</span>
+                                        </div>
+                                    )}
                                 </h1>
                                 <span className="mt-1 text-emerald-600 font-bold text-xs uppercase tracking-widest bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
                                     CEO / Business Owner
@@ -379,20 +388,24 @@ export function VendorStore() {
                                     isVendorVerified={vendor.isVerified}
                                     isVendorActive={vendor.isActiveNow}
                                     vendorBadges={vendor.badges}
+                                    verificationLevel={vendor.verificationLevel}
+                                    isStudent={vendor.isStudent}
                                 />
                             ))}
                         </div>
                     )}
                 </div>
-            </main>
+            </main >
 
             {/* Business Card Modal */}
-            {showBusinessCard && vendor && (
-                <VendorBusinessCard
-                    vendor={vendor}
-                    onClose={() => setShowBusinessCard(false)}
-                />
-            )}
+            {
+                showBusinessCard && vendor && (
+                    <VendorBusinessCard
+                        vendor={vendor}
+                        onClose={() => setShowBusinessCard(false)}
+                    />
+                )
+            }
 
             <Footer />
         </>

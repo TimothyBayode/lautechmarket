@@ -29,7 +29,7 @@ export const trackVendorActivity = async (vendorId: string): Promise<void> => {
  */
 export const updateInactiveVendors = async (): Promise<number> => {
     try {
-        const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+        const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
 
         const q = query(
             collection(db, 'vendors'),
@@ -43,7 +43,7 @@ export const updateInactiveVendors = async (): Promise<number> => {
             const data = docSnap.data();
             const lastActive = data.lastActive?.toDate ? data.lastActive.toDate() : null;
 
-            if (lastActive && lastActive < fifteenMinutesAgo) {
+            if (lastActive && lastActive < thirtyMinutesAgo) {
                 await updateDoc(docSnap.ref, {
                     isActiveNow: false
                 });
