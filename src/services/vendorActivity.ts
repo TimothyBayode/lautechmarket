@@ -24,12 +24,12 @@ export const trackVendorActivity = async (vendorId: string): Promise<void> => {
 };
 
 /**
- * Mark vendors as inactive if they haven't been active in 15 minutes
+ * Mark vendors as inactive if they haven't been active in 5 minutes
  * This should be run periodically (e.g., every 5 minutes via a cron job or Cloud Function)
  */
 export const updateInactiveVendors = async (): Promise<number> => {
     try {
-        const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
 
         const q = query(
             collection(db, 'vendors'),
@@ -43,7 +43,7 @@ export const updateInactiveVendors = async (): Promise<number> => {
             const data = docSnap.data();
             const lastActive = data.lastActive?.toDate ? data.lastActive.toDate() : null;
 
-            if (lastActive && lastActive < thirtyMinutesAgo) {
+            if (lastActive && lastActive < fiveMinutesAgo) {
                 await updateDoc(docSnap.ref, {
                     isActiveNow: false
                 });

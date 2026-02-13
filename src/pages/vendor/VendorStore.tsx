@@ -28,8 +28,10 @@ import { VendorBusinessCard } from "../../components/VendorBusinessCard";
 import { VendorMetricsDisplay } from "../../components/VendorMetricsDisplay";
 import { getVendorProducts } from "../../services/products";
 import { trackStoreVisit } from "../../services/vendorVisits";
-import { getVendorBySlug, getVendorById } from "../../services/vendorAuth";
+import { getVendorBySlug, getVendorById, normalizeVendorData } from "../../services/vendorAuth";
 import { getProxiedImageUrl } from "../../utils/imageUrl";
+import { db } from "../../firebase";
+import { doc, onSnapshot } from "firebase/firestore";
 
 
 
@@ -108,6 +110,20 @@ export function VendorStore() {
 
         loadVendorData();
     }, [vendorId]);
+
+    // Real-time vendor status listener
+    useEffect(() => {
+        if (!vendor?.id) return;
+
+        const unsubscribe = onSnapshot(doc(db, "vendors", vendor.id), (snapshot) => {
+            if (snapshot.exists()) {
+                const updatedVendor = normalizeVendorData(snapshot);
+                setVendor(updatedVendor);
+            }
+        });
+
+        return () => unsubscribe();
+    }, [vendor?.id]);
 
     // Generate WhatsApp link
     const getWhatsAppLink = (number: string): string => {

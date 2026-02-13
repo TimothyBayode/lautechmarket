@@ -1,5 +1,5 @@
 import { db } from "../firebase";
-import { collection, getDocs, updateDoc, doc, writeBatch } from "firebase/firestore";
+import { collection, getDocs, doc, writeBatch } from "firebase/firestore";
 import { addBucket, fetchBuckets } from "./categories";
 
 const NEW_BUCKETS: Record<string, string[]> = {

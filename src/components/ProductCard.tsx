@@ -174,7 +174,8 @@ export const ProductCard = React.memo(({
               vendor={{
                 isVerified: isVendorVerified,
                 isStudent: isStudent || vendorBadges?.some(b => b.type === 'reliable'),
-                verificationLevel: verificationLevel || (isVendorVerified ? 'verified' : 'basic')
+                verificationLevel: verificationLevel || (isVendorVerified ? 'verified' : 'basic'),
+                isActiveNow: false
               }}
               metrics={null}
               className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md p-1.5 rounded-lg shadow-sm border border-white/20"

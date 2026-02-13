@@ -12,6 +12,18 @@ interface TrustSummaryProps {
 export function TrustSummary({ vendor, metrics, className = "", showFull = false }: TrustSummaryProps) {
     if (!vendor) return null;
 
+    const isFresh = (lastActive: { toDate?: () => Date } | Date | string | null | undefined) => {
+        if (!lastActive) return false;
+        const date = lastActive instanceof Date ? lastActive :
+            (typeof lastActive === 'object' && 'toDate' in lastActive && typeof lastActive.toDate === 'function') ? lastActive.toDate() :
+                new Date(lastActive as string);
+        const now = new Date();
+        const diffMs = now.getTime() - date.getTime();
+        return diffMs < 5 * 60 * 1000; // 5 minutes
+    };
+
+    const isOnline = (vendor.isActiveNow || metrics?.isActiveNow) && isFresh(vendor.lastActive || metrics?.lastActive);
+
     return (
         <div className={`flex flex-col gap-3 ${className}`}>
             {/* Main Trust Line */}
@@ -28,7 +40,7 @@ export function TrustSummary({ vendor, metrics, className = "", showFull = false
                     </div>
                 )}
 
-                {(vendor.isActiveNow || metrics?.isActiveNow) && (
+                {isOnline && (
                     <div className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full text-[10px] sm:text-xs font-bold border border-emerald-100 uppercase tracking-tight shadow-sm">
                         <span className="relative flex h-2 w-2">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>

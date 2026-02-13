@@ -36,7 +36,13 @@ export const normalizeVendorData = (vendorDoc: any): Vendor => {
     const verificationLevel = data.verificationLevel || (data.isVerified ? "verified" : "basic");
     const isStudent = data.isStudent || false;
     const lastActive = data.lastActive?.toDate ? data.lastActive.toDate() : null;
-    const isActiveNow = lastActive ? (new Date().getTime() - lastActive.getTime()) < 30 * 60 * 1000 : false;
+
+    // HYBRID STATUS CHECK: 
+    // 1. Trust the stored boolean if it's there (useful for preventing clock drift issues)
+    // 2. BUT also verify the timestamp is within 45 mins just in case heartbeat stopped but boolean stayed true
+    const fiveMinutesMs = 5 * 60 * 1000;
+    const isTimestampRecent = lastActive ? (Math.abs(new Date().getTime() - lastActive.getTime())) < fiveMinutesMs : false;
+    const isActiveNow = (data.isActiveNow === true && isTimestampRecent) || (lastActive && isTimestampRecent);
 
     return {
         id: vendorDoc.id,

@@ -15,7 +15,7 @@ import { Footer } from "../components/Footer";
 import { ProductCard } from "../components/ProductCard";
 import { Product, Vendor } from "../types";
 import { getProductById, fetchProducts } from "../services/products";
-import { getAllVendors } from "../services/vendorAuth";
+import { getAllVendors, normalizeVendorData } from "../services/vendorAuth";
 import { getVendorMetrics } from "../services/vendorMetrics";
 import { trackProductView, getSimilarProducts } from "../services/recommendations";
 import { addToCart } from "../utils/cart";
@@ -92,13 +92,7 @@ export function ProductDetail() {
         if (data.vendorId) {
           const vendorDoc = await getDoc(doc(db, "vendors", data.vendorId));
           if (vendorDoc.exists()) {
-            const vendorData = vendorDoc.data();
-            setVendor({
-              id: vendorDoc.id,
-              ...vendorData,
-              createdAt: vendorData.createdAt?.toDate() || new Date(),
-              verifiedAt: vendorData.verifiedAt?.toDate() || null,
-            } as Vendor);
+            setVendor(normalizeVendorData(vendorDoc));
 
             // Fetch vendor metrics for badges
             const metrics = await getVendorMetrics(data.vendorId);

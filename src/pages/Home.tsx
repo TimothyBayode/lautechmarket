@@ -7,7 +7,9 @@ import { AnnouncementCarousel } from "../components/AnnouncementCarousel";
 import { CuratedCarousel } from "../components/CuratedCarousel";
 import { Product, Vendor, FilterOptions } from "../types";
 import { getAllProducts } from "../services/products";
-import { getAllVendors } from "../services/vendorAuth";
+import { normalizeVendorData } from "../services/vendorAuth";
+import { db } from "../firebase";
+import { collection, onSnapshot } from "firebase/firestore";
 import { fetchBuckets, fetchCategories, Bucket, Category } from "../services/categories";
 import { Store, Info } from "lucide-react";
 import { SEO } from "../components/SEO";
@@ -59,18 +61,13 @@ export function Home() {
           console.error("Failed to fetch products:", err);
           return [] as Product[];
         });
-        const vendorsPromise = getAllVendors().catch(err => {
-          console.error("Failed to fetch vendors:", err);
-          return [] as Vendor[];
-        });
         const bucketsPromise = fetchBuckets().catch(err => {
           console.error("Failed to fetch buckets:", err);
           return [] as Bucket[];
         });
 
-        const [productsData, vendorsData, bucketsData, categoriesData] = await Promise.all([
+        const [productsData, bucketsData, categoriesData] = await Promise.all([
           productsPromise,
-          vendorsPromise,
           bucketsPromise,
           fetchCategories().catch(() => [])
         ]);
@@ -86,7 +83,6 @@ export function Home() {
         }));
 
         setProducts(normalizedProducts);
-        setVendors(vendorsData);
         setBuckets(bucketsData);
         setCategoriesList(categoriesData);
 
@@ -130,6 +126,19 @@ export function Home() {
 
     fetchData();
   }, [category]); // Refetch when navigating between categories/home
+
+  // Real-time Vendor Listener to capture Online Status updates instantly
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "vendors"), (snapshot) => {
+      const vendorsData = snapshot.docs.map(doc => normalizeVendorData(doc));
+      console.log("[Home] Real-time vendors updated:", vendorsData.length);
+      setVendors(vendorsData);
+    }, (error) => {
+      console.error("[Home] Error in real-time vendor listener:", error);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (category) {
