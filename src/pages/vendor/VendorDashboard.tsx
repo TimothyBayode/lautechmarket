@@ -44,6 +44,7 @@ import {
 } from "../../services/vendorVisits";
 import { VendorBusinessCard } from "../../components/VendorBusinessCard";
 import { getProxiedImageUrl } from "../../utils/imageUrl";
+import { trackVendorActivity } from "../../services/vendorActivity";
 
 /**
  * VendorDashboard Component
@@ -115,6 +116,21 @@ export function VendorDashboard() {
         const timer = setTimeout(checkVendorHubPopup, 1000);
         return () => clearTimeout(timer);
     }, []);
+
+    // Heartbeat: Track activity every 5 minutes while on dashboard
+    useEffect(() => {
+        if (!vendor) return;
+
+        // Track immediately on mount/vendor load to ensure "Online" status is fresh
+        trackVendorActivity(vendor.id);
+
+        // Then every 5 minutes
+        const interval = setInterval(() => {
+            trackVendorActivity(vendor.id);
+        }, 5 * 60 * 1000);
+
+        return () => clearInterval(interval);
+    }, [vendor]);
 
     // Generate WhatsApp link
     const getWhatsAppLink = (number: string): string => {
