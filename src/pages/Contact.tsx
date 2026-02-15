@@ -28,7 +28,7 @@ export function Contact() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('https://formsubmit.co/support@lautechmarket.com.ng', {
+      const response = await fetch('https://formsubmit.co/40c1b5d53bfc02f2c63a018714b361d9', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -113,7 +113,7 @@ export function Contact() {
                   </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-6" action='https://formsubmit.co/support@lautechmarket.com.ng' method='POST'>
+                <form onSubmit={handleSubmit} className="space-y-6" action='https://formsubmit.co/40c1b5d53bfc02f2c63a018714b361d9' method='POST'>
                   <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
                     <div>
                       <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
