@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
@@ -24,6 +24,32 @@ import { LoadingScreen } from "../components/LoadingScreen";
 
 export function Home() {
   const { category } = useParams<{ category?: string }>();
+
+  const structuredData = useMemo(() => ({
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://lautechmarket.com.ng/#organization",
+        "name": "LAUTECH Market",
+        "url": "https://lautechmarket.com.ng",
+        "logo": "https://lautechmarket.com.ng/logo_icon.png",
+        "description": "The official student marketplace for LAUTECH Ogbomoso. Buy and sell electronics, fashion, and services."
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://lautechmarket.com.ng/#website",
+        "url": "https://lautechmarket.com.ng",
+        "name": "LAUTECH Market",
+        "publisher": { "@id": "https://lautechmarket.com.ng/#organization" },
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://lautechmarket.com.ng/?search={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      }
+    ]
+  }), []);
 
   const [products, setProducts] = useState<Product[]>([]);
   const [buckets, setBuckets] = useState<Bucket[]>([]);
@@ -367,31 +393,7 @@ export function Home() {
     );
   }
 
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "Organization",
-        "@id": "https://lautechmarket.com.ng/#organization",
-        "name": "LAUTECH Market",
-        "url": "https://lautechmarket.com.ng",
-        "logo": "https://lautechmarket.com.ng/logo_icon.png",
-        "description": "The official student marketplace for LAUTECH Ogbomoso. Buy and sell electronics, fashion, and services."
-      },
-      {
-        "@type": "WebSite",
-        "@id": "https://lautechmarket.com.ng/#website",
-        "url": "https://lautechmarket.com.ng",
-        "name": "LAUTECH Market",
-        "publisher": { "@id": "https://lautechmarket.com.ng/#organization" },
-        "potentialAction": {
-          "@type": "SearchAction",
-          "target": "https://lautechmarket.com.ng/?search={search_term_string}",
-          "query-input": "required name=search_term_string"
-        }
-      }
-    ]
-  };
+
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
