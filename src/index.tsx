@@ -54,6 +54,8 @@ root.render(
 );
 
 // --- SERVICE WORKER REGISTRATION (Production ONLY) ---
+// KILL SWITCH ACTIVATED: Disabling SW to fix production crash loops.
+/*
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
@@ -65,12 +67,13 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
 
   // NO window.location.reload() here to prevent potential redirect loops
   // The app will update on next natural navigation or manual reload
-} else if ('serviceWorker' in navigator) {
-  // Unregister in dev to avoid conflicts
+} else */
+if ('serviceWorker' in navigator) {
+  // ALWAYS Unregister to clear potential bad states
   navigator.serviceWorker.getRegistrations().then(registrations => {
     for (let registration of registrations) {
       registration.unregister();
-      logger.log('SW unregistered (Dev Mode)');
+      logger.log('SW unregistered (Kill Switch Active)');
     }
   });
 }
