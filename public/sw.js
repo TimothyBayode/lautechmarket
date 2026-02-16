@@ -41,7 +41,21 @@ self.addEventListener('fetch', (event) => {
     // Check if the request is for a script/module
     const isScript = event.request.destination === 'script';
 
-    // For scripts, always try network first to avoid "MIME type" errors with stale hashes
+    // Check if it's a navigation request (HTML page)
+    const isNavigation = event.request.mode === 'navigate';
+
+    // 1. Navigation (HTML): Network First, fall back to Cache
+    if (isNavigation) {
+        event.respondWith(
+            fetch(event.request)
+                .catch(() => {
+                    return caches.match(event.request);
+                })
+        );
+        return;
+    }
+
+    // 2. Scripts: Network First to avoid hash mismatches
     if (isScript) {
         event.respondWith(
             fetch(event.request).catch(() => caches.match(event.request))
@@ -49,6 +63,7 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    // 3. Other Assets (Images, fonts, etc.): Cache First, fall back to Network
     event.respondWith(
         caches.match(event.request).then((response) => {
             return response || fetch(event.request);
