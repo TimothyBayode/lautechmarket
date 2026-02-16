@@ -4,6 +4,7 @@ import "./index.css";
 import App from "./App";
 
 import { HelmetProvider } from "react-helmet-async";
+import { logger } from "./utils/logger";
 
 const root = ReactDOM.createRoot(document.getElementById("root")!);
 root.render(
@@ -22,7 +23,7 @@ try {
   const currentVersion = localStorage.getItem(MIGRATION_KEY);
 
   if (currentVersion !== APP_VERSION) {
-    console.log(`[Auto-Fix] Migrating from ${currentVersion} to ${APP_VERSION}`);
+    logger.log(`[Auto-Fix] Migrating from ${currentVersion} to ${APP_VERSION}`);
 
     // 1. Unregister all Service Workers immediately
     if ('serviceWorker' in navigator) {
@@ -55,7 +56,7 @@ try {
     // window.location.reload(); // Optional: react-router might handle it, but reload is safer for SW updates.
   }
 } catch (e) {
-  console.error("Migration error", e);
+  logger.error("Migration error", e);
   localStorage.clear(); // Nuclear option fallback
 }
 
@@ -63,7 +64,7 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then(registration => {
-        console.log('SW registered: ', registration);
+        logger.log('SW registered: ', registration);
 
         // Check for updates
         registration.addEventListener('updatefound', () => {
@@ -79,7 +80,7 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
         });
       })
       .catch(registrationError => {
-        console.log('SW registration failed: ', registrationError);
+        logger.log('SW registration failed: ', registrationError);
       });
   });
 
@@ -96,7 +97,7 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then((registrations) => {
     for (let registration of registrations) {
       registration.unregister();
-      console.log('SW unregistered in dev mode');
+      logger.log('SW unregistered in dev mode');
     }
   });
 }

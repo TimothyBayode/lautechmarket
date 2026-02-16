@@ -5,7 +5,9 @@ import {
   onAuthStateChanged,
   User,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult
 } from "firebase/auth";
 
 // Authorized Admin Credentials Email
@@ -21,27 +23,43 @@ export const verifyGoogleIdentity = async (): Promise<boolean> => {
   const provider = new GoogleAuthProvider();
   try {
     const result = await signInWithPopup(auth, provider);
-    const user = result.user;
-
-    console.log("[Auth] Google sign-in successful. Email:", user.email);
-    console.log("[Auth] Authorized email:", AUTHORIZED_GOOGLE_EMAIL);
-
-    if (user.email?.toLowerCase().trim() === AUTHORIZED_GOOGLE_EMAIL.toLowerCase().trim()) {
-      console.log("[Auth] Identity match confirmed.");
-      sessionStorage.setItem(IDENTITY_VERIFIED_KEY, "true");
-      // Sign out immediately to clear the Google session from Firebase Auth
-      // but keep our local verification flag
-      await signOut(auth);
-      return true;
-    }
-
-    console.warn("[Auth] Identity mismatch. Expected:", AUTHORIZED_GOOGLE_EMAIL.toLowerCase(), "Got:", user.email?.toLowerCase());
-    await signOut(auth);
-    return false;
+    return await handleAuthResult(result.user);
   } catch (error) {
-    console.error("Google Identity Verification Error:", error);
+    console.error("Google Identity Verification Error (Popup):", error);
+    throw error; // Re-throw to allow component to handle specific error codes
+  }
+};
+
+export const verifyGoogleIdentityWithRedirect = async (): Promise<void> => {
+  const provider = new GoogleAuthProvider();
+  await signInWithRedirect(auth, provider);
+};
+
+export const handleGoogleRedirectResult = async (): Promise<boolean | null> => {
+  try {
+    const result = await getRedirectResult(auth);
+    if (!result) return null; // No redirect result found
+    return await handleAuthResult(result.user);
+  } catch (error) {
+    console.error("Google Identity Verification Error (Redirect):", error);
     return false;
   }
+};
+
+const handleAuthResult = async (user: User): Promise<boolean> => {
+  console.log("[Auth] Google sign-in successful. Email:", user.email);
+  console.log("[Auth] Authorized email:", AUTHORIZED_GOOGLE_EMAIL);
+
+  if (user.email?.toLowerCase().trim() === AUTHORIZED_GOOGLE_EMAIL.toLowerCase().trim()) {
+    console.log("[Auth] Identity match confirmed.");
+    sessionStorage.setItem(IDENTITY_VERIFIED_KEY, "true");
+    await signOut(auth);
+    return true;
+  }
+
+  console.warn("[Auth] Identity mismatch. Expected:", AUTHORIZED_GOOGLE_EMAIL.toLowerCase(), "Got:", user.email?.toLowerCase());
+  await signOut(auth);
+  return false;
 };
 
 export const isGoogleIdentityVerified = (): boolean => {

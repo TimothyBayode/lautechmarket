@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Lock, Mail, Eye, EyeOff, ShieldCheck, Chrome } from "lucide-react";
-import { loginUser, isAdmin, verifyGoogleIdentity, isGoogleIdentityVerified } from "../services/auth";
+import {
+  loginUser,
+  isAdmin,
+  verifyGoogleIdentity,
+  verifyGoogleIdentityWithRedirect,
+  handleGoogleRedirectResult,
+  isGoogleIdentityVerified
+} from "../services/auth";
 
 export function AdminLogin() {
   const navigate = useNavigate();
@@ -15,7 +22,21 @@ export function AdminLogin() {
   useEffect(() => {
     if (isGoogleIdentityVerified()) {
       setStep(2);
+      return;
     }
+
+    // Check for redirect result
+    const checkRedirect = async () => {
+      setLoading(true);
+      const success = await handleGoogleRedirectResult();
+      if (success === true) {
+        setStep(2);
+      } else if (success === false) {
+        setError("Identity Verification Failed: You must sign in with the authorized Google admin account.");
+      }
+      setLoading(false);
+    };
+    checkRedirect();
   }, []);
 
   const getFriendlyErrorMessage = (error: any): string => {
@@ -55,11 +76,25 @@ export function AdminLogin() {
         setError("Domain Not Authorized: Please add 'www.lautechmarket.com.ng' to the Authorized Domains in your Firebase Console (Authentication -> Settings).");
       } else if (err.code === "auth/operation-not-allowed") {
         setError("Sign-in Method Disabled: Please enable 'Google' as a Sign-in provider in your Firebase Console (Authentication -> Sign-in method).");
+      } else if (err.code === "auth/popup-closed-by-user") {
+        setError("Popup Blocked or Closed: Your browser's security policy (COOP) blocked the login window. Please use the 'Try Redirect' option below.");
       } else {
         setError("Verification Error: " + (err.message || "An unexpected error occurred."));
       }
     }
     setLoading(false);
+  };
+
+  const handleVerifyWithRedirect = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      await verifyGoogleIdentityWithRedirect();
+    } catch (err: any) {
+      console.error("Identity error (Redirect):", err);
+      setError("Redirect Error: " + (err.message || "Could not initiate redirect."));
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -120,20 +155,30 @@ export function AdminLogin() {
                 </div>
               </div>
 
-              <button
-                onClick={handleVerifyIdentity}
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-200 text-gray-700 py-3.5 px-6 rounded-xl hover:bg-gray-50 disabled:opacity-50 transition-all font-bold group shadow-sm hover:shadow-md"
-              >
-                {loading ? (
-                  <div className="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <>
-                    <Chrome className="w-5 h-5 text-emerald-600 group-hover:scale-110 transition-transform" />
-                    <span>Verify with Google</span>
-                  </>
-                )}
-              </button>
+              <div className="space-y-3">
+                <button
+                  onClick={handleVerifyIdentity}
+                  disabled={loading}
+                  className="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-200 text-gray-700 py-3.5 px-6 rounded-xl hover:bg-gray-50 disabled:opacity-50 transition-all font-bold group shadow-sm hover:shadow-md"
+                >
+                  {loading ? (
+                    <div className="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <Chrome className="w-5 h-5 text-emerald-600 group-hover:scale-110 transition-transform" />
+                      <span>Verify with Popup</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={handleVerifyWithRedirect}
+                  disabled={loading}
+                  className="w-full text-center text-[10px] text-gray-400 hover:text-emerald-600 font-bold uppercase tracking-widest transition-colors"
+                >
+                  Trouble with popups? Try Redirect
+                </button>
+              </div>
 
               <p className="text-[10px] text-center text-gray-400 font-medium italic">
                 Authorized identity required

@@ -12,19 +12,24 @@ import {
   Menu,
   Search,
   Tag,
-  Flame,
+  Star,
+  DollarSign,
+  ShoppingBag,
   Eye,
   ShoppingCart,
-  RefreshCw,
-  PieChart,
-  MoveDown,
+  Flame,
   AlertCircle,
   Trophy,
   Activity,
-  TrendingUp,
+  PieChart,
+  RefreshCw,
+  MoveDown,
+  MessageSquare,
   Clock,
-  Star
+  ThumbsUp,
+  Calendar
 } from "lucide-react";
+
 import {
   getDocs,
   query,
@@ -34,7 +39,7 @@ import {
   onSnapshot,
   where,
 } from "firebase/firestore";
-import { Product, Vendor, ExpansionResponse } from "../types";
+import { Product, Vendor, ExpansionResponse, ContactFeedback } from "../types";
 import {
   fetchProducts,
   addProduct,
@@ -61,6 +66,7 @@ import { getExpansionResponses, deleteExpansionResponse } from "../services/expa
 import { auth } from "../firebase";
 import { logAdminAction, getRecentAuditLogs } from "../services/audit";
 import { getRecentFeedbackNotes } from "../services/vendorContacts";
+import { GMVDashboard } from "../components/admin/GMVDashboard";
 
 export function AdminDashboard() {
   const navigate = useNavigate();
@@ -79,8 +85,11 @@ export function AdminDashboard() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [authChecked, setAuthChecked] = useState(false);
-  const [activeTab, setActiveTab] = useState<string>("vendors");
+  const [activeTab, setActiveTab] = useState<string>("business-metrics");
+  const [productFilter, setProductFilter] = useState<'all' | 'out-of-stock'>('all');
+  const [inventorySearch, setInventorySearch] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
 
   const [analytics, setAnalytics] = useState<any>(null);
 
@@ -740,573 +749,415 @@ export function AdminDashboard() {
 
   const renderContent = () => {
     switch (activeTab) {
-      case "expansion-circle":
-        return <ExpansionCircleView />;
       case "overview":
+      case "business-metrics":
         return (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            {/* Dashboard Headers and Refresh */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-2xl font-black text-gray-900">Platform Overview</h2>
-                <p className="text-sm text-gray-500">Real-time performance metrics and buyer intent</p>
-              </div>
-              <div className="flex items-center gap-3">
+          <GMVDashboard
+            totalVisits={analytics?.total?.totalVisits || 0}
+            uniqueVisitors={analytics?.total?.uniqueVisitors || 0}
+            totalProducts={allProducts.length}
+            outOfStockCount={allProducts.filter(p => p.inStock === false).length}
+            trafficLeaderboard={leaderboard}
+            onViewLeaderboard={() => setActiveTab("leaderboard")}
+            onViewProducts={(filter) => {
+              setProductFilter(filter || 'all');
+              setActiveTab("all-products");
+            }}
+            totalProductViews={totalProductViews}
+            totalOrderIntents={totalOrders}
+          />
+        );
+
+      case "all-products":
+        const filteredProducts = allProducts.filter(p => {
+          const matchesFilter = productFilter === 'all' || !p.inStock;
+          const searchLower = inventorySearch.toLowerCase();
+          const matchesSearch = !inventorySearch ||
+            p.name.toLowerCase().includes(searchLower) ||
+            p.category.toLowerCase().includes(searchLower) ||
+            p.vendorName.toLowerCase().includes(searchLower);
+          return matchesFilter && matchesSearch;
+        });
+
+        return (
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-6">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight font-display flex items-center gap-2">
+                <Package className="w-6 h-6 text-emerald-600" />
+                Platform Inventory ({filteredProducts.length})
+              </h3>
+              <div className="flex bg-gray-100 rounded-lg p-1 text-xs">
                 <button
-                  onClick={loadDashboardData}
-                  disabled={loading}
-                  className="flex items-center space-x-2 px-6 py-3 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50"
+                  onClick={() => setProductFilter('all')}
+                  className={`px-4 py-2 rounded-lg font-bold transition-all ${productFilter === 'all' ? 'bg-white shadow-sm text-emerald-600' : 'text-gray-500'}`}
                 >
-                  <RefreshCw className={`w - 4 h - 4 ${loading ? 'animate-spin' : ''} `} />
-                  <span>{loading ? "Refreshing..." : "Refresh Metrics"}</span>
+                  All Items
+                </button>
+                <button
+                  onClick={() => setProductFilter('out-of-stock')}
+                  className={`px-4 py-2 rounded-lg font-bold transition-all ${productFilter === 'out-of-stock' ? 'bg-white shadow-sm text-red-600' : 'text-gray-500'}`}
+                >
+                  Out of Stock
                 </button>
               </div>
             </div>
 
-            <AdminStats
-              vendorsCount={vendors.length}
-              productsCount={allProducts.length}
-              inStockCount={allProducts.filter((p) => p.inStock).length}
-              outOfStockCount={allProducts.filter((p) => !p.inStock).length}
-              analytics={analytics}
-            />
-
-            {/* Interaction Analytics */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-bold text-gray-900 font-display">Engagement Overview</h3>
-                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest border border-gray-100 px-2 py-1 rounded bg-gray-50">Click to view full list</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                <div
-                  onClick={() => setActiveTab('product-interactions')}
-                  className="p-4 bg-orange-50 rounded-2xl border border-orange-100 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all group"
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="text-orange-600 text-[10px] font-black uppercase tracking-wider">Total Clicks to Order</p>
-                    <Flame className="w-4 h-4 text-orange-400 group-hover:animate-bounce" />
-                  </div>
-                  <p className="text-3xl font-black text-orange-900">{totalOrders.toLocaleString()}</p>
-                </div>
-
-                <div
-                  onClick={() => setActiveTab('product-interactions')}
-                  className="p-4 bg-blue-50 rounded-2xl border border-blue-100 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all group"
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="text-blue-600 text-[10px] font-black uppercase tracking-wider">Total Product Views</p>
-                    <Eye className="w-4 h-4 text-blue-400 group-hover:animate-bounce" />
-                  </div>
-                  <p className="text-3xl font-black text-blue-900">{totalProductViews.toLocaleString()}</p>
-                </div>
-
-                <div
-                  onClick={() => setActiveTab('product-interactions')}
-                  className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all group"
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="text-emerald-600 text-[10px] font-black uppercase tracking-wider">Total Cart Additions</p>
-                    <ShoppingCart className="w-4 h-4 text-emerald-400 group-hover:animate-bounce" />
-                  </div>
-                  <p className="text-3xl font-black text-emerald-900">{totalCartAdditions.toLocaleString()}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-
-      case "category-stats":
-        return (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-              <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
-                <Tag className="w-5 h-5 mr-2 text-emerald-600" />
-                Category Distribution
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {Array.from(new Set(allProducts.map(p => p.category)))
-                  .map(category => ({
-                    name: category,
-                    count: allProducts.filter(p => p.category === category).length
-                  }))
-                  .sort((a, b) => b.count - a.count)
-                  .map(({ name: category, count }) => {
-                    const percentage = Math.round((count / (allProducts.length || 1)) * 100) || 0;
-                    return (
-                      <div key={category} className="space-y-2 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                        <div className="flex justify-between text-sm font-medium">
-                          <span className="capitalize text-gray-700">{category}</span>
-                          <span className="text-gray-500">{count} products ({percentage}%)</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div
-                            className="bg-emerald-500 h-full rounded-full transition-all duration-1000"
-                            style={{ width: `${percentage}% ` }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-              </div>
-            </div>
-          </div>
-        );
-
-      case "market-intelligence":
-        const conversionRate = totalProductViews > 0 ? ((totalOrders / totalProductViews) * 100).toFixed(1) : "0";
-        const avgPriceIndex = allProducts.length > 0
-          ? allProducts.reduce((sum, p) => sum + p.price, 0) / allProducts.length
-          : 0;
-
-        return (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            {/* Global Health Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                <div className="flex items-center space-x-3 mb-4">
-                  <Activity className="w-5 h-5 text-emerald-600" />
-                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-tight">Global Conv.</h3>
-                </div>
-                <p className="text-3xl font-black text-emerald-600">{conversionRate}%</p>
-                <p className="text-[10px] text-gray-400 mt-2 font-medium">Platform-wide average</p>
-              </div>
-
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                <div className="flex items-center space-x-3 mb-4">
-                  <Tag className="w-5 h-5 text-blue-600" />
-                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-tight">Market Price</h3>
-                </div>
-                <p className="text-3xl font-black text-blue-600">₦{Math.round(avgPriceIndex).toLocaleString()}</p>
-                <p className="text-[10px] text-gray-400 mt-2 font-medium">Avg listing price</p>
-              </div>
-
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                <div className="flex items-center space-x-3 mb-4">
-                  <Clock className="w-5 h-5 text-orange-600" />
-                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-tight">Peak Activity</h3>
-                </div>
-                <div className="h-10 flex items-end gap-1">
-                  {peakTraffic.slice(10, 22).map((pt, i) => (
-                    <div
-                      key={i}
-                      className="flex-1 bg-orange-100 rounded-sm hover:bg-orange-500 transition-colors cursor-help group relative"
-                      style={{ height: `${Math.min(100, (pt.count / (Math.max(...peakTraffic.map(p => p.count)) || 1)) * 100)}%` }}
-                    >
-                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 bg-gray-900 text-white text-[8px] px-1 py-0.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap">
-                        {pt.hour}:00 - {pt.count}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-[10px] text-gray-400 mt-2 font-medium">Daily traffic distribution</p>
-              </div>
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search products, categories, or vendors..."
+                value={inventorySearch}
+                onChange={(e) => setInventorySearch(e.target.value)}
+                className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none shadow-sm transition-all font-medium text-gray-900"
+              />
             </div>
 
-            {/* Customer Sentiment Review */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mb-8">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-sm font-bold text-gray-900 flex items-center uppercase tracking-tight">
-                  <Star className="w-4 h-4 mr-2 text-amber-500" />
-                  Recent Customer Sentiment (Feedback Notes)
-                </h3>
-                <span className="text-[10px] bg-amber-50 text-amber-700 px-2 py-1 rounded font-black">Student Feedback</span>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {feedbackNotes.length > 0 ? feedbackNotes.slice(0, 6).map((note, i) => (
-                  <div key={i} className="p-4 bg-amber-50/20 rounded-xl border border-amber-100 flex flex-col h-full hover:bg-amber-50/40 transition-colors">
-                    <div className="flex justify-between items-start mb-2">
-                      <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase ${note.wasHelpful ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                        {note.wasHelpful ? 'Helpful' : 'Negative'}
-                      </span>
-                      <span className="text-[9px] text-gray-400 font-mono italic">
-                        {note.feedbackAt.toLocaleDateString()}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-700 font-medium italic mb-3 flex-grow leading-relaxed">"{note.feedbackNote}"</p>
-                    <div className="flex items-center justify-between border-t border-amber-100/50 pt-2">
-                      <span className="text-[9px] font-bold text-amber-900/40 uppercase tracking-tighter truncate">Vendor: {note.vendorId.substring(0, 8)}</span>
-                      <span className="text-[9px] font-black text-amber-600 bg-white px-1.5 py-0.5 rounded shadow-sm">
-                        {note.purchaseMade ? 'PURCHASE' : 'NO SALE'}
-                      </span>
-                    </div>
-                  </div>
-                )) : (
-                  <div className="col-span-full py-12 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100 text-gray-400 text-xs italic font-medium">
-                    No recent student feedback notes recorded.
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Product</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Vendor</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Price</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {filteredProducts.map((product) => (
+                      <tr key={product.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center space-x-4">
+                            <img src={getProxiedImageUrl(product.image) || product.image} alt={product.name} className="w-12 h-12 object-cover rounded-lg shadow-sm" />
+                            <div>
+                              <span className="font-semibold text-gray-900 block">{product.name}</span>
+                              <span className="text-[10px] text-gray-400 font-bold uppercase">{product.category}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-sm font-bold text-gray-500">{product.vendorName}</span>
+                        </td>
+                        <td className="px-6 py-4 text-sm font-bold text-gray-900">₦{product.price.toLocaleString()}</td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex px-3 py-1 text-[10px] font-black uppercase rounded-full ${product.inStock ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                            {product.inStock ? "In Stock" : "Out of Stock"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end space-x-2">
+                            <button onClick={() => navigate(`/product/${product.id}`)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="View on Site"><Eye className="w-4 h-4" /></button>
+                            <button
+                              onClick={async () => {
+                                setSelectedVendor(vendors.find(v => v.id === product.vendorId) || null);
+                                setEditingProduct(product);
+                                setShowForm(true);
+                              }}
+                              className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                              title="Edit"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => handleDelete(product.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete"><Trash2 className="w-4 h-4" /></button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {filteredProducts.length === 0 && (
+                  <div className="p-20 text-center text-gray-400 italic font-medium">
+                    No products matching this filter found.
                   </div>
                 )}
-              </div>
-            </div>
-
-            {/* Market Intelligence Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Reliability Leaders */}
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-sm font-bold text-gray-900 flex items-center uppercase tracking-tight">
-                    <Trophy className="w-4 h-4 mr-2 text-amber-500" />
-                    Reliability Kings (Supply Quality)
-                  </h3>
-                  <span className="text-[10px] bg-amber-50 text-amber-600 px-2 py-1 rounded font-black">Top 10</span>
-                </div>
-                <div className="space-y-4">
-                  {reliabilityRanking.map((vendor, i) => (
-                    <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center text-xs font-bold text-amber-700">
-                          #{i + 1}
-                        </div>
-                        <div>
-                          <p className="text-xs font-bold text-gray-800">{vendor.businessName}</p>
-                          <p className="text-[10px] text-gray-400">Trust: {vendor.trustScore}%</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs font-black text-emerald-600 italic">~{vendor.responseTime}m</p>
-                        <p className="text-[9px] text-gray-400 uppercase font-bold tracking-tighter">Response</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Comparison Trends */}
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-sm font-bold text-gray-900 flex items-center uppercase tracking-tight">
-                    <RefreshCw className="w-4 h-4 mr-2 text-purple-600" />
-                    Comparison Leaderboard (Student Research)
-                  </h3>
-                  <span className="text-[10px] bg-purple-50 text-purple-600 px-2 py-1 rounded font-black">Top Compared</span>
-                </div>
-                <div className="space-y-4">
-                  {comparisonLeaderboard.map((item, i) => (
-                    <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-white rounded-lg overflow-hidden border border-gray-100 p-1">
-                          {item.image ? (
-                            <img src={getProxiedImageUrl(item.image) || undefined} className="w-full h-full object-contain" />
-                          ) : (
-                            <Package className="w-full h-full text-gray-200 p-1" />
-                          )}
-                        </div>
-                        <div>
-                          <p className="text-xs font-bold text-gray-800 truncate max-w-[120px]">{item.name}</p>
-                          <p className="text-[9px] text-gray-400">by {item.vendorName}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-black text-purple-600">{item.compareCount}</p>
-                        <p className="text-[9px] text-gray-400 uppercase font-bold tracking-tighter">Comparisons</p>
-                      </div>
-                    </div>
-                  ))}
-                  {comparisonLeaderboard.length === 0 && (
-                    <p className="text-center py-8 text-gray-400 text-sm italic">Waiting for comparison data...</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Price Index Card */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-sm font-bold text-gray-900 flex items-center uppercase tracking-tight">
-                  <Activity className="w-4 h-4 mr-2 text-blue-600" />
-                  Demand Price Index (Market Value)
-                </h3>
-                <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded font-black">Real-time Avg</span>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {keywordPriceIndex.slice(0, 8).map((item, i) => (
-                  <div key={i} className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex flex-col justify-between">
-                    <div>
-                      <span className="text-[10px] font-black text-blue-600 uppercase italic">"{item.query}"</span>
-                      <p className="text-[9px] text-gray-400 font-bold uppercase tracking-tighter mt-1">{item.productCount} products</p>
-                    </div>
-                    <p className="text-sm font-black text-gray-900 mt-2 font-mono">₦{Math.round(item.avgPrice).toLocaleString()}</p>
-                  </div>
-                ))}
-                {keywordPriceIndex.length === 0 && (
-                  <p className="text-center py-4 text-gray-400 text-xs italic">Waiting for more search data...</p>
-                )}
-              </div>
-            </div>
-
-            {/* Category Conversion Heatmap */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-sm font-bold text-gray-900 flex items-center uppercase tracking-tight">
-                  <TrendingUp className="w-4 h-4 mr-2 text-emerald-600" />
-                  Category Conversion Heatmap (Order Intent)
-                </h3>
-                <span className="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-1 rounded font-black">Sorted by Rate</span>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {categoryConversion.map((item, i) => (
-                  <div key={i} className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="text-xs font-black text-gray-700 capitalize">{item.category}</span>
-                      <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${item.rate > 10 ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-500'}`}>
-                        {item.rate.toFixed(1)}%
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-[9px] text-gray-400 uppercase font-bold">
-                      <span>{item.orders} Orders</span>
-                      <span>{item.views} Views</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-1 mt-2">
-                      <div
-                        className="bg-emerald-500 h-full rounded-full transition-all"
-                        style={{ width: `${Math.min(100, item.rate * 2)}% ` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                <h3 className="text-sm font-bold text-gray-900 mb-6 flex items-center uppercase tracking-tight">
-                  <PieChart className="w-4 h-4 mr-2 text-blue-600" />
-                  Categorical Price Index
-                </h3>
-                <div className="space-y-4">
-                  {Array.from(new Set(allProducts.map(p => p.category || "Uncategorized")))
-                    .map(cat => {
-                      const catProducts = allProducts.filter(p => (p.category || "Uncategorized") === cat);
-                      const avg = catProducts.reduce((sum, p) => sum + p.price, 0) / (catProducts.length || 1);
-                      return { name: cat, avg };
-                    })
-                    .sort((a, b) => b.avg - a.avg)
-                    .map(item => (
-                      <div key={item.name} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
-                        <span className="text-xs font-bold text-gray-700 capitalize">{item.name}</span>
-                        <span className="text-xs font-black text-blue-600 font-mono">₦{Math.round(item.avg).toLocaleString()}</span>
-                      </div>
-                    ))}
-                </div>
-              </div>
-
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                <h3 className="text-sm font-bold text-gray-900 mb-6 flex items-center uppercase tracking-tight">
-                  <AlertCircle className="w-4 h-4 mr-2 text-red-600" />
-                  Stagnant Products (L14D)
-                </h3>
-                <div className="space-y-4">
-                  {allProducts
-                    .filter(p => (p.viewCount || 0) < 5 && (p.orderCount || 0) === 0)
-                    .slice(0, 5)
-                    .map(product => (
-                      <div key={product.id} className="flex items-center justify-between p-3 bg-red-50/30 rounded-xl border border-red-50">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
-                            {product.image && <img src={getProxiedImageUrl(product.image) || product.image} className="w-full h-full object-cover" />}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-[10px] font-bold text-gray-900 truncate">{product.name}</p>
-                            <p className="text-[9px] text-gray-400">by {product.vendorName}</p>
-                          </div>
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <p className="text-[9px] font-black text-red-600 uppercase">Attention</p>
-                          <p className="text-[9px] text-gray-400">{product.viewCount || 0} views</p>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-
-
-      case "demand-gap":
-        return (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 relative max-w-2xl mx-auto">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900 flex items-center">
-                    <MoveDown className="w-5 h-5 mr-2 text-emerald-600" />
-                    Market Demand Gaps
-                  </h3>
-                  <p className="text-xs text-gray-500">Queries that returned 0 results</p>
-                </div>
-                <div className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
-                  High Priority
-                </div>
-              </div>
-
-              {demandGaps.length > 0 ? (
-                <div className="space-y-3">
-                  {demandGaps.map((item, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-emerald-200 hover:bg-emerald-50/30 transition-all group">
-                      <div>
-                        <span className="text-sm font-semibold text-gray-700 font-display italic">"{item.query}"</span>
-                        <p className="text-[9px] text-gray-400 mt-1 uppercase font-bold tracking-wider">Unmet Student Request</p>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <span className="bg-white shadow-sm border border-gray-100 text-gray-600 px-3 py-1 rounded-lg text-xs font-black font-mono">
-                          {item.count} searches
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <Package className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-                  <p className="text-gray-500 font-medium font-display">No demand gaps identified yet</p>
-                </div>
-              )}
-
-              <div className="mt-8 p-4 bg-emerald-600 rounded-xl text-white">
-                <p className="text-xs font-bold leading-relaxed">
-                  <TrendingUp className="w-4 h-4 inline-block mr-1 mb-1" />
-                  Strategy: Reach out to vendors in the category of these missing products to stock up.
-                </p>
-              </div>
-            </div>
-          </div>
-        );
-
-      case "search-analytics":
-        return (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 relative max-w-2xl mx-auto">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-bold text-gray-900 flex items-center">
-                  <Search className="w-5 h-5 mr-2 text-emerald-600" />
-                  Top Search Queries
-                </h3>
-                <div className={`text - [10px] font - bold uppercase tracking - widest px - 2 py - 1 rounded ${searchError ? 'bg-red-50 text-red-600 animate-pulse' : 'bg-gray-50 text-gray-400'} `}>
-                  {searchError ? 'Access Denied' : 'Real-time Active'}
-                </div>
-              </div>
-              {searchError ? (
-                <div className="text-center py-10 bg-red-50 rounded-xl border border-red-100 px-6">
-                  <ShieldX className="w-10 h-10 text-red-400 mx-auto mb-3" />
-                  <p className="text-sm font-bold text-red-700">Analytics Blocked</p>
-                  <p className="text-[10px] text-red-600 mt-1">{searchError}</p>
-                </div>
-              ) : topSearches.length > 0 ? (
-                <div className="space-y-3 px-2">
-                  {topSearches.map((item, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 hover:bg-emerald-50 hover:border-emerald-100 transition-colors">
-                      <span className="text-sm font-semibold text-gray-700 font-display">"{item.query}"</span>
-                      <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg text-xs font-black font-mono">
-                        {item.count}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <Search className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-                  <p className="text-gray-500 font-medium font-display">No search data yet</p>
-                </div>
-              )}
-              <div className="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between">
-                <span className="text-[10px] text-gray-400 italic">{searchError ? 'Sync failed' : 'Syncing with Firestore...'}</span>
-                <span className="text-[10px] text-gray-400 font-mono">{new Date().toLocaleTimeString()}</span>
               </div>
             </div>
           </div>
         );
 
       case "product-interactions":
+      case "product-performance":
         return (
-          <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 px-1">
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
-                <div>
-                  <h3 className="text-2xl font-black text-gray-900 flex items-center gap-3 font-display uppercase tracking-tight">
-                    <Flame className="w-8 h-8 text-orange-500" />
-                    Product Hotlist (Top 20)
-                  </h3>
-                  <p className="text-gray-500 mt-1 text-sm font-medium">Ranked by total engagement (Orders, Views, and Cart Additions)</p>
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            {/* Global Product Health */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-blue-600 text-[10px] font-black uppercase tracking-wider">Total Product Views</p>
+                  <Eye className="w-4 h-4 text-blue-400" />
                 </div>
+                <p className="text-3xl font-black text-blue-900">{totalProductViews.toLocaleString()}</p>
               </div>
 
-              <div className="bg-gray-50/50 rounded-2xl border border-gray-100 overflow-hidden">
+              <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-emerald-600 text-[10px] font-black uppercase tracking-wider">Total Cart Additions</p>
+                  <ShoppingCart className="w-4 h-4 text-emerald-400" />
+                </div>
+                <p className="text-3xl font-black text-emerald-900">{totalCartAdditions.toLocaleString()}</p>
+                <p className="text-[10px] text-emerald-600 font-bold mt-1">High Intent Customers</p>
+              </div>
+
+              <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-orange-600 text-[10px] font-black uppercase tracking-wider">Direct Order Clicks</p>
+                  <ShoppingBag className="w-4 h-4 text-orange-400" />
+                </div>
+                <p className="text-3xl font-black text-orange-900">{totalOrders.toLocaleString()}</p>
+                <p className="text-[10px] text-orange-600 font-bold mt-1">Lead Generation Pipeline</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Product Hotlist */}
+              <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                <h3 className="text-xl font-black text-gray-900 flex items-center gap-3 font-display uppercase tracking-tight mb-6">
+                  <Flame className="w-6 h-6 text-orange-500" />
+                  Product Engagement Hotlist
+                </h3>
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead>
-                      <tr className="bg-emerald-600 text-white text-left">
-                        <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest">Product Details</th>
-                        <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-center">Score Breakdown</th>
-                        <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-right">Action</th>
+                    <thead className="bg-gray-50 text-left">
+                      <tr>
+                        <th className="px-4 py-3 text-[10px] font-black uppercase text-gray-400 tracking-widest">Product</th>
+                        <th className="px-4 py-3 text-[10px] font-black uppercase text-gray-400 tracking-widest text-center">Engagement</th>
+                        <th className="px-4 py-3 text-[10px] font-black uppercase text-gray-400 tracking-widest text-right">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200 bg-white">
+                    <tbody className="divide-y divide-gray-100">
                       {allProducts
                         .map(p => ({
                           ...p,
                           totalScore: (p.orderCount || 0) + (p.viewCount || 0) + (p.cartCount || 0)
                         }))
                         .sort((a, b) => b.totalScore - a.totalScore)
-                        .slice(0, 20)
+                        .slice(0, 10)
                         .map((product) => (
-                          <tr key={product.id} className="hover:bg-emerald-50/30 transition-colors group">
-                            <td className="px-6 py-4">
-                              <div className="flex items-center space-x-4">
-                                <div className="w-14 h-14 rounded-2xl bg-gray-200 overflow-hidden shadow-sm border border-gray-100 flex-shrink-0">
-                                  {product.image ? (
-                                    <img src={getProxiedImageUrl(product.image) || product.image} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                                  ) : (
-                                    <Package className="w-full h-full p-4 text-gray-400" />
-                                  )}
-                                </div>
+                          <tr key={product.id} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-4 py-3">
+                              <div className="flex items-center space-x-3">
+                                <img src={getProxiedImageUrl(product.image) || product.image} className="w-10 h-10 rounded-lg object-cover" />
                                 <div className="min-w-0">
-                                  <p className="font-bold text-gray-900 group-hover:text-emerald-700 transition-colors uppercase tracking-tight text-sm truncate">
-                                    {product.name}
-                                  </p>
-                                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5 flex items-center">
-                                    <Tag className="w-3 h-3 mr-1" />
-                                    {product.category}
-                                  </p>
+                                  <p className="text-sm font-bold truncate">{product.name}</p>
+                                  <p className="text-[9px] text-gray-400 uppercase font-black">{product.category}</p>
                                 </div>
                               </div>
                             </td>
-                            <td className="px-6 py-4">
-                              <div className="flex items-center justify-center gap-8">
+                            <td className="px-4 py-3">
+                              <div className="flex items-center justify-center gap-4">
                                 <div className="text-center">
-                                  <p className="text-xs font-black text-orange-600">{(product.orderCount || 0).toLocaleString()}</p>
-                                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Orders</p>
+                                  <p className="text-xs font-black text-blue-600">{product.viewCount || 0}</p>
+                                  <p className="text-[8px] font-black text-gray-400 uppercase">Views</p>
                                 </div>
                                 <div className="text-center">
-                                  <p className="text-xs font-black text-blue-600">{(product.viewCount || 0).toLocaleString()}</p>
-                                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Views</p>
-                                </div>
-                                <div className="text-center">
-                                  <p className="text-xs font-black text-emerald-600">{(product.cartCount || 0).toLocaleString()}</p>
-                                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">In Cart</p>
+                                  <p className="text-xs font-black text-emerald-600">{product.orderCount || 0}</p>
+                                  <p className="text-[8px] font-black text-gray-400 uppercase">Orders</p>
                                 </div>
                               </div>
                             </td>
-                            <td className="px-6 py-4 text-right">
-                              <button
-                                onClick={() => navigate(`/ product / ${product.id} `)}
-                                className="px-4 py-2 bg-white text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-widest border border-emerald-100 hover:bg-emerald-600 hover:text-white transition-all shadow-sm active:scale-95"
-                              >
-                                View Item
+                            <td className="px-4 py-3 text-right">
+                              <button onClick={() => navigate(`/product/${product.id}`)} className="text-gray-400 hover:text-emerald-600 transition-colors">
+                                <Eye className="w-4 h-4" />
                               </button>
                             </td>
                           </tr>
                         ))}
                     </tbody>
                   </table>
-                  {allProducts.length === 0 && (
-                    <div className="text-center py-20 bg-white">
-                      <Package className="w-16 h-16 text-gray-100 mx-auto mb-4" />
-                      <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No analytics data found</p>
-                    </div>
-                  )}
                 </div>
+              </div>
+
+              {/* Side Intelligence */}
+              <div className="space-y-6">
+                {/* Stagnant Products */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                  <h3 className="text-sm font-bold text-gray-900 mb-6 flex items-center uppercase tracking-tight">
+                    <AlertCircle className="w-4 h-4 mr-2 text-red-600" />
+                    Stagnant Inventory
+                  </h3>
+                  <div className="space-y-4">
+                    {allProducts
+                      .filter(p => (p.viewCount || 0) < 5 && (p.orderCount || 0) === 0)
+                      .slice(0, 4)
+                      .map(product => (
+                        <div key={product.id} className="flex items-center justify-between p-3 bg-red-50/20 rounded-xl border border-red-50">
+                          <div className="flex items-center space-x-3">
+                            <img src={getProxiedImageUrl(product.image) || product.image} className="w-8 h-8 object-cover rounded shadow-xs" />
+                            <div className="min-w-0">
+                              <p className="text-[10px] font-bold truncate max-w-[100px]">{product.name}</p>
+                              <p className="text-[8px] text-gray-400">by {product.vendorName}</p>
+                            </div>
+                          </div>
+                          <span className="text-[9px] font-black text-red-600 uppercase">Boost Req.</span>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+
+                {/* Reliability Kings */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                  <h3 className="text-sm font-bold text-gray-900 mb-6 flex items-center uppercase tracking-tight">
+                    <Trophy className="w-4 h-4 mr-2 text-amber-500" />
+                    Reliability Kings
+                  </h3>
+                  <div className="space-y-3">
+                    {reliabilityRanking.slice(0, 4).map((vendor, i) => (
+                      <div key={i} className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-gray-700">{vendor.businessName}</span>
+                        <span className="text-xs font-black text-emerald-600">{vendor.trustScore}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div >
+        );
+
+      case "category-stats":
+      case "market-intelligence":
+      case "category-intelligence":
+        return (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            {/* Category Conversion & Volume */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                <h3 className="text-sm font-bold text-gray-900 mb-6 flex items-center uppercase tracking-tight text-emerald-600">
+                  <Activity className="w-4 h-4 mr-2" />
+                  Category Order Conversion
+                </h3>
+                <div className="space-y-4">
+                  {categoryConversion.slice(0, 6).map((item, i) => (
+                    <div key={i} className="space-y-1">
+                      <div className="flex justify-between text-xs font-bold">
+                        <span className="capitalize">{item.category}</span>
+                        <span className="text-emerald-600 font-black">{item.rate.toFixed(1)}%</span>
+                      </div>
+                      <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                        <div className="bg-emerald-500 h-full rounded-full transition-all duration-1000" style={{ width: `${Math.min(100, item.rate * 3)}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                <h3 className="text-sm font-bold text-gray-900 mb-6 flex items-center uppercase tracking-tight text-blue-600">
+                  <PieChart className="w-4 h-4 mr-2" />
+                  Supply Distribution
+                </h3>
+                <div className="space-y-4">
+                  {Array.from(new Set(allProducts.map(p => p.category)))
+                    .map(category => ({
+                      name: category,
+                      count: allProducts.filter(p => p.category === category).length
+                    }))
+                    .sort((a, b) => b.count - a.count)
+                    .slice(0, 6)
+                    .map(({ name, count }) => {
+                      const percentage = Math.round((count / (allProducts.length || 1)) * 100);
+                      return (
+                        <div key={name} className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-blue-500" />
+                            <span className="text-xs font-bold capitalize text-gray-700">{name}</span>
+                          </div>
+                          <span className="text-xs font-black text-gray-400">{count} Units ({percentage}%)</span>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            </div>
+
+            {/* Categorical Price Index */}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+              <h3 className="text-sm font-bold text-gray-900 mb-6 flex items-center uppercase tracking-tight text-purple-600">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Market Price Index (By Category)
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {Array.from(new Set(allProducts.map(p => p.category || "Uncategorized")))
+                  .map(cat => {
+                    const catProducts = allProducts.filter(p => (p.category || "Uncategorized") === cat);
+                    const avg = catProducts.reduce((sum, p) => sum + p.price, 0) / (catProducts.length || 1);
+                    return { name: cat, avg };
+                  })
+                  .sort((a, b) => b.avg - a.avg)
+                  .map(item => (
+                    <div key={item.name} className="p-3 bg-purple-50/50 rounded-xl border border-purple-100 text-center">
+                      <p className="text-[9px] font-black text-purple-400 uppercase truncate">{item.name}</p>
+                      <p className="text-sm font-black text-purple-700 mt-1">₦{Math.round(item.avg).toLocaleString()}</p>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </div>
+        );
+
+      case "demand-gap":
+      case "search-analytics":
+      case "search-intelligence":
+        return (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Search Queries */}
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-sm font-bold text-gray-900 flex items-center uppercase tracking-tight">
+                    <Search className="w-4 h-4 mr-2 text-emerald-600" />
+                    Active Student Interest
+                  </h3>
+                  <span className="text-[10px] font-black uppercase text-emerald-600">{topSearches.length} Key Terms</span>
+                </div>
+                <div className="grid grid-cols-1 gap-2">
+                  {topSearches.slice(0, 10).map((item, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-emerald-50 transition-colors">
+                      <span className="text-sm font-bold italic text-gray-700">"{item.query}"</span>
+                      <span className="bg-white text-emerald-600 px-3 py-1 rounded-lg text-xs font-black shadow-xs">{item.count} searches</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Demand Gaps */}
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-sm font-bold text-gray-900 flex items-center uppercase tracking-tight text-red-600">
+                    <MoveDown className="w-4 h-4 mr-2" />
+                    Unmet Demand (Zero Results)
+                  </h3>
+                  <span className="text-[10px] bg-red-100 text-red-700 px-2 py-1 rounded font-black tracking-widest">URGENT</span>
+                </div>
+                <div className="space-y-2">
+                  {demandGaps.slice(0, 10).map((item, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 bg-red-50/30 rounded-xl border border-red-50">
+                      <span className="text-sm font-bold text-red-900 italic">"{item.query}"</span>
+                      <span className="text-xs font-black text-red-400">{item.count} Student Requests</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Keyword Price Index */}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+              <h3 className="text-sm font-bold text-gray-900 mb-6 flex items-center uppercase tracking-tight">
+                <DollarSign className="w-4 h-4 mr-2 text-blue-600" />
+                Keyword Price Sensitivity index
+              </h3>
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                {keywordPriceIndex.slice(0, 10).map((item, i) => (
+                  <div key={i} className="p-3 bg-white border border-gray-100 rounded-xl shadow-xs">
+                    <p className="text-[10px] font-black text-gray-400 italic mb-1 truncate">"{item.query}"</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-blue-600">₦{Math.round(item.avgPrice).toLocaleString()}</span>
+                      <span className="text-[10px] text-gray-400">n={item.productCount}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -1388,7 +1239,7 @@ export function AdminDashboard() {
                             <td className="px-6 py-4 text-sm text-gray-600 font-medium">{product.category}</td>
                             <td className="px-6 py-4 text-sm font-bold text-gray-900">₦{product.price.toLocaleString()}</td>
                             <td className="px-6 py-4">
-                              <span className={`inline - flex px - 3 py - 1 text - xs font - bold rounded - full ${product.inStock ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"} `}>
+                              <span className={`inline-flex px-3 py-1 text-xs font-bold rounded-full ${product.inStock ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
                                 {product.inStock ? "In Stock" : "Out of Stock"}
                               </span>
                             </td>
@@ -1454,7 +1305,7 @@ export function AdminDashboard() {
                               </div>
                             </div>
                             <div className="flex items-center justify-center gap-2">
-                              <button onClick={(e) => handleVerifyVendor(vendor, e)} className={`flex - 1 flex items - center justify - center px - 3 py - 2 text - xs font - bold rounded - xl border transition - all ${vendor.isVerified ? 'text-amber-600 border-amber-200 hover:bg-amber-50' : 'text-emerald-600 border-emerald-200 hover:bg-emerald-50'} `}>
+                              <button onClick={(e) => handleVerifyVendor(vendor, e)} className={`flex-1 flex items-center justify-center px-3 py-2 text-xs font-bold rounded-xl border transition-all ${vendor.isVerified ? 'text-amber-600 border-amber-200 hover:bg-amber-50' : 'text-emerald-600 border-emerald-200 hover:bg-emerald-50'}`}>
                                 {vendor.isVerified ? <ShieldX className="w-3.5 h-3.5 mr-1" /> : <ShieldCheck className="w-3.5 h-3.5 mr-1" />}
                                 {vendor.isVerified ? 'Unverify' : 'Verify'}
                               </button>
@@ -1472,16 +1323,105 @@ export function AdminDashboard() {
             )}
           </div>
         );
+      case "leaderboard":
+        return <AdminLeaderboard initialLeaderboard={leaderboard} />;
+
       case "banners":
         return <div className="animate-in fade-in slide-in-from-bottom-2 duration-500"><AdminAnnouncements /></div>;
       case "categories":
         return <div className="animate-in fade-in slide-in-from-bottom-2 duration-500"><AdminCategories allProducts={allProducts} /></div>;
       case "verification":
         return <div className="animate-in fade-in slide-in-from-bottom-2 duration-500"><AdminVerificationRequests /></div>;
-      case "leaderboard":
-        return <div className="animate-in fade-in slide-in-from-bottom-2 duration-500"><AdminLeaderboard initialLeaderboard={leaderboard} /></div>;
       case "curation":
         return <div className="animate-in fade-in slide-in-from-bottom-2 duration-500"><AdminCuration vendors={vendors} /></div>;
+      case "expansion-circle":
+        return <ExpansionCircleView />;
+      case "customer-feedback":
+        return (
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight font-display flex items-center gap-2">
+                <MessageSquare className="w-6 h-6 text-emerald-600" />
+                Customer Feedback Loop
+              </h3>
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1 rounded-full border border-gray-100">
+                Latest Student Experiences
+              </span>
+            </div>
+
+            <div className="space-y-6">
+              {feedbackNotes.length > 0 ? (
+                feedbackNotes.map((feedback) => {
+                  const vendor = vendors.find(v => v.id === feedback.vendorId);
+
+                  return (
+                    <div
+                      key={feedback.id}
+                      className="p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:border-emerald-200 transition-all group"
+                    >
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-emerald-50 rounded-lg">
+                            <Store className="w-5 h-5 text-emerald-600" />
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-gray-900">{vendor?.businessName || "Unknown Vendor"}</h4>
+                            <div className="flex items-center gap-2 text-[10px] text-gray-400 font-bold uppercase">
+                              <Calendar className="w-3 h-3" />
+                              {feedback.feedbackAt.toLocaleDateString()}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                          <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-1.5 ${feedback.responseTime === 'under_30min' || feedback.responseTime === '30min_2hr'
+                              ? 'bg-emerald-50 text-emerald-700'
+                              : feedback.responseTime === 'no_response'
+                                ? 'bg-red-50 text-red-700'
+                                : 'bg-amber-50 text-amber-700'
+                            }`}>
+                            <Clock className="w-3 h-3" />
+                            {feedback.responseTime.replace('_', ' ')}
+                          </div>
+
+                          <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-1.5 ${feedback.wasHelpful ? 'bg-blue-50 text-blue-700' : 'bg-red-50 text-red-700'
+                            }`}>
+                            <ThumbsUp className="w-3 h-3" />
+                            {feedback.wasHelpful ? 'Helpful' : 'Not Helpful'}
+                          </div>
+
+                          <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-1.5 ${feedback.purchaseMade ? 'bg-purple-50 text-purple-700' : 'bg-gray-50 text-gray-500'
+                            }`}>
+                            <ShoppingBag className="w-3 h-3" />
+                            {feedback.purchaseMade ? 'Purchase Made' : 'No Purchase'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {feedback.feedbackNote && (
+                        <div className="mt-4 p-4 bg-gray-50 rounded-xl relative">
+                          <div className="absolute -top-2 left-4 w-3 h-3 bg-gray-50 rotate-45 border-t border-l border-gray-100" />
+                          <p className="text-sm text-gray-600 italic leading-relaxed">
+                            "{feedback.feedbackNote}"
+                          </p>
+                        </div>
+                      )}
+
+                      {!feedback.feedbackNote && (
+                        <p className="text-xs text-gray-300 italic">No additional comments provided.</p>
+                      )}
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-center py-20 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
+                  <MessageSquare className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+                  <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">No customer feedback collected yet</p>
+                </div>
+              )}
+            </div>
+          </div>
+        );
       case "audit-logs":
         return (
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 animate-in fade-in slide-in-from-bottom-2 duration-500">
@@ -1497,8 +1437,7 @@ export function AdminDashboard() {
                 <div key={log.id} className="p-4 bg-gray-50 rounded-xl border border-gray-100 flex items-start justify-between group hover:border-emerald-200 transition-all">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${log.action.includes('delete') ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'
-                        }`}>
+                      <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${log.action.includes('delete') ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>
                         {(log.action || '').replace('_', ' ')}
                       </span>
                       <span className="text-xs font-bold text-gray-900">{log.targetName}</span>
@@ -1524,6 +1463,7 @@ export function AdminDashboard() {
         return null;
     }
   };
+
 
   return (
     <div className="h-screen bg-gray-50 flex overflow-hidden">

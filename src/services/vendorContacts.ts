@@ -20,6 +20,7 @@ import {
 } from 'firebase/firestore';
 import { ContactFeedback, VendorContact } from '../types';
 import { updateVendorMetrics } from './vendorMetrics';
+import { logger } from '../utils/logger';
 
 /**
  * Log when a student contacts a vendor
@@ -40,7 +41,7 @@ export const logVendorContact = async (
             feedbackSubmitted: false
         });
 
-        console.log('[Contact] Logged contact:', contactRef.id);
+        logger.log('[Contact] Logged contact:', contactRef.id);
         return contactRef.id;
     } catch (error) {
         console.error('[Contact] Error logging contact:', error);
@@ -65,7 +66,7 @@ export const submitContactFeedback = async (
             feedbackAt: serverTimestamp()
         });
 
-        console.log('[Contact] Feedback submitted for:', contactId);
+        logger.log('[Contact] Feedback submitted for:', contactId);
 
         // Get vendor ID and trigger metrics recalculation
         const contactDoc = await getDoc(doc(db, 'vendorContacts', contactId));

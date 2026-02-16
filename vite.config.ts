@@ -10,6 +10,16 @@ export default defineConfig({
     },
   },
   build: {
-    target: 'es2022'
+    target: 'es2022',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-utils': ['lucide-react', 'react-helmet-async', 'react-hot-toast'],
+          'firebase': ['firebase/app', 'firebase/firestore', 'firebase/auth', 'firebase/storage'],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1000,
   }
 })

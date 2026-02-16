@@ -130,9 +130,24 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // ===== ORDERS =====
+    match /orders/{orderId} {
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.vendorId == request.auth.uid);
+      allow create: if true; // Students create orders
+      allow update: if isAdmin() || (isAuthenticated() && resource.data.vendorId == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
+    // ===== GMV STATS =====
+    match /gmv_stats/{statId} {
+      allow read: if isAdmin();
+      allow write: if isAuthenticated(); // Vendors update stats on confirmation
+    }
+
     // ===== AUDIT LOGS =====
     match /audit_logs/{logId} {
       allow read, create: if isAdmin();
     }
   }
 }
+

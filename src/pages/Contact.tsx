@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 import { Mail, Phone, Send } from 'lucide-react';
-import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { SEO } from '../components/SEO';
 
 export function Contact() {
-  useDocumentTitle("Contact Us | LAUTECH Market");
+  // useDocumentTitle("Contact Us | LAUTECH Market");
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -53,6 +53,10 @@ export function Contact() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
+      <SEO
+        title="Contact Us"
+        description="Get in touch with the LAUTECH Market team for support, inquiries, or feedback."
+      />
       <Header onSearch={() => { }} categories={[]} />
 
       <main className="flex-1">

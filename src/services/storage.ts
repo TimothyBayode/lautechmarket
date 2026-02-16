@@ -1,4 +1,5 @@
 import { compressImage } from './imageCompression';
+import { logger } from '../utils/logger';
 
 
 
@@ -23,7 +24,7 @@ export const uploadImage = async (file: File): Promise<UploadResult> => {
         const compressedFile = await compressImage(file);
 
         // 2. Upload via Worker
-        console.log(`[Storage] Attempting upload to: ${WORKER_URL}`);
+        logger.log(`[Storage] Attempting upload to: ${WORKER_URL}`);
 
         const response = await fetch(`${WORKER_URL}?file=${encodeURIComponent(compressedFile.name)}`, {
             method: 'POST',

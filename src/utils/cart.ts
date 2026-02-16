@@ -1,4 +1,5 @@
 import { CartItem, Product } from "../types";
+import { logger } from "./logger";
 
 const CART_KEY = "shopping_cart";
 
@@ -33,7 +34,7 @@ export const addToCart = (product: Product, quantity: number = 1): void => {
   const productIdentifier =
     product.id || `${product.name}-${product.vendorName}`;
 
-  console.log("Adding to cart:", {
+  logger.log("Adding to cart:", {
     productId: productIdentifier,
     productName: product.name,
     quantity,
@@ -47,7 +48,7 @@ export const addToCart = (product: Product, quantity: number = 1): void => {
 
   if (existingItemIndex !== -1) {
     cart[existingItemIndex].quantity += quantity;
-    console.log("Increased quantity for existing product");
+    logger.log("Increased quantity for existing product");
   } else {
     cart.push({
       product: {
@@ -56,11 +57,11 @@ export const addToCart = (product: Product, quantity: number = 1): void => {
       },
       quantity,
     });
-    console.log("Added new product to cart");
+    logger.log("Added new product to cart");
   }
 
   saveCart(cart);
-  console.log("Cart after add:", getCart());
+  logger.log("Cart after add:", getCart());
 };
 
 export const removeFromCart = (productId: string): void => {

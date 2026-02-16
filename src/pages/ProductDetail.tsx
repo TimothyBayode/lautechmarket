@@ -28,6 +28,8 @@ import { logEvent } from "../services/analytics";
 import { TrustSummary } from "../components/TrustSummary";
 import { showToast } from "../components/ToastContainer";
 import { getProxiedImageUrl } from "../utils/imageUrl";
+import { createPendingOrder } from "../services/orders";
+
 
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -139,24 +141,45 @@ export function ProductDetail() {
     showToast(`Added ${quantity} item(s) to cart`);
   };
 
-  const handleWhatsAppOrder = () => {
+  const handleWhatsAppOrder = async () => {
     if (!product) return;
 
-    const message = `Hello 👋\nI found this product on LAUTECH Market.\n\nI’m interested in ${quantity > 1 ? `*${quantity}x ${product.name}*` : `the *${product.name}*`} (₦${formatPrice(product.price * quantity)}).\n\nBefore I decide, please confirm:\n– Is it currently available?\n– can you deliver around lautech?\n– How fast can I get it?\n\nThank you 😊`;
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${product.whatsappNumber.replace(
-      /[^0-9]/g,
-      ""
-    )}?text=${encodedMessage}`;
+    try {
+      // 1. Create a pending order record for GMV tracking
+      const orderId = await createPendingOrder(product);
+      console.log(`[Order] Created pending order: ${orderId}`);
 
-    logEvent("whatsapp_order", {
-      productId: product.id,
-      vendorId: product.vendorId,
-      category: product.category
-    });
+      // 2. Prepare WhatsApp message
+      const message = `Hello 👋\nI found this product on LAUTECH Market.\n\nI’m interested in ${quantity > 1 ? `*${quantity}x ${product.name}*` : `the *${product.name}*`} (₦${formatPrice(product.price * quantity)}).\n\nMy Order Reference is: ${orderId}\n\nBefore I decide, please confirm:\n– Is it currently available?\n– can you deliver around lautech?\n– How fast can I get it?\n\nThank you 😊`;
+      const encodedMessage = encodeURIComponent(message);
+      const whatsappUrl = `https://wa.me/${product.whatsappNumber.replace(
+        /[^0-9]/g,
+        ""
+      )}?text=${encodedMessage}`;
 
-    window.location.assign(whatsappUrl);
+      // 3. Log analytics event
+      logEvent("whatsapp_order", {
+        productId: product.id,
+        vendorId: product.vendorId,
+        category: product.category
+      });
+
+      // 4. Redirect to WhatsApp
+      window.location.assign(whatsappUrl);
+    } catch (err) {
+      console.error("Failed to track order:", err);
+      // Fallback: still redirect to WhatsApp even if tracking fails 
+      // so we don't block the student's purchase
+      const message = `Hello 👋\nI found this product on LAUTECH Market.\n\nI’m interested in ${quantity > 1 ? `*${quantity}x ${product.name}*` : `the *${product.name}*`} (₦${formatPrice(product.price * quantity)}).\n\nThank you 😊`;
+      const encodedMessage = encodeURIComponent(message);
+      const whatsappUrl = `https://wa.me/${product.whatsappNumber.replace(
+        /[^0-9]/g,
+        ""
+      )}?text=${encodedMessage}`;
+      window.location.assign(whatsappUrl);
+    }
   };
+
 
   const handleQuantityChange = (change: number) => {
     const newQuantity = quantity + change;

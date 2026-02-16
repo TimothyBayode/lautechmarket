@@ -1,5 +1,6 @@
 import { Vendor } from "../types";
 import { auth, db } from "../firebase";
+import { logger } from "../utils/logger";
 import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
@@ -295,12 +296,12 @@ export const deleteVendor = async (vendorId: string): Promise<void> => {
         );
         await Promise.all(deletePromises);
 
-        console.log(`Deleted ${productsSnapshot.size} products for vendor ${vendorId}`);
+        logger.log(`Deleted ${productsSnapshot.size} products for vendor ${vendorId}`);
 
         // Then, delete the vendor document
         await deleteDoc(doc(db, "vendors", vendorId));
 
-        console.log(`Deleted vendor ${vendorId}`);
+        logger.log(`Deleted vendor ${vendorId}`);
     } catch (error) {
         console.error("Error deleting vendor:", error);
         throw error;

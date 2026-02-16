@@ -9,6 +9,7 @@ import {
 import { Vendor } from "../types";
 import { toPng } from "html-to-image";
 import { getProxiedImageUrl } from '../utils/imageUrl';
+import { logger } from "../utils/logger";
 
 interface VendorBusinessCardProps {
     vendor: Vendor;
@@ -44,7 +45,7 @@ export const VendorBusinessCard: React.FC<VendorBusinessCardProps> = ({ vendor, 
                 reader.readAsDataURL(blob);
             });
         } catch (err) {
-            console.warn(`[BusinessCard] Failed to pre-fetch image ${url}:`, err);
+            logger.warn(`[BusinessCard] Failed to pre-fetch image ${url}:`, err);
             return null;
         }
     };
@@ -66,7 +67,7 @@ export const VendorBusinessCard: React.FC<VendorBusinessCardProps> = ({ vendor, 
         if (!cardRef.current) return;
 
         setIsDownloading(true);
-        console.log("[BusinessCard] Starting download...");
+        logger.log("[BusinessCard] Starting download...");
 
         try {
             // Wait a bit for any pending transitions
@@ -87,9 +88,9 @@ export const VendorBusinessCard: React.FC<VendorBusinessCardProps> = ({ vendor, 
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            console.log("[BusinessCard] Download triggered successfully");
+            logger.log("[BusinessCard] Download triggered successfully");
         } catch (err: any) {
-            console.error("Business Card Download failed:", err);
+            logger.error("Business Card Download failed:", err);
 
             // Provide helpful, actionable error message
             let message = "⚠️ Download Failed\n\n";

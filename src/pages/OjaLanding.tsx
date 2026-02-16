@@ -11,6 +11,7 @@ import {
     Shield
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { SEO } from "../components/SEO";
 import { submitExpansionResponse } from "../services/expansion";
 import { showToast } from "../components/ToastContainer";
 
@@ -132,6 +133,11 @@ export function OjaLanding() {
 
     return (
         <div className="min-h-screen bg-[#FAF7F2] text-[#1a1a1a] selection:bg-[#B45309]/20 font-sans">
+            <SEO
+                title="Oja Expansion Circle"
+                description="Help bring Oja to your city. Join the expansion circle and be the first to know when we launch in your area."
+                type="website"
+            />
             {/* Navigation */}
             <nav className="absolute top-0 left-0 right-0 p-8 flex justify-end items-center z-20 max-w-7xl mx-auto">
                 <button

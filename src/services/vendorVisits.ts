@@ -19,6 +19,8 @@ import {
     setDoc,
     increment,
 } from "firebase/firestore";
+import { getCurrentVendor } from "./vendorAuth";
+import { logger } from "../utils/logger";
 
 const COLLECTION_NAME = "vendorVisits";
 const HISTORY_COLLECTION = "visitHistory";
@@ -43,6 +45,13 @@ export interface VisitHistoryPeriod {
  */
 export const trackStoreVisit = async (vendorId: string, isExternal: boolean): Promise<boolean> => {
     try {
+        // Anti-manipulation: Don't track if the current user is the vendor themselves
+        const currentVendor = getCurrentVendor();
+        if (currentVendor && currentVendor.id === vendorId) {
+            logger.log("[VendorVisits] Self-visit detected. Skipping track.");
+            return false;
+        }
+
         const response = await fetch('/api/track-visit', {
             method: 'POST',
             headers: {
@@ -58,11 +67,17 @@ export const trackStoreVisit = async (vendorId: string, isExternal: boolean): Pr
         const data = await response.json();
         return data.counted === true;
     } catch (error) {
-        console.warn("API tracking failed, falling back to client-side write (Dev Mode):", error);
+        logger.warn("API tracking failed, falling back to client-side write (Dev Mode):", error);
 
         // Fallback: Direct Firestore write for development/offline handling
         try {
-            console.log("[VendorVisits] Tracking visit for ID:", vendorId);
+            // Repeat anti-manipulation check in fallback
+            const currentVendor = getCurrentVendor();
+            if (currentVendor && currentVendor.id === vendorId) {
+                return false;
+            }
+
+            logger.log("[VendorVisits] Tracking visit for ID:", vendorId);
             const visitRef = doc(db, COLLECTION_NAME, vendorId);
 
             // Use setDoc with merge: true to avoid needing read permissions
@@ -72,7 +87,7 @@ export const trackStoreVisit = async (vendorId: string, isExternal: boolean): Pr
                 lastVisit: Timestamp.now()
             }, { merge: true });
 
-            console.log("[VendorVisits] Tracked visit for:", vendorId);
+            logger.log("[VendorVisits] Tracked visit for:", vendorId);
             return true;
         } catch (dbError) {
             console.error("[VendorVisits] Client-side fallback failed:", dbError);
@@ -83,10 +98,10 @@ export const trackStoreVisit = async (vendorId: string, isExternal: boolean): Pr
 
 export const getVisitsLeaderboard = async (): Promise<VendorVisitData[]> => {
     try {
-        console.log("[VendorVisits] Fetching leaderboard...");
+        logger.log("[VendorVisits] Fetching leaderboard...");
         const visitsRef = collection(db, COLLECTION_NAME);
         const snapshot = await getDocs(visitsRef);
-        console.log("[VendorVisits] Found", snapshot.size, "visit records");
+        logger.log("[VendorVisits] Found", snapshot.size, "visit records");
 
         if (snapshot.empty) {
             return [];
@@ -110,7 +125,7 @@ export const getVisitsLeaderboard = async (): Promise<VendorVisitData[]> => {
                     count: data.count || 0,
                 };
             } catch (nameError) {
-                console.warn(`[VendorVisits] Could not fetch name for vendor ${vendorId}:`, nameError);
+                logger.warn(`[VendorVisits] Could not fetch name for vendor ${vendorId}:`, nameError);
                 return {
                     vendorId,
                     vendorName: "Unknown Vendor",
@@ -129,7 +144,7 @@ export const getVisitsLeaderboard = async (): Promise<VendorVisitData[]> => {
                 rank: index + 1,
             }));
 
-        console.log("[VendorVisits] Leaderboard prepared with", sorted.length, "ranked items");
+        logger.log("[VendorVisits] Leaderboard prepared with", sorted.length, "ranked items");
         return sorted;
     } catch (error) {
         console.error("[VendorVisits] FATAL Error getting visits leaderboard:", error);
@@ -164,7 +179,7 @@ export const resetVisits = async (periodName: string): Promise<boolean> => {
         const currentLeaderboard = await getVisitsLeaderboard();
 
         if (currentLeaderboard.length === 0) {
-            console.log("No data to archive");
+            logger.log("No data to archive");
             return true;
         }
 

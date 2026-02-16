@@ -10,6 +10,7 @@ import { logVendorContact } from "../services/vendorContacts";
 import { getStudentId } from "../utils/studentId";
 import { showToast } from "./ToastContainer";
 import { getProxiedImageUrl } from "../utils/imageUrl";
+import { createPendingOrder } from "../services/orders";
 
 interface ProductCardProps {
   product: Product;
@@ -77,33 +78,49 @@ export const ProductCard = React.memo(({
     showToast("Added to cart!");
   };
 
-  const handleWhatsAppClick = (e: React.MouseEvent) => {
+  const handleWhatsAppClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
 
-    const message = `Hello 👋\nI found this product on LAUTECH Market.\n\nI’m interested in the *${product.name}* (₦${formatPrice(product.price)}).\n\nBefore I decide, please confirm:\n– Is it currently available?\n– can you deliver around lautech?\n– How fast can I get it?\n\nThank you 😊`;
-    const whatsappUrl = `https://wa.me/${product.whatsappNumber.replace(
-      /[^0-9]/g,
-      ""
-    )}?text=${encodeURIComponent(message)}`;
+    try {
+      // 1. Create a pending order record for GMV tracking
+      const orderId = await createPendingOrder(product);
+      console.log(`[Order] Created pending order: ${orderId}`);
 
-    // Log event immediately (no await to prevent popup block)
-    logEvent("whatsapp_order", {
-      productId: product.id,
-      vendorId: product.vendorId,
-      category: product.category
-    });
+      // 2. Prepare WhatsApp message with Order Reference
+      const message = `Hello 👋\nI found this product on LAUTECH Market.\n\nI’m interested in the *${product.name}* (₦${formatPrice(product.price)}).\n\nMy Order Reference is: ${orderId}\n\nBefore I decide, please confirm:\n– Is it currently available?\n– can you deliver around lautech?\n– How fast can I get it?\n\nThank you 😊`;
+      const whatsappUrl = `https://wa.me/${product.whatsappNumber.replace(
+        /[^0-9]/g,
+        ""
+      )}?text=${encodeURIComponent(message)}`;
 
-    // Background tasks (logging contact)
-    const studentId = getStudentId();
-    logVendorContact(
-      product.vendorId || '',
-      studentId,
-      'whatsapp',
-      product.id
-    ).catch(error => console.error('Error logging contact:', error));
+      // 3. Log analytics event
+      logEvent("whatsapp_order", {
+        productId: product.id,
+        vendorId: product.vendorId,
+        category: product.category
+      });
 
-    // Direct redirection is more resilient against mobile popup blockers
-    window.location.assign(whatsappUrl);
+      // 4. Log contact background tasks
+      const studentId = getStudentId();
+      logVendorContact(
+        product.vendorId || '',
+        studentId,
+        'whatsapp',
+        product.id
+      ).catch(error => console.error('Error logging contact:', error));
+
+      // 5. Redirection
+      window.location.assign(whatsappUrl);
+    } catch (err) {
+      console.error("Failed to track order:", err);
+      // Fallback message if tracking fails
+      const message = `Hello 👋\nI found this product on LAUTECH Market.\n\nI’m interested in the *${product.name}* (₦${formatPrice(product.price)}).\n\nThank you 😊`;
+      const whatsappUrl = `https://wa.me/${product.whatsappNumber.replace(
+        /[^0-9]/g,
+        ""
+      )}?text=${encodeURIComponent(message)}`;
+      window.location.assign(whatsappUrl);
+    }
   };
 
   const handleCopyLink = (e: React.MouseEvent) => {

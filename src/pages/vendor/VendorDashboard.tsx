@@ -20,7 +20,8 @@ import {
     List,
     Check,
     MessageCircle,
-    ExternalLink
+    ExternalLink,
+    ChevronRight,
 } from "lucide-react";
 import { Product, Vendor } from "../../types";
 import { auth } from "../../firebase";
@@ -45,6 +46,11 @@ import {
 import { VendorBusinessCard } from "../../components/VendorBusinessCard";
 import { getProxiedImageUrl } from "../../utils/imageUrl";
 import { trackVendorActivity } from "../../services/vendorActivity";
+import { Order, getVendorOrders } from "../../services/orders";
+import { OrdersWidget } from "../../components/vendor/OrdersWidget";
+import { OrderConfirmationModal } from "../../components/vendor/OrderConfirmationModal";
+import { logger } from "../../utils/logger";
+
 
 /**
  * VendorDashboard Component
@@ -94,6 +100,11 @@ export function VendorDashboard() {
 
     // State for business card modal
     const [showBusinessCard, setShowBusinessCard] = useState(false);
+
+    // Order Tracking State
+    const [pendingOrders, setPendingOrders] = useState<Order[]>([]);
+    const [confirmingOrder, setConfirmingOrder] = useState<Order | null>(null);
+
 
     // Check if should show Vendor Hub popup on mount
     useEffect(() => {
@@ -165,7 +176,7 @@ export function VendorDashboard() {
                 setTimeout(() => setCopiedStoreLink(false), 2000);
             }
         } catch (err) {
-            console.error("Error sharing:", err);
+            logger.error("Error sharing:", err);
             // Fallback to clipboard
             const textArea = document.createElement("textarea");
             textArea.value = storeUrl;
@@ -202,21 +213,33 @@ export function VendorDashboard() {
             setVendor(currentVendor);
             setAuthChecked(true);
             loadVendorProducts(currentVendor.id);
+            loadPendingOrders(currentVendor.id);
         });
 
         return () => unsubscribe();
     }, [navigate]);
 
+    // Load vendor's pending orders
+    const loadPendingOrders = async (vendorId: string) => {
+        try {
+            const orders = await getVendorOrders(vendorId, 'pending');
+            setPendingOrders(orders);
+        } catch (err) {
+            logger.error("Failed to load pending orders:", err);
+        }
+    };
+
+
     // Load top referrers leaderboard and find vendor's rank
     useEffect(() => {
         const loadLeaderboard = async () => {
             if (!vendor) {
-                console.log("[VendorDashboard] Leaderboard fetch skipped: No vendor yet");
+                logger.log("[VendorDashboard] Leaderboard fetch skipped: No vendor yet");
                 return;
             }
-            console.log("[VendorDashboard] Loading leaderboard for vendor UID:", vendor.id);
+            logger.log("[VendorDashboard] Loading leaderboard for vendor UID:", vendor.id);
             const data = await getVisitsLeaderboard();
-            console.log("[VendorDashboard] Leaderboard data received:", data.length, "items");
+            logger.log("[VendorDashboard] Leaderboard data received:", data.length, "items");
             setTopReferrers(data.slice(0, 3)); // Only top 3
 
             // Find current vendor's rank data (if not already in top 3)
@@ -237,7 +260,7 @@ export function VendorDashboard() {
             const data = await getVendorProducts(vendorId);
             setProducts(data);
         } catch (err) {
-            console.error("Failed to load products:", err);
+            logger.error("Failed to load products:", err);
         } finally {
             setLoading(false);
         }
@@ -265,11 +288,11 @@ export function VendorDashboard() {
                 setProducts((prev) => [...prev, newProduct]);
             }
         } catch (err: any) {
-            console.error("Error saving product:", err);
+            logger.error("Error saving product:", err);
 
             // Diagnostic logging for the specific vendor issue
             const currentUser = auth.currentUser;
-            console.log("[Diagnostic] Save attempt details:", {
+            logger.log("[Diagnostic] Save attempt details:", {
                 vendorId: vendor.id,
                 authUid: currentUser?.uid,
                 isAuthEmailVerified: currentUser?.emailVerified,
@@ -306,7 +329,7 @@ export function VendorDashboard() {
             await deleteProduct(id);
             setProducts((prev) => prev.filter((p) => p.id !== id));
         } catch (err) {
-            console.error("Error deleting product:", err);
+            logger.error("Error deleting product:", err);
             alert("Error deleting product: " + (err as Error).message);
         }
     };
@@ -361,7 +384,7 @@ export function VendorDashboard() {
             setSelectedProducts(new Set());
             alert(`Successfully deleted ${selectedProducts.size} product(s).`);
         } catch (err) {
-            console.error("Error in bulk delete:", err);
+            logger.error("Error in bulk delete:", err);
             alert("Error deleting products: " + (err as Error).message);
         }
     };
@@ -386,7 +409,7 @@ export function VendorDashboard() {
             setSelectedProducts(new Set());
             alert(`Successfully updated ${selectedProducts.size} product(s).`);
         } catch (err) {
-            console.error("Error in bulk stock update:", err);
+            logger.error("Error in bulk stock update:", err);
             alert("Error updating products: " + (err as Error).message);
         }
     };
@@ -399,7 +422,7 @@ export function VendorDashboard() {
             setCopiedProductId(productId);
             setTimeout(() => setCopiedProductId(null), 2000);
         } catch (err) {
-            console.error("Failed to copy link:", err);
+            logger.error("Failed to copy link:", err);
             const textArea = document.createElement("textarea");
             textArea.value = productUrl;
             document.body.appendChild(textArea);
@@ -431,7 +454,7 @@ export function VendorDashboard() {
             });
             setShowProfileForm(false);
         } catch (err) {
-            console.error("Error updating profile:", err);
+            logger.error("Error updating profile:", err);
             alert("Failed to update profile");
         }
     };
@@ -465,7 +488,7 @@ export function VendorDashboard() {
             const uploadResult = await uploadImage(file);
             await updateVendorProfile(vendor.id, { bannerImage: uploadResult.url });
         } catch (err) {
-            console.error("Error uploading banner:", err);
+            logger.error("Error uploading banner:", err);
             alert("Failed to upload banner image");
         } finally {
             setUploadingBanner(false);
@@ -482,7 +505,7 @@ export function VendorDashboard() {
             const uploadResult = await uploadImage(file);
             await updateVendorProfile(vendor.id, { profileImage: uploadResult.url });
         } catch (err) {
-            console.error("Error uploading profile image:", err);
+            logger.error("Error uploading profile image:", err);
             alert("Failed to upload profile image");
         } finally {
             setUploadingProfile(false);
@@ -682,6 +705,26 @@ export function VendorDashboard() {
             </div>
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Orders Confirmation Widget */}
+                {vendor && (
+                    <div className="mb-8">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-bold text-gray-900">Recent Orders</h3>
+                            <Link
+                                to="/vendor/orders"
+                                className="text-sm font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1"
+                            >
+                                View All Orders
+                                <ChevronRight className="w-4 h-4" />
+                            </Link>
+                        </div>
+                        <OrdersWidget
+                            pendingOrders={pendingOrders}
+                            onReview={() => setConfirmingOrder(pendingOrders[0])}
+                        />
+                    </div>
+                )}
+
                 {/* Business Identity Card */}
                 <div className="bg-white rounded-2xl shadow-sm border border-emerald-100 p-6 mb-8 bg-gradient-to-br from-white to-emerald-50/30 overflow-hidden relative">
                     <div className="absolute top-0 right-0 p-4 opacity-10">
@@ -779,7 +822,7 @@ export function VendorDashboard() {
                             </div>
                             <button
                                 onClick={() => {
-                                    console.log("[VendorDashboard] Manual leaderboard refresh triggered");
+                                    logger.log("[VendorDashboard] Manual leaderboard refresh triggered");
                                     const loadLeaderboard = async () => {
                                         if (!vendor) return;
                                         const data = await getVisitsLeaderboard();
@@ -1358,6 +1401,17 @@ export function VendorDashboard() {
                     </div>
                 )
             }
+            {/* Order Confirmation Modal */}
+            {confirmingOrder && (
+                <OrderConfirmationModal
+                    order={confirmingOrder}
+                    onClose={() => setConfirmingOrder(null)}
+                    onConfirmed={() => {
+                        if (vendor) loadPendingOrders(vendor.id);
+                    }}
+                />
+            )}
         </div >
+
     );
 }

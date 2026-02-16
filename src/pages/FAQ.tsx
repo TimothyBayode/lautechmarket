@@ -11,10 +11,10 @@ import {
   MessageCircle,
   Search
 } from 'lucide-react';
-import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { SEO } from '../components/SEO';
 
 export function FAQ() {
-  useDocumentTitle("FAQs | LAUTECH Market");
+  // useDocumentTitle("FAQs | LAUTECH Market");
   const [searchTerm, setSearchTerm] = useState('');
   const [openCategory, setOpenCategory] = useState<string | null>('general');
   const [openFaqs, setOpenFaqs] = useState<Set<string>>(new Set(['faq-1', 'faq-4']));
@@ -184,8 +184,28 @@ export function FAQ() {
     })
   })).filter(category => category.faqs.length > 0);
 
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": filteredCategories.flatMap(cat =>
+      cat.faqs.map(faq => ({
+        "@type": "Question",
+        "name": faq.question,
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": typeof faq.answer === 'string' ? faq.answer : "Visit our FAQ page for more details."
+        }
+      }))
+    )
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col" >
+      <SEO
+        title="Frequently Asked Questions"
+        description="Find answers to common questions about buying and selling on LAUTECH Market, security, payments, and more."
+        schema={faqSchema}
+      />
       <Header onSearch={() => { /* No search needed on FAQ page */ }} categories={[]} />
 
       <main className="flex-1">
@@ -305,6 +325,6 @@ export function FAQ() {
       </main>
 
       <Footer />
-    </div>
+    </div >
   );
 }

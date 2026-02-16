@@ -1,4 +1,5 @@
 import { db } from "../firebase";
+import { logger } from "../utils/logger";
 import {
     collection,
     addDoc,
@@ -28,7 +29,7 @@ export async function submitExpansionResponse(data: Omit<ExpansionResponse, 'id'
         });
         return docRef.id;
     } catch (error) {
-        console.error("Error submitting expansion response:", error);
+        logger.error("Error submitting expansion response:", error);
         throw error;
     }
 }
@@ -52,7 +53,7 @@ export async function getExpansionResponses(): Promise<ExpansionResponse[]> {
             } as ExpansionResponse;
         });
     } catch (error) {
-        console.error("Error getting expansion responses:", error);
+        logger.error("Error getting expansion responses:", error);
         throw error;
     }
 }
@@ -64,7 +65,7 @@ export async function deleteExpansionResponse(id: string) {
         const { doc, deleteDoc } = await import("firebase/firestore");
         await deleteDoc(doc(db, COLLECTION_NAME, id));
     } catch (error) {
-        console.error("Error deleting expansion response:", error);
+        logger.error("Error deleting expansion response:", error);
         throw error;
     }
 }

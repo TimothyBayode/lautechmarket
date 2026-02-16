@@ -10,6 +10,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { getCurrentVendor } from "./vendorAuth";
+import { logger } from "../utils/logger";
 
 export type EventType =
     | "whatsapp_order"
@@ -44,13 +45,13 @@ export const logEvent = async (
             // Anti-manipulation: Block vendor self-interaction
             const vendor = getCurrentVendor();
             if (vendor && vendor.id === data.vendorId) {
-                console.log(`[Analytics] Self-interaction detected for ${type} on product ${data.productId}. Counter not incremented.`);
+                logger.log(`[Analytics] Self-interaction detected for ${type} on product ${data.productId}. Counter not incremented.`);
                 return;
             }
 
             // Anti-manipulation: Throttling
             if (shouldThrottle(type, data.productId)) {
-                console.log(`[Analytics] ${type} throttled for product ${data.productId}.`);
+                logger.log(`[Analytics] ${type} throttled for product ${data.productId}.`);
                 return;
             }
 
@@ -75,13 +76,13 @@ export const logEvent = async (
 export const logSearch = async (query: string, resultsCount: number = 0) => {
     if (!query.trim()) return;
     try {
-        console.log(`[Analytics] Logging search: "${query}" with ${resultsCount} results`);
+        logger.log(`[Analytics] Logging search: "${query}" with ${resultsCount} results`);
         await addDoc(collection(db, "searches"), {
             query: query.trim().toLowerCase(),
             resultsCount,
             timestamp: serverTimestamp(),
         });
-        console.log(`[Analytics] Search logged successfully`);
+        logger.log(`[Analytics] Search logged successfully`);
     } catch (error) {
         console.error("Error logging search:", error);
     }

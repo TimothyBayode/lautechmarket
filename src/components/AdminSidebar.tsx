@@ -10,11 +10,11 @@ import {
     PieChart,
     Search,
     Flame,
-    Activity,
-    MoveDown,
     Star,
     Mail,
-    Globe2
+    Globe2,
+    Package,
+    MessageSquare,
 } from "lucide-react";
 import { getCurrentUser } from "../services/auth";
 
@@ -28,19 +28,19 @@ interface AdminSidebarProps {
 
 export function AdminSidebar({ activeTab, onTabChange, onLogout, isOpen, onClose }: AdminSidebarProps) {
     const menuItems = [
-        { id: "overview", label: "Overview", icon: BarChart2 },
-        { id: "category-stats", label: "Category Stats", icon: PieChart },
-        { id: "market-intelligence", label: "Market Intelligence", icon: Activity },
-        { id: "demand-gap", label: "Demand Gap", icon: MoveDown },
-        { id: "search-analytics", label: "Search Analytics", icon: Search },
-        { id: "product-interactions", label: "Product Hotlist", icon: Flame },
-        { id: "vendors", label: "Vendors", icon: Users },
+        { id: "business-metrics", label: "Business Intelligence", icon: BarChart2 },
+        { id: "all-products", label: "All Products", icon: Package },
+        { id: "customer-feedback", label: "Customer Feedback", icon: MessageSquare },
+        { id: "product-performance", label: "Product Performance", icon: Flame },
+        { id: "category-intelligence", label: "Category Intelligence", icon: PieChart },
+        { id: "search-intelligence", label: "Search Intelligence", icon: Search },
+        { id: "vendors", label: "Vendors Management", icon: Users },
         { id: "banners", label: "Homepage Banners", icon: Megaphone },
-        { id: "categories", label: "Categories", icon: Tag },
+        { id: "categories", label: "Category Manager", icon: Tag },
         { id: "expansion-circle", label: "Expansion Circle", icon: Globe2 },
         { id: "curation", label: "Curation & Top 3", icon: Star },
-        { id: "verification", label: "Verification", icon: ShieldCheck },
-        { id: "leaderboard", label: "Top Visits", icon: Trophy },
+        { id: "verification", label: "Verification Requests", icon: ShieldCheck },
+        { id: "leaderboard", label: "Visitor Leaderboard", icon: Trophy },
         { id: "audit-logs", label: "Audit Logs", icon: ShieldCheck },
     ];
 

@@ -16,6 +16,7 @@ import {
     serverTimestamp
 } from 'firebase/firestore';
 import { VendorBadge, VendorMetrics } from '../types';
+import { logger } from '../utils/logger';
 
 /**
  * Response time mapping for calculations
@@ -33,7 +34,7 @@ const RESPONSE_TIME_MAP = {
  */
 export const updateVendorMetrics = async (vendorId: string): Promise<void> => {
     try {
-        console.log('[Metrics] Updating metrics for vendor:', vendorId);
+        logger.log('[Metrics] Updating metrics for vendor:', vendorId);
 
         // Get all contacts for this vendor
         const contactsQuery = query(
@@ -48,7 +49,7 @@ export const updateVendorMetrics = async (vendorId: string): Promise<void> => {
         const feedbackCount = feedbackDocs.length;
 
         if (feedbackCount === 0) {
-            console.log('[Metrics] No feedback yet for vendor:', vendorId);
+            logger.log('[Metrics] No feedback yet for vendor:', vendorId);
             return;
         }
 
@@ -144,7 +145,7 @@ export const updateVendorMetrics = async (vendorId: string): Promise<void> => {
             badges
         });
 
-        console.log('[Metrics] Updated metrics for vendor:', vendorId, {
+        logger.log('[Metrics] Updated metrics for vendor:', vendorId, {
             responsivenessScore,
             trustScore,
             badges: badges.map(b => b.type)

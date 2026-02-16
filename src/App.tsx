@@ -12,6 +12,7 @@ const FAQ = lazy(() => import("./pages/FAQ").then(module => ({ default: module.F
 const VendorRegister = lazy(() => import("./pages/vendor/VendorRegister").then(module => ({ default: module.VendorRegister })));
 const VendorLogin = lazy(() => import("./pages/vendor/VendorLogin").then(module => ({ default: module.VendorLogin })));
 const VendorDashboard = lazy(() => import("./pages/vendor/VendorDashboard").then(module => ({ default: module.VendorDashboard })));
+const VendorOrders = lazy(() => import("./pages/vendor/Orders").then(module => ({ default: module.default })));
 const VendorStore = lazy(() => import("./pages/vendor/VendorStore").then(module => ({ default: module.VendorStore })));
 const VerifyEmail = lazy(() => import("./pages/vendor/VerifyEmail").then(module => ({ default: module.VerifyEmail })));
 const OjaLanding = lazy(() => import("./pages/OjaLanding").then(module => ({ default: module.OjaLanding })));
@@ -145,6 +146,14 @@ export default function App() {
               element={
                 <VendorProtectedRoute>
                   <VendorDashboard />
+                </VendorProtectedRoute>
+              }
+            />
+            <Route
+              path="/vendor/orders"
+              element={
+                <VendorProtectedRoute>
+                  <VendorOrders />
                 </VendorProtectedRoute>
               }
             />
