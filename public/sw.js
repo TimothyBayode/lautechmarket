@@ -1,6 +1,6 @@
 /* eslint-env serviceworker */
-// Version 2 - Forced Update
-const CACHE_NAME = 'lautech-market-v3';
+// Version 3.0.4 - Rescue Update
+const CACHE_NAME = 'lautech-market-v3.0.4';
 const ASSETS_TO_CACHE = [
     '/logo_icon.png',
     '/logo_text.png',

@@ -6,14 +6,14 @@ import { HelmetProvider } from "react-helmet-async";
 import { logger } from "./utils/logger";
 
 // --- EMERGENCY AUTO-FIX & MIGRATION (Runs before React) ---
-const APP_VERSION = 'v3.0.3'; // Forced bump for surgical cleanup
+const APP_VERSION = 'v3.0.4'; // Forced bump for AGGRESSIVE cleanup
 const MIGRATION_KEY = 'app_version';
 
 try {
   const currentVersion = localStorage ? localStorage.getItem(MIGRATION_KEY) : null;
 
   if (currentVersion !== APP_VERSION) {
-    logger.log(`[Auto-Fix] Surgical cleanup: Migrating from ${currentVersion} to ${APP_VERSION}`);
+    logger.log(`[Auto-Fix] Aggressive cleanup: Migrating from ${currentVersion} to ${APP_VERSION}`);
 
     // 1. Unregister all Service Workers (NO RELOAD)
     if ('serviceWorker' in navigator) {
@@ -25,18 +25,12 @@ try {
       });
     }
 
-    // 2. Surgical Cleanup (Preserve cart and critical keys)
+    // 2. Aggressive Cleanup (WIPE EVERYTHING)
     if (localStorage) {
-      // Keys to remove (Analytics/Throttle keys often cause issues)
-      const keysToRemove = Object.keys(localStorage).filter(key =>
-        key.startsWith('lautech_market_throttle_') ||
-        key.startsWith('last_visit_')
-      );
-
-      keysToRemove.forEach(key => localStorage.removeItem(key));
-
-      // If we are doing a major version jump or emergency fix, we might clear more
-      // But let's stay surgical for now to avoid UX friction.
+      // We are wiping everything to fix the "Works in Incognito" issue.
+      // Corrupted keys in normal tab are the likely culprit.
+      localStorage.clear();
+      sessionStorage.clear();
 
       localStorage.setItem(MIGRATION_KEY, APP_VERSION);
     }
