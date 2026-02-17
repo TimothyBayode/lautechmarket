@@ -78,9 +78,14 @@ export const createPendingOrder = async (product: any): Promise<string> => {
 
         await addDoc(collection(db, "orders"), orderData);
 
-
         // Also log this as an analytics event via a separate service if needed, 
         // but for now, we have the order record.
+
+        // UPDATE: Increment the product's orderCount so it shows "X orders" on the card
+        const productRef = doc(db, "products", product.id);
+        await updateDoc(productRef, {
+            orderCount: increment(1)
+        });
 
         return orderId;
     } catch (error) {
