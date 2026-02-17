@@ -5,38 +5,39 @@ import App from "./App";
 import { HelmetProvider } from "react-helmet-async";
 import { logger } from "./utils/logger";
 
-// --- EMERGENCY AUTO-FIX & MIGRATION (Runs before React) ---
-const APP_VERSION = 'v3.0.4'; // Forced bump for AGGRESSIVE cleanup
-const MIGRATION_KEY = 'app_version';
+// --- SMART MIGRATION (Runs once per device) ---
+const MIGRATION_VERSION = 'v3.0.5-fix';
+const MIGRATION_KEY = 'app_migration_version';
 
 try {
   const currentVersion = localStorage ? localStorage.getItem(MIGRATION_KEY) : null;
 
-  if (currentVersion !== APP_VERSION) {
-    logger.log(`[Auto-Fix] Aggressive cleanup: Migrating from ${currentVersion} to ${APP_VERSION}`);
+  if (currentVersion !== MIGRATION_VERSION && localStorage) {
+    // We use console.log here because logger might not be fully initialized or we want raw output
+    console.log(`[Migration] Upgrading to ${MIGRATION_VERSION}. Clearing old data...`);
 
-    // 1. Unregister all Service Workers (NO RELOAD)
+    // 1. Unregister Service Workers (Async, don't await to avoid blocking)
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then((registrations) => {
         for (let registration of registrations) {
           registration.unregister();
-          logger.log('[Auto-Fix] SW Unregistered');
         }
       });
     }
 
-    // 2. Aggressive Cleanup (WIPE EVERYTHING)
-    if (localStorage) {
-      // We are wiping everything to fix the "Works in Incognito" issue.
-      // Corrupted keys in normal tab are the likely culprit.
-      localStorage.clear();
-      sessionStorage.clear();
+    // 2. Clear Storage (Safe Wipe)
+    // This fixes the "Incognito works / Normal fails" issue by removing corrupted keys
+    localStorage.clear();
+    sessionStorage.clear();
 
-      localStorage.setItem(MIGRATION_KEY, APP_VERSION);
-    }
+    // 3. Set New Version Lock IMMEDIATELY
+    localStorage.setItem(MIGRATION_KEY, MIGRATION_VERSION);
+
+    // 4. Reload ONCE to ensure clean state
+    window.location.reload();
   }
 } catch (e) {
-  logger.error("Early migration error:", e);
+  console.error("Migration error:", e);
 }
 
 // --- APP RENDERING ---

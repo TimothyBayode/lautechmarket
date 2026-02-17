@@ -40,41 +40,7 @@
 
 
 
-  <script>
-    // --- EMERGENCY RESCUE SCRIPT (v3.0.4) ---
-    (function () {
-      try {
-        var REQUIRED_VERSION = 'v3.0.4-rescue';
-        var currentVersion = localStorage.getItem('rescue_version');
 
-        if (currentVersion !== REQUIRED_VERSION) {
-          console.warn('RESCUE MODE: Cleaning up old version...');
-
-          // 1. Clear all storage
-          localStorage.clear();
-          sessionStorage.clear();
-
-          // 2. Set new version immediately to prevent loops
-          localStorage.setItem('rescue_version', REQUIRED_VERSION);
-
-          // 3. Unregister SWs
-          if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(function (registrations) {
-              for (var i = 0; i < registrations.length; i++) {
-                registrations[i].unregister();
-              }
-              // 4. Reload to get fresh assets
-              window.location.reload();
-            });
-          } else {
-            window.location.reload();
-          }
-        }
-      } catch (e) {
-        console.error('Rescue script failed:', e);
-      }
-    })();
-  </script>
 </head>
 
 <body>
