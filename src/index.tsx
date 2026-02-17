@@ -33,8 +33,9 @@ try {
     // 3. Set New Version Lock IMMEDIATELY
     localStorage.setItem(MIGRATION_KEY, MIGRATION_VERSION);
 
-    // 4. Reload ONCE to ensure clean state
-    window.location.reload();
+    // 4. Do NOT reload. Just let the app initialize with the cleared state.
+    // Reloading risks a loop if localStorage fails to persist or is cleared again.
+    console.log("[Migration] Cleanup complete. Proceeding with initialization.");
   }
 } catch (e) {
   console.error("Migration error:", e);
