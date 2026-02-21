@@ -1,4 +1,3 @@
-import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import App from "./App";
@@ -6,7 +5,7 @@ import { HelmetProvider } from "react-helmet-async";
 import { logger } from "./utils/logger";
 
 // --- SMART MIGRATION (Runs once per device) ---
-const MIGRATION_VERSION = 'v3.0.5-fix';
+const MIGRATION_VERSION = 'v3.2.0-sw-fix';
 const MIGRATION_KEY = 'app_migration_version';
 
 try {

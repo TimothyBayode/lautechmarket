@@ -1,6 +1,6 @@
 /* eslint-env serviceworker */
-// Version 3.0.4 - Rescue Update
-const CACHE_NAME = 'lautech-market-v3.0.4';
+// Version 3.2.0 - SW Cache Fix (network-first for all Vite bundles)
+const CACHE_NAME = 'lautech-market-v3.2.0';
 const ASSETS_TO_CACHE = [
     '/logo_icon.png',
     '/logo_text.png',
@@ -22,12 +22,12 @@ self.addEventListener('activate', (event) => {
     event.waitUntil(
         Promise.all([
             self.clients.claim(),
-            // Clear old caches
+            // Clear ALL old caches so stale Vite bundles are fully purged
             caches.keys().then((cacheNames) => {
                 return Promise.all(
                     cacheNames.map((cache) => {
                         if (cache !== CACHE_NAME) {
-                            console.log('Clearing old cache:', cache);
+                            console.log('[SW] Clearing old cache:', cache);
                             return caches.delete(cache);
                         }
                     })
@@ -38,32 +38,38 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-    // Check if the request is for a script/module
-    const isScript = event.request.destination === 'script';
+    const url = event.request.url;
 
-    // Check if it's a navigation request (HTML page)
-    const isNavigation = event.request.mode === 'navigate';
-
-    // 1. Navigation (HTML): Network First, fall back to Cache
-    if (isNavigation) {
-        event.respondWith(
-            fetch(event.request)
-                .catch(() => {
-                    return caches.match(event.request);
-                })
-        );
-        return;
-    }
-
-    // 2. Scripts: Network First to avoid hash mismatches
-    if (isScript) {
+    // 1. Navigation (HTML pages): Network First, fallback to Cache
+    //    This prevents stale index.html from being served to returning users.
+    if (event.request.mode === 'navigate') {
         event.respondWith(
             fetch(event.request).catch(() => caches.match(event.request))
         );
         return;
     }
 
-    // 3. Other Assets (Images, fonts, etc.): Cache First, fall back to Network
+    // 2. Vite-hashed JS/CSS bundles (/assets/): Network First
+    //    CRITICAL: Vite uses content-hashed filenames (e.g. index-abc123.js).
+    //    After every deployment these hashes change, so old cached bundles
+    //    become 404s. Always fetch fresh from the network.
+    if (url.includes('/assets/')) {
+        event.respondWith(
+            fetch(event.request).catch(() => caches.match(event.request))
+        );
+        return;
+    }
+
+    // 3. Script/module requests (any destination='script'): Network First
+    if (event.request.destination === 'script') {
+        event.respondWith(
+            fetch(event.request).catch(() => caches.match(event.request))
+        );
+        return;
+    }
+
+    // 4. Static assets (Images, icons, fonts, manifest): Cache First
+    //    These are stable files that don't change with builds.
     event.respondWith(
         caches.match(event.request).then((response) => {
             return response || fetch(event.request);

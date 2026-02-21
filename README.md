@@ -1,53 +1,113 @@
-# Multi Vendor Mini Ecommerce
+# LAUTECH Market 🛒
 
-Welcome! This repository contains a compact, extensible multi-vendor e-commerce reference application. It is intended as a starting point for learning, rapid prototyping, and building a production-ready marketplace with clear boundaries between buyers, sellers, and the platform.
+> The official online marketplace for LAUTECH students in Ogbomosho, Oyo State, Nigeria.
 
-Key goals:
-- Minimal, well-documented codebase that demonstrates multi-vendor flows (seller onboarding, product management, checkout, payouts).
-- Clear API surface and frontend UX examples.
-- Easy to run locally and to extend into production (Docker-first).
+**Live site:** [lautechmarket.com.ng](https://lautechmarket.com.ng)
 
----
-
-## Table of contents
-- About
-- Features
-- Contributing
-- License
-
----
-
-## About
-This project models a small multi-vendor marketplace:
-- Sellers register, list products, manage inventory and orders.
-- Buyers browse, add to cart, checkout.
-- Platform mediates payments and optionally handles payouts to sellers.
-- Focus on separation of concerns and clear integration points (payments, notifications, admin).
-
-This repo intentionally keeps features focused so you can plug in additional services (payment provider, analytics, search) without heavy refactors.
+LAUTECH Market connects verified campus vendors with student buyers — 100% free, mobile-first, and built for life on campus.
 
 ---
 
 ## Features
-- User roles: buyer, seller, admin
-- Seller onboarding & store management
-- Product CRUD with categories and simple inventory
-- Cart and checkout flows
-- Authentication (Firebase)
-- Validation, error handling, and simple rate limiting examples
-- Tests for core business logic
+
+- 🛍️ **Multi-vendor marketplace** — vendors register, list products, manage orders
+- 🔍 **Browse & search** — filter by category, price, vendor rating
+- 📦 **Order tracking** — buyers track purchases end-to-end
+- 🏆 **Vendor leaderboard** — ranked by store visits and order count
+- 📊 **Admin dashboard** — curated lists, market intelligence, feedback management
+- 🔒 **Secure auth** — Firebase Authentication with role-based access (buyer / vendor / admin)
+- 📱 **PWA-ready** — installable on Android & iOS with offline support
+- ⚡ **Rate limiting** — client-side abuse protection
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 18 + TypeScript + Vite |
+| Styling | Tailwind CSS |
+| Database | Firebase Firestore |
+| Auth | Firebase Authentication |
+| Storage | Cloudflare Worker (image uploads) |
+| Hosting | Vercel |
+| PWA | Custom Service Worker (`/public/sw.js`) |
+
+---
+
+## Local Setup
+
+### Prerequisites
+- Node.js ≥ 18
+- npm ≥ 9
+- A Firebase project (Firestore + Authentication enabled)
+- A Cloudflare Worker for image uploads (optional for dev)
+
+### Steps
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/YOUR_USERNAME/lautech-market.git
+cd lautech-market
+
+# 2. Install dependencies
+npm install
+
+# 3. Configure environment variables
+cp .env.example .env
+# Edit .env and fill in your Firebase credentials
+
+# 4. Start the dev server
+npm run dev
+```
+
+> The app runs at `http://localhost:5173` by default.
+
+---
+
+## Deployment
+
+This project is deployed on **Vercel**. Push to the `main` branch to trigger an automatic deployment.
+
+```bash
+# Build the production bundle locally (optional check)
+npm run build
+```
+
+Environment variables must be configured in the Vercel dashboard under **Project → Settings → Environment Variables** using the same keys from `.env.example`.
+
+---
+
+## Project Structure
+
+```
+src/
+├── components/     # Reusable UI components
+├── config/         # Firebase initialization
+├── context/        # React Context providers (Auth, Cart, etc.)
+├── middleware/      # Rate limiter
+├── pages/          # Route-level page components
+├── services/       # Firestore data-access layer
+├── types/          # TypeScript type definitions
+└── utils/          # Helpers (logger, formatting, etc.)
+public/
+├── sw.js           # Service Worker (PWA, network-first for bundles)
+└── site.webmanifest
+```
 
 ---
 
 ## Contributing
-Contributions are welcome. Please follow these steps:
-1. Fork the repository.
-2. Create a branch: git checkout -b feature/your-feature
-3. Run tests and linters locally.
-4. Open a PR with a clear description and tests for new behavior.
-5. Include a short CONTRIBUTING.md in the repo with branch naming, commit message format, and PR checklist.
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Commit your changes with a clear message
+4. Open a Pull Request describing what you changed and why
 
 ---
 
 ## License
-MIT License — see LICENSE file for details.
+
+MIT License — see [LICENSE.md](LICENSE.md) for details.
+
+**Author:** Timothy Bayode — [timothybayode76@gmail.com](mailto:timothybayode76@gmail.com)

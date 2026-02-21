@@ -28,3 +28,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local diagnostic / build output files (not for GitHub)
+errors*.txt
+lint_errors*.txt
+tsc_*.txt
+eslint_errors*.txt
+full_errors.txt
+all_errors.txt
+check_firestore.ts
