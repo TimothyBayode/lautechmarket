@@ -93,7 +93,6 @@ const CuratedSection: React.FC<{ list: CuratedList; vendors: Vendor[] }> = ({ li
                 <div>
                     <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3 border ${getListColor()}`}>
                         {getListIcon()}
-                        <span>{list.type === 'top_3' ? 'Official Ranking' : list.type === 'certified' ? 'Certified Best' : 'Featured Collection'}</span>
                     </div>
                     <h2 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">
                         {list.title}
@@ -171,20 +170,26 @@ const CuratedSection: React.FC<{ list: CuratedList; vendors: Vendor[] }> = ({ li
                                         {formatResponseTime(vendor.metrics.averageResponseMinutes)}
                                     </div>
                                 )}
-                                <div className="font-medium">
-                                    {vendor.tagline || 'Verified Vendor'}
-                                </div>
+                                {vendor.tagline && (
+                                    <div className="font-medium">
+                                        {vendor.tagline}
+                                    </div>
+                                )}
                             </div>
 
                             {/* "Why This Vendor" Mini Explainer */}
                             <div className="mt-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
                                 <p className="text-xs font-medium text-gray-600 leading-relaxed">
                                     <span className="font-bold text-gray-900">Why? </span>
-                                    {vendor.metrics?.trustScore && vendor.metrics.trustScore > 80
-                                        ? "Highly trusted by students with excellent feedback."
-                                        : vendor.metrics?.averageResponseMinutes && vendor.metrics.averageResponseMinutes < 30
-                                            ? "Responds faster than 90% of other vendors."
-                                            : `${vendor.totalOrders || 'New'} successful orders delivered.`}
+                                    {list.vendorReasons?.[vendor.id] ? (
+                                        list.vendorReasons[vendor.id]
+                                    ) : (
+                                        vendor.metrics?.trustScore && vendor.metrics.trustScore > 80
+                                            ? "Highly trusted by students with excellent feedback."
+                                            : vendor.metrics?.averageResponseMinutes && vendor.metrics.averageResponseMinutes < 30
+                                                ? "Responds faster than 90% of other vendors."
+                                                : `${vendor.totalOrders || 'New'} successful orders delivered.`
+                                    )}
                                 </p>
                             </div>
                         </div>
